@@ -97,34 +97,13 @@ export default function EmployeeExpensesPage() {
   }, [selectedLocationId])
 
   const fetchExpenses = async () => {
-    if (expensesLoadedRef.current && loading === false) return
-
     try {
       setLoading(true)
-      const token = localStorage.getItem('authToken')
-      const apiUrl = authService.getSettingsApiUrl()
       const locationId = authService.getLocationId()
-
-      const url = locationId
-        ? `${apiUrl}/employee-expenses?location_id=${locationId}`
-        : `${apiUrl}/employee-expenses`
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
-      })
-
-      if (response.ok || response.status === 304) {
-        const data = await response.json()
-        if (Array.isArray(data)) {
-          setExpenses(data)
-        } else {
-          setExpenses([])
-        }
+      const data = await settingsApi.getEmployeeExpenses(locationId ? Number(locationId) : undefined)
+      
+      if (Array.isArray(data)) {
+        setExpenses(data)
       } else {
         setExpenses([])
       }
@@ -292,19 +271,20 @@ export default function EmployeeExpensesPage() {
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Description</TableHead>
+                <TableHead>Receipt</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-4">
+                  <TableCell colSpan={7} className="text-center py-4">
                     Loading expenses...
                   </TableCell>
                 </TableRow>
               ) : expenses.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-4 text-gray-500">
+                  <TableCell colSpan={7} className="text-center py-4 text-gray-500">
                     No expenses found
                   </TableCell>
                 </TableRow>
@@ -316,6 +296,40 @@ export default function EmployeeExpensesPage() {
                     <TableCell>${Number(expense.amount || 0).toFixed(2)}</TableCell>
                     <TableCell>{getStatusBadge(expense.status)}</TableCell>
                     <TableCell>{expense.description || '-'}</TableCell>
+                    <TableCell>
+                      {expense.receipt ? (
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-0 h-auto hover:bg-transparent"
+                            onClick={() => window.open(`${authService.getSettingsApiUrl()?.replace('/api', '')}/${expense.receipt}`, '_blank')}
+                          >
+                            {expense.receipt.toLowerCase().endsWith('.pdf') ? (
+                              <div className="flex items-center text-blue-600 hover:text-blue-800 transition-colors">
+                                <span className="text-xs font-medium mr-1 underline">View PDF</span>
+                              </div>
+                            ) : (
+                              <div className="relative group cursor-pointer border rounded-md overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                <img
+                                  src={`${authService.getSettingsApiUrl()?.replace('/api', '')}/${expense.receipt}`}
+                                  alt="Receipt"
+                                  className="h-10 w-10 object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://placehold.co/40x40?text=Error';
+                                  }}
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                  <Plus className="h-4 w-4 text-white" />
+                                </div>
+                              </div>
+                            )}
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">No receipt</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"

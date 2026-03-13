@@ -1065,7 +1065,7 @@ export const settingsApi = {
   },
 
   // Patient Examination
-  getPatientExaminations: async (locationId?: number, page = 1, limit = 10, fromDate?: string, toDate?: string, search?: string) => {
+  getPatientExaminations: async (locationId?: number, page = 1, limit = 10, fromDate?: string, toDate?: string, search?: string, sortField?: string, sortOrder?: string) => {
     try {
       const params = new URLSearchParams()
       if (locationId) params.append('location_id', locationId.toString())
@@ -1074,6 +1074,8 @@ export const settingsApi = {
       if (fromDate) params.append('from_date', fromDate)
       if (toDate) params.append('to_date', toDate)
       if (search) params.append('search', search)
+      if (sortField) params.append('sort_field', sortField)
+      if (sortOrder) params.append('sort_order', sortOrder)
 
       const response = await fetch(`${authService.getSettingsApiUrl()}/patient-examinations?${params.toString()}`, {
         headers: getAuthHeaders(),
@@ -1369,6 +1371,22 @@ export const settingsApi = {
       throw error;
     }
   },
+
+  // Employee Expenses
+  getEmployeeExpenses: async (locationId?: number) => {
+    try {
+      const params = new URLSearchParams();
+      if (locationId) params.append('location_id', locationId.toString());
+
+      const response = await fetch(`${authService.getSettingsApiUrl()}/employee-expenses?${params.toString()}`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getEmployeeExpenses error:', error);
+      throw error;
+    }
+  },
 };
 
 // Type definitions
@@ -1430,7 +1448,7 @@ export interface LocationsIp {
   createdBy?: number;
   createdAt: string;
   updatedAt: string;
-}
+};
 
 export interface SystemSettings {
   general: {

@@ -20,7 +20,10 @@ import {
   DollarSign,
   FileText,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -41,6 +44,8 @@ export default function PatientListPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalRecords, setTotalRecords] = useState(0)
+  const [sortField, setSortField] = useState<string>("createdAt")
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC")
   const pageSize = 10
   const router = useRouter()
   const fetchingRef = useRef(false)
@@ -51,7 +56,7 @@ export default function PatientListPage() {
 
   useEffect(() => {
     fetchPatients();
-  }, [currentPage])
+  }, [currentPage, sortField, sortOrder])
 
   useEffect(() => {
     const handleBranchChange = () => {
@@ -89,6 +94,8 @@ export default function PatientListPage() {
       params.append('page', currentPage.toString())
       params.append('limit', pageSize.toString())
       if (searchTerm) params.append('search', searchTerm)
+      if (sortField) params.append('sort_field', sortField)
+      if (sortOrder) params.append('sort_order', sortOrder)
 
       const url = `${authService.getSettingsApiUrl()}/patients?${params}`
 
@@ -169,6 +176,23 @@ export default function PatientListPage() {
     fetchPatients()
   }
 
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "ASC" ? "DESC" : "ASC")
+    } else {
+      setSortField(field)
+      setSortOrder("ASC")
+    }
+    setCurrentPage(1)
+  }
+
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) return <ArrowUpDown className="ml-2 h-4 w-4 text-gray-400" />
+    return sortOrder === "ASC" ? 
+      <ArrowUp className="ml-2 h-4 w-4 text-blue-600" /> : 
+      <ArrowDown className="ml-2 h-4 w-4 text-blue-600" />
+  }
+
   const maskMobile = (mobile: string) => {
     if (!mobile) return 'N/A'
     if (mobile.length <= 4) return mobile
@@ -247,14 +271,70 @@ export default function PatientListPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Patient ID</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Mobile</TableHead>
-                      <TableHead>Next Renewal Date</TableHead>
-                      <TableHead>Due Amount</TableHead>
-                      <TableHead>Age</TableHead>
-                      <TableHead>Gender</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:text-blue-600 transition-colors"
+                        onClick={() => handleSort('patientId')}
+                      >
+                        <div className="flex items-center">
+                          Patient ID {getSortIcon('patientId')}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:text-blue-600 transition-colors"
+                        onClick={() => handleSort('name')}
+                      >
+                        <div className="flex items-center">
+                          Name {getSortIcon('name')}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:text-blue-600 transition-colors"
+                        onClick={() => handleSort('mobile')}
+                      >
+                        <div className="flex items-center">
+                          Mobile {getSortIcon('mobile')}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:text-blue-600 transition-colors"
+                        onClick={() => handleSort('nextRenewalDate')}
+                      >
+                        <div className="flex items-center">
+                          Next Renewal Date {getSortIcon('nextRenewalDate')}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:text-blue-600 transition-colors"
+                        onClick={() => handleSort('dueAmount')}
+                      >
+                        <div className="flex items-center">
+                          Due Amount {getSortIcon('dueAmount')}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:text-blue-600 transition-colors"
+                        onClick={() => handleSort('age')}
+                      >
+                        <div className="flex items-center">
+                          Age {getSortIcon('age')}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:text-blue-600 transition-colors"
+                        onClick={() => handleSort('gender')}
+                      >
+                        <div className="flex items-center">
+                          Gender {getSortIcon('gender')}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:text-blue-600 transition-colors"
+                        onClick={() => handleSort('status')}
+                      >
+                        <div className="flex items-center">
+                          Status {getSortIcon('status')}
+                        </div>
+                      </TableHead>
                       <TableHead className="text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>

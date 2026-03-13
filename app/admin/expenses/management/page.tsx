@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 import authService from '@/lib/authService'
 import settingsApi from '@/lib/settingsApi'
 import PrivateRoute from "@/components/auth/PrivateRoute"
-import { format } from 'date-fns'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
 
 interface ExpenseCategory {
   id: number
@@ -60,8 +60,8 @@ export default function ExpenseManagementPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
+  const [fromDate, setFromDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'))
+  const [toDate, setToDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'))
 
   // Pagination
   const [page, setPage] = useState(1)
