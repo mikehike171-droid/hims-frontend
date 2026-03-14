@@ -55,7 +55,7 @@ export default function PatientBillDiscussPage() {
   }
 
   const currentMonth = getCurrentMonthDates()
-  const [fromDate, setFromDate] = useState<string>(currentMonth.today)
+  const [fromDate, setFromDate] = useState<string>(currentMonth.from)
   const [toDate, setToDate] = useState<string>(currentMonth.to)
   const [searchTerm, setSearchTerm] = useState('')
   const hasLoadedRef = useRef(false)
@@ -168,11 +168,11 @@ export default function PatientBillDiscussPage() {
 
   const handleClearFilters = () => {
     const dates = getCurrentMonthDates()
-    setFromDate(dates.today)
+    setFromDate(dates.from)
     setToDate(dates.to)
     setSearchTerm('')
     // Pass cleared values directly
-    fetchExaminations(1, sortField, sortOrder, dates.today, dates.to, '')
+    fetchExaminations(1, sortField, sortOrder, dates.from, dates.to, '')
   }
 
   const handleSearch = () => {

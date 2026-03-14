@@ -32,6 +32,7 @@ import { format, parseISO, addMonths } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { settingsApi } from "@/lib/settingsApi"
 
 
 
@@ -235,14 +236,20 @@ export default function PatientBillDiscuss() {
   }
 
   const fetchPaymentMethods = async () => {
-    // Use static payment methods like in registration page
-    setPaymentMethods([
-      { id: 1, code: "cash", name: "Cash" },
-      { id: 2, code: "card", name: "Card" },
-      { id: 3, code: "upi", name: "UPI" },
-      { id: 4, code: "insurance", name: "Insurance" },
-      { id: 5, code: "other", name: "Other" }
-    ])
+    try {
+      const data = await settingsApi.getPaymentTypes()
+      setPaymentMethods(data)
+    } catch (error) {
+      console.error('Error fetching payment types:', error)
+      // Fallback to static if API fails
+      setPaymentMethods([
+        { id: 1, code: "cash", name: "Cash" },
+        { id: 2, code: "card", name: "Card" },
+        { id: 3, code: "upi", name: "UPI" },
+        { id: 4, code: "insurance", name: "Insurance" },
+        { id: 5, code: "other", name: "Other" }
+      ])
+    }
   }
 
   const fetchLocationData = async () => {
@@ -826,10 +833,14 @@ export default function PatientBillDiscuss() {
                 }}>
 
                   <SelectContent>
-                    {paymentMethods.filter(method => !selectedPaymentMethods.find(p => p.id === method.code)).map((method) => {
-                      const IconComponent = getPaymentIcon(method.code)
+                    {paymentMethods.filter(method => {
+                      const methodValue = method.code || method.name?.toLowerCase() || ''
+                      return !selectedPaymentMethods.find(p => p.id === methodValue)
+                    }).map((method) => {
+                      const methodValue = method.code || method.name?.toLowerCase() || ''
+                      const IconComponent = getPaymentIcon(methodValue)
                       return (
-                        <SelectItem key={method.id} value={method.code}>
+                        <SelectItem key={method.id} value={methodValue}>
                           <div className="flex items-center gap-2">
                             <IconComponent className="h-4 w-4" />
                             {method.name}
@@ -845,12 +856,12 @@ export default function PatientBillDiscuss() {
                 <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <h4 className="font-medium text-blue-900">Payment Breakdown</h4>
                   {selectedPaymentMethods.map((payment, index) => {
-                    const method = paymentMethods.find(m => m.code === payment.id)
+                    const method = paymentMethods.find(m => (m.code || m.name?.toLowerCase()) === payment.id)
                     const IconComponent = getPaymentIcon(payment.id)
                     return (
                       <div key={payment.id} className="flex items-center gap-3 p-3 bg-white rounded border">
                         <IconComponent className="h-4 w-4 text-gray-600" />
-                        <span className="min-w-20 text-sm font-medium">{method?.name}</span>
+                        <span className="min-w-20 text-sm font-medium">{method?.name || payment.id}</span>
                         <div className="flex-1 relative">
                           <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                           <Input
@@ -947,9 +958,10 @@ export default function PatientBillDiscuss() {
                         </SelectTrigger>
                         <SelectContent>
                           {paymentMethods.map((method) => {
-                            const IconComponent = getPaymentIcon(method.code)
+                            const methodValue = method.code || method.name?.toLowerCase() || ''
+                            const IconComponent = getPaymentIcon(methodValue)
                             return (
-                              <SelectItem key={method.id} value={method.code}>
+                              <SelectItem key={method.id} value={methodValue}>
                                 <div className="flex items-center gap-2">
                                   <IconComponent className="h-4 w-4" />
                                   {method.name}
