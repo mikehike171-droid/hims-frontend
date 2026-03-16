@@ -1157,6 +1157,32 @@ export const settingsApi = {
     }
   },
 
+  createExpenseCategory: async (data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/expense-categories`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  updateExpenseCategory: async (id: number, data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/expense-categories/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  deleteExpenseCategory: async (id: number) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/expense-categories/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return await handleApiResponse(response);
+  },
+
   // Employee Expenses
   getAllEmployeeExpenses: async (filters?: { fromDate?: string; toDate?: string; page?: number; limit?: number }) => {
     try {
@@ -1316,14 +1342,14 @@ export const settingsApi = {
     }
   },
 
-  getHRPolicies: async (filters?: { page?: number; limit?: number; search?: string }) => {
+  getHRPolicies: async (params: { page?: number; limit?: number; search?: string } = {}) => {
     try {
-      const params = new URLSearchParams();
-      if (filters?.page) params.append('page', filters.page.toString());
-      if (filters?.limit) params.append('limit', filters.limit.toString());
-      if (filters?.search) params.append('search', filters.search);
+      const queryParams = new URLSearchParams();
+      if (params.page) queryParams.append('page', params.page.toString());
+      if (params.limit) queryParams.append('limit', params.limit.toString());
+      if (params.search) queryParams.append('search', params.search);
 
-      const response = await fetch(`${authService.getSettingsApiUrl()}/hr-policies?${params.toString()}`, {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/hr-policies?${queryParams.toString()}`, {
         headers: getAuthHeaders(),
       });
       return await handleApiResponse(response);
@@ -1368,6 +1394,50 @@ export const settingsApi = {
       return await handleApiResponse(response);
     } catch (error) {
       console.error('deleteHRPolicy error:', error);
+      throw error;
+    }
+  },
+
+  bulkUploadHRPolicies: async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const headers: any = getAuthHeaders();
+      delete headers['Content-Type'];
+
+      const response = await fetch(`${authService.getSettingsApiUrl()}/hr-policies/bulk-upload`, {
+        method: 'POST',
+        headers: headers,
+        body: formData,
+      });
+
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('bulkUploadHRPolicies error:', error);
+      throw error;
+    }
+  },
+
+  downloadHRPoliciesSample: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/hr-policies/sample-excel`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) throw new Error('Failed to download sample file');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'hr_policies_sample.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('downloadHRPoliciesSample error:', error);
       throw error;
     }
   },

@@ -39,6 +39,7 @@ export default function EditHRPolicyPage({ params }: { params: { id: string } })
     const { id } = params
     const [policyNumber, setPolicyNumber] = useState("")
     const [policyTitle, setPolicyTitle] = useState("")
+    const [policyDescription, setPolicyDescription] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [isFetching, setIsFetching] = useState(true)
     const router = useRouter()
@@ -50,9 +51,7 @@ export default function EditHRPolicyPage({ params }: { params: { id: string } })
                 const policy = await settingsApi.getHRPolicy(parseInt(id))
                 setPolicyNumber(policy.policyNumber)
                 setPolicyTitle(policy.title)
-                if (editorRef.current) {
-                    editorRef.current.innerHTML = policy.description
-                }
+                setPolicyDescription(policy.description || "")
             } catch (error) {
                 console.error("Error fetching policy:", error)
                 toast.error("Failed to fetch policy details")
@@ -188,6 +187,8 @@ export default function EditHRPolicyPage({ params }: { params: { id: string } })
                                 <div
                                     ref={editorRef}
                                     contentEditable
+                                    suppressContentEditableWarning
+                                    dangerouslySetInnerHTML={{ __html: policyDescription }}
                                     className="min-h-[350px] p-4 focus:outline-none text-base leading-relaxed bg-white prose prose-sm max-w-none"
                                 />
 

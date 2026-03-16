@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Search, FileText, ChevronLeft, ChevronRight, Edit, Eye, Trash2 } from "lucide-react"
+import { Plus, Search, FileText, ChevronLeft, ChevronRight, Edit, Eye, Trash2, Upload, Download, FileJson } from "lucide-react"
 import Link from "next/link"
 import PrivateRoute from "@/components/auth/PrivateRoute"
 import { cn } from "@/lib/utils"
-import settingsApi from "@/lib/settingsApi"
+import { settingsApi } from "@/lib/settingsApi"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { format } from "date-fns"
@@ -17,12 +17,15 @@ import { format } from "date-fns"
 export default function HRPoliciesListPage() {
     const [searchTerm, setSearchTerm] = useState("")
     const [loading, setLoading] = useState(false)
+    const [importing, setImporting] = useState(false)
     const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
     const [totalRecords, setTotalRecords] = useState(0)
     const [policies, setPolicies] = useState<any[]>([])
     const [selectedPolicy, setSelectedPolicy] = useState<any>(null)
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+    const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
     const fetchPolicies = async () => {
         setLoading(true)
@@ -32,9 +35,9 @@ export default function HRPoliciesListPage() {
                 limit: 10,
                 search: searchTerm
             })
-            setPolicies(response.data)
-            setTotalPages(response.totalPages)
-            setTotalRecords(response.total)
+            setPolicies(response.data || [])
+            setTotalPages(response.totalPages || 0)
+            setTotalRecords(response.total || 0)
         } catch (error) {
             console.error("Error fetching policies:", error)
             toast.error("Failed to fetch policies")
@@ -65,6 +68,37 @@ export default function HRPoliciesListPage() {
         }
     }
 
+    const handleImport = async () => {
+        if (!selectedFile) {
+            toast.error("Please select a file first")
+            return
+        }
+
+        setImporting(true)
+        try {
+            const result = await settingsApi.bulkUploadHRPolicies(selectedFile)
+            toast.success(`Successfully processed ${result.total} rows. Created: ${result.created}, Updated: ${result.updated}`)
+            setIsImportDialogOpen(false)
+            setSelectedFile(null)
+            fetchPolicies()
+        } catch (error: any) {
+            console.error("Error importing policies:", error)
+            toast.error(error.message || "Failed to import policies")
+        } finally {
+            setImporting(false)
+        }
+    }
+
+    const handleDownloadSample = async () => {
+        try {
+            await settingsApi.downloadHRPoliciesSample()
+            toast.success("Sample file downloaded")
+        } catch (error) {
+            console.error("Error downloading sample:", error)
+            toast.error("Failed to download sample file")
+        }
+    }
+
     const getPageNumbers = () => {
         const pages = [];
         const windowSize = 7;
@@ -90,12 +124,63 @@ export default function HRPoliciesListPage() {
                         <h1 className="text-3xl font-bold text-gray-900">HR Policies</h1>
                         <p className="text-gray-600">Create and manage organization-wide HR policies</p>
                     </div>
-                    <Link href="/admin/hr-management/policies/create">
-                        <Button className="bg-gray-900 hover:bg-black text-white shadow-lg shadow-gray-900/10">
-                            <Plus className="h-4 w-4 mr-2" />
-                            New HR Policy
-                        </Button>
-                    </Link>
+                    <div className="flex gap-3">
+                        <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" className="border-gray-300 hover:bg-gray-50 shadow-sm">
+                                    <Upload className="h-4 w-4 mr-2" />
+                                    Import Excel
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Import HR Policies</DialogTitle>
+                                    <DialogDescription>
+                                        Upload an Excel or CSV file to bulk create or update HR policies.
+                                        Existing policies will be updated based on their Policy Number.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4 space-y-4">
+                                    <Button 
+                                        variant="link" 
+                                        className="p-0 h-auto text-[#008fba] hover:text-[#007ba1]"
+                                        onClick={handleDownloadSample}
+                                    >
+                                        <Download className="h-4 w-4 mr-2" />
+                                        Download Sample Excel Sheet
+                                    </Button>
+                                    <Input 
+                                        type="file" 
+                                        accept=".xlsx, .xls, .csv" 
+                                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                                    />
+                                    {selectedFile && (
+                                        <p className="text-sm text-gray-500">
+                                            Selected: <span className="font-semibold text-gray-900">{selectedFile.name}</span>
+                                        </p>
+                                    )}
+                                </div>
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => setIsImportDialogOpen(false)} disabled={importing}>
+                                        Cancel
+                                    </Button>
+                                    <Button 
+                                        className="bg-gray-900 hover:bg-black text-white" 
+                                        onClick={handleImport} 
+                                        disabled={importing || !selectedFile}
+                                    >
+                                        {importing ? "Importing..." : "Upload & Import"}
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                        <Link href="/admin/hr-management/policies/create">
+                            <Button className="bg-gray-900 hover:bg-black text-white shadow-lg shadow-gray-900/10">
+                                <Plus className="h-4 w-4 mr-2" />
+                                New HR Policy
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Search Section */}
