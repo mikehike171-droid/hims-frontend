@@ -27,6 +27,7 @@ export default function PatientRegistrationPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPrintDialog, setShowPrintDialog] = useState(false)
   const [registeredPatient, setRegisteredPatient] = useState<any>(null)
+  const [locationData, setLocationData] = useState<any>(null)
 
   // Master data states
   const [genders, setGenders] = useState<Gender[]>([])
@@ -61,7 +62,32 @@ export default function PatientRegistrationPage() {
     }
 
     loadMasterData()
+    fetchLocationData()
   }, [])
+
+  const fetchLocationData = async () => {
+    try {
+      const token = localStorage.getItem('authToken')
+      const userData = JSON.parse(localStorage.getItem('user') || '{}')
+      const locationId = userData?.primary_location_id || authService.getLocationId()
+
+      if (locationId) {
+        const response = await fetch(`${authService.getSettingsApiUrl()}/locations/${locationId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setLocationData(data)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching location data:', error)
+    }
+  }
 
   // Load patient data if editing
   useEffect(() => {
@@ -284,12 +310,20 @@ export default function PatientRegistrationPage() {
         if (isEditMode) {
           router.push('/admin/front-office/patients')
         } else {
+          const selectedFee = feeMasters.find(f => f.code.toLowerCase() === fee.toLowerCase())
+          const selectedType = paymentTypes.find(t => (t.code || t.name.toLowerCase()) === feeType.toLowerCase())
+          
           setRegisteredPatient({
             patientId: result.patient.patientId,
             name: `${firstName} ${lastName}`,
             gender: gender,
             mobile: mobile,
-            amount: amount || '0'
+            amount: amount || '0',
+            fee: selectedFee?.title || fee,
+            type: selectedType?.name || feeType,
+            address: address1,
+            dob: dobDate ? format(dobDate, 'dd/MM/yyyy') : 'N/A',
+            age: years
           })
           setShowPrintDialog(true)
         }
@@ -697,41 +731,146 @@ export default function PatientRegistrationPage() {
 
       {/* Print Receipt Dialog */}
       <Dialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto print:max-h-none print:overflow-visible print:border-none print:shadow-none print:p-0 print:m-0">
           <DialogHeader>
-            <DialogTitle>Registration Successful</DialogTitle>
+            <DialogTitle className="print:hidden">Registration Successful</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="text-center p-6 border rounded-lg bg-gray-50">
-              <h3 className="text-lg font-bold mb-4">Patient Receipt</h3>
-              <div className="space-y-2 text-left">
-                <div className="flex justify-between">
-                  <span className="font-medium">Patient ID:</span>
-                  <span>{registeredPatient?.patientId}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Name:</span>
-                  <span>{registeredPatient?.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Gender:</span>
-                  <span className="capitalize">{registeredPatient?.gender}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Mobile:</span>
-                  <span>{registeredPatient?.mobile}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Amount:</span>
-                  <span>₹{registeredPatient?.amount}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Date:</span>
-                  <span>{new Date().toLocaleDateString()}</span>
-                </div>
+          <div className="receipt-content p-4 space-y-6">
+            <style jsx>{`
+              @media print {
+                @page { margin: 10mm; size: A4; }
+                /* Hide everything except the receipt content */
+                body > *:not(.receipt-portal), 
+                body > div:not(.receipt-portal) { 
+                  display: none !important; 
+                }
+                
+                /* Handle Shadcn/Radix portal specifically if it's not a direct child */
+                [data-radix-portal] { display: block !important; }
+                [data-radix-portal] > *:not([role="dialog"]) { display: none !important; }
+                
+                .print\\:hidden { display: none !important; }
+                
+                body { 
+                  background: white !important; 
+                  margin: 0 !important; 
+                  padding: 0 !important; 
+                }
+                
+                .receipt-content { 
+                  visibility: visible !important;
+                  display: block !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 10mm !important;
+                }
+                
+                [role="dialog"] { 
+                  position: static !important;
+                  display: block !important;
+                  width: 100% !important;
+                  max-width: none !important;
+                  max-height: none !important; 
+                  overflow: visible !important; 
+                  border: none !important; 
+                  box-shadow: none !important;
+                  padding: 0 !important;
+                  margin: 0 !important;
+                  transform: none !important;
+                }
+                
+                [data-radix-overlay] { display: none !important; }
+              }
+            `}</style>
+            
+            {/* Logo and Header */}
+            <div className="text-center space-y-2">
+              <div className="flex justify-center mb-2">
+                <img src="/images/patientrecipts.jpeg" alt="Hospital Logo" className="w-48 h-32 object-contain" />
+              </div>
+              <p className="text-sm font-semibold text-gray-700">ISO 9001:2015 Certified</p>
+              <p className="text-sm text-gray-600">{locationData?.address || '10-5-53, 1st Floor, Upstairs, Surya Tea Stall, Palnadu Bus Stand Centre, Main Road, Narasaraopeta, Andhra Pradesh 522601'}</p>
+              <p className="text-sm text-gray-600">Helpline: {locationData?.phone || '9059051906'}</p>
+              <div className="border-b-2 border-gray-100 my-4"></div>
+              <h3 className="text-xl font-bold uppercase tracking-wider">Payment Receipt</h3>
+            </div>
+
+            {/* Patient Info Grid */}
+            <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm">
+              <div className="space-y-1">
+                <p><strong>Date:</strong> {format(new Date(), 'dd/MM/yyyy')}</p>
+                <p><strong>Name:</strong> {registeredPatient?.name?.toUpperCase()}</p>
+                <p><strong>Age/DOB:</strong> {registeredPatient?.age} Y / {registeredPatient?.dob}</p>
+                <p><strong>Renewal Date:</strong> N/A</p>
+              </div>
+              <div className="space-y-1">
+                <p><strong>UHID:</strong> {registeredPatient?.patientId}</p>
+                <p><strong>Mobile:</strong> {registeredPatient?.mobile}</p>
+                <p><strong>Address:</strong> {registeredPatient?.address}</p>
               </div>
             </div>
-            <div className="flex gap-2">
+
+            {/* Table */}
+            <div className="border border-gray-300 rounded-sm">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-300">
+                    <th className="p-3 text-center border-r border-gray-300 w-16">S.No.</th>
+                    <th className="p-3 text-center border-r border-gray-300">Mode</th>
+                    <th className="p-3 text-right">Amount(Rs)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-gray-300">
+                    <td className="p-3 text-center border-r border-gray-300">1</td>
+                    <td className="p-3 text-center border-r border-gray-300">{registeredPatient?.fee} ({registeredPatient?.type})</td>
+                    <td className="p-3 text-right">{parseFloat(registeredPatient?.amount || '0').toFixed(2)}</td>
+                  </tr>
+                  <tr className="font-bold">
+                    <td colSpan={2} className="p-3 text-right border-r border-gray-300">
+                      Paid Amount (Rupees {registeredPatient?.amount} Only)
+                    </td>
+                    <td className="p-3 text-right">{parseFloat(registeredPatient?.amount || '0').toFixed(2)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p className="text-sm">Received with thanks Rs. {registeredPatient?.amount}/- from Mr. {registeredPatient?.name}.</p>
+
+            {/* Terms and Conditions */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-bold text-center uppercase">Terms & Conditions</h4>
+              <ul className="text-[10px] leading-relaxed text-gray-700 space-y-1">
+                <li>• The facilities of joining the card includes any number of consultations with physician.</li>
+                <li>• Only the bearer can avail the facilities of the card. The card facilities are given only to the one on whose name the card is made.</li>
+                <li>• The fee is non transferable, non refundable and non extendable.</li>
+                <li>• Patients are strictly advised to use medicines as per attending physicians recommendation. We assume patients have the responsibility to inform the attending physician about the status of the health or any serious disorder during the course of treatment.</li>
+                <li>• We expect & would appreciate patients to visit the clinic as per the due date of their consultations.</li>
+                <li>• Patients are requested to co-operate with the mode of treatment, as sometimes, the speed of recovery is slow (the time of recovery may vary).</li>
+                <li>• The duration of treatment and results may vary from patient.</li>
+                <li>• The Doctor and the clinic has given no guarantee to me (Patient) about the results and duration of the treatment.</li>
+                <li>• During critical emergencies patients / attendants are advised to inform the attending physician.</li>
+                <li>• Case Sheet Record are(Digital) and kept with the Doctor (in Server) till the end of the course of the treatment.</li>
+                <li>• This Corporate Clinic, promises to provide Best Service and Treatment to all Patients.</li>
+                <li>• All disputes are subject to Narasaraopet Court Jurisdiction only. E&OE.</li>
+              </ul>
+            </div>
+
+            {/* Signatures */}
+            <div className="flex justify-between pt-12 text-sm">
+              <div className="text-center">
+                <div className="border-t border-gray-400 w-48 mb-1"></div>
+                <p className="font-medium">Patients Signature</p>
+              </div>
+              <div className="text-center">
+                <div className="border-t border-gray-400 w-48 mb-1"></div>
+                <p className="font-medium">Authorised Signature</p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-6 print:hidden">
               <Button
                 variant="outline"
                 onClick={() => window.print()}
@@ -745,7 +884,7 @@ export default function PatientRegistrationPage() {
                   setShowPrintDialog(false)
                   router.push('/admin/front-office/patients')
                 }}
-                className="flex-1"
+                className="flex-1 bg-red-600 hover:bg-red-700"
               >
                 Continue
               </Button>

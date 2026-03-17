@@ -7,10 +7,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DollarSign, User, Stethoscope, ArrowLeft, CreditCard, Plus, Trash2, Search, ChevronDown } from "lucide-react"
+import { DollarSign, User, Stethoscope, ArrowLeft, CreditCard, Plus, Trash2, Search, ChevronDown, Printer } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import authService from "@/lib/authService"
 import PrivateRoute from "@/components/auth/PrivateRoute"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { format } from "date-fns"
+import { settingsApi } from "@/lib/settingsApi"
 
 export default function ConsultationPage() {
   const router = useRouter()
@@ -26,14 +29,42 @@ export default function ConsultationPage() {
   const [consultationFee, setConsultationFee] = useState("")
   const [payments, setPayments] = useState<{type: string, amount: string}[]>([{type: "cash", amount: ""}])
   const [loading, setLoading] = useState(false)
+  const [locationData, setLocationData] = useState<any>(null)
+  const [showPrintDialog, setShowPrintDialog] = useState(false)
+  const [consultationData, setConsultationData] = useState<any>(null)
 
   useEffect(() => {
     if (patientId) {
       fetchPatientDetails()
       fetchDoctors()
       fetchConsultationFees()
+      fetchLocationData()
     }
   }, [patientId])
+
+  const fetchLocationData = async () => {
+    try {
+      const token = localStorage.getItem('authToken')
+      const userData = JSON.parse(localStorage.getItem('user') || '{}')
+      const locationId = userData?.primary_location_id || authService.getLocationId()
+
+      if (locationId) {
+        const response = await fetch(`${authService.getSettingsApiUrl()}/locations/${locationId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setLocationData(data)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching location data:', error)
+    }
+  }
 
   const fetchPatientDetails = async () => {
     try {
@@ -170,8 +201,16 @@ export default function ConsultationPage() {
       })
 
       if (response.ok) {
-        alert('Consultation fee recorded successfully!')
-        router.push('/admin/front-office/patients')
+        const result = await response.json()
+        setConsultationData({
+          patient: patient,
+          doctor: selectedDoctor,
+          fee: consultationAmount,
+          payments: validPayments,
+          date: new Date(),
+          id: result.id
+        })
+        setShowPrintDialog(true)
       } else {
         const error = await response.json()
         alert(error.message || 'Failed to record consultation fee')
@@ -200,7 +239,7 @@ export default function ConsultationPage() {
   }
 
   return (
-    <PrivateRoute modulePath="admin/front-office/consultation" action="create">
+    <PrivateRoute modulePath="admin/front-office/consultation" action="add">
       <div className="min-h-screen bg-gray-50">
         <div className="">
           {/* Header */}
@@ -467,6 +506,148 @@ export default function ConsultationPage() {
             </Card>
           </div>
         </div>
+        
+        {/* Receipt Dialog */}
+        <Dialog open={showPrintDialog} onOpenChange={(open) => {
+          setShowPrintDialog(open)
+          if (!open) router.push('/admin/front-office/patients')
+        }}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto print:max-h-none print:overflow-visible print:border-none print:shadow-none print:p-0">
+            <DialogHeader>
+              <DialogTitle className="print:hidden">Consultation Receipt</DialogTitle>
+            </DialogHeader>
+            <div className="receipt-content p-4 space-y-6">
+              <style jsx>{`
+                @media print {
+                  @page { margin: 10mm; size: A4; }
+                  body > *:not([data-radix-portal]), 
+                  [data-radix-portal] > *:not([role="dialog"]) { 
+                    display: none !important; 
+                  }
+                  .print\\:hidden { display: none !important; }
+                  [role="dialog"] { 
+                    position: static !important;
+                    display: block !important;
+                    width: 100% !important;
+                    max-width: none !important;
+                    max-height: none !important; 
+                    overflow: visible !important; 
+                    border: none !important; 
+                    box-shadow: none !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    transform: none !important;
+                    visibility: visible !important;
+                  }
+                  .receipt-content { display: block !important; visibility: visible !important; }
+                  [data-radix-overlay] { display: none !important; }
+                }
+              `}</style>
+              
+              {/* Logo and Header */}
+              <div className="text-center space-y-2">
+                <div className="flex justify-center mb-2">
+                  <img src="/images/patientrecipts.jpeg" alt="Hospital Logo" className="w-48 h-32 object-contain" />
+                </div>
+                <p className="text-sm font-semibold text-gray-700">ISO 9001:2015 Certified</p>
+                <p className="text-sm text-gray-600">{locationData?.address || '10-5-53, 1st Floor, Upstairs, Surya Tea Stall, Palnadu Bus Stand Centre, Main Road, Narasaraopeta, Andhra Pradesh 522601'}</p>
+                <p className="text-sm text-gray-600">Helpline: {locationData?.phone || '9059051906'}</p>
+                <div className="border-b-2 border-gray-100 my-4"></div>
+                <h3 className="text-xl font-bold uppercase tracking-wider">Payment Receipt</h3>
+              </div>
+
+              {/* Patient and Receipt Info */}
+              <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm border-b pb-4">
+                <div className="space-y-1">
+                  <p><strong>Date:</strong> {consultationData?.date ? format(new Date(consultationData.date), "dd/MM/yyyy") : format(new Date(), "dd/MM/yyyy")}</p>
+                  <p><strong>Name:</strong> {((patient?.first_name || '') + ' ' + (patient?.last_name || '')).toUpperCase()}</p>
+                  <p><strong>Age/Gender:</strong> {calculateAge(patient?.date_of_birth)} Y / {patient?.gender?.toUpperCase()}</p>
+                  <p><strong>Doctor:</strong> {(selectedDoctor?.first_name || selectedDoctor?.firstName || '') + ' ' + (selectedDoctor?.last_name || selectedDoctor?.lastName || '')}</p>
+                </div>
+                <div className="space-y-1 text-right">
+                  <p><strong>UHID:</strong> {patient?.patient_id}</p>
+                  <p><strong>Mobile:</strong> {patient?.mobile || patient?.phone}</p>
+                  <p><strong>Receipt No:</strong> {consultationData?.id || 'N/A'}</p>
+                </div>
+              </div>
+
+              {/* Services Table */}
+              <div className="border border-gray-200 rounded-sm">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="p-3 text-left border-r border-gray-200">Description</th>
+                      <th className="p-3 text-center border-r border-gray-200 w-32">Mode</th>
+                      <th className="p-3 text-right w-32">Amount(Rs)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-gray-200">
+                      <td className="p-3 border-r border-gray-200">Consultation Fee</td>
+                      <td className="p-3 text-center border-r border-gray-200">
+                        {consultationData?.payments.map((p: any) => p.type).join(', ').toUpperCase()}
+                      </td>
+                      <td className="p-3 text-right font-medium">{parseFloat(consultationData?.fee || '0').toFixed(2)}</td>
+                    </tr>
+                    <tr className="font-bold bg-gray-50">
+                      <td colSpan={2} className="p-3 text-right border-r border-gray-200">Total Paid</td>
+                      <td className="p-3 text-right text-blue-700">₹{parseFloat(consultationData?.fee || '0').toFixed(2)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Amount in Words */}
+              <div className="text-sm italic text-gray-600">
+                Received with thanks Rs. {consultationData?.fee}/- from {patient?.salutation}. {patient?.first_name} {patient?.last_name}.
+              </div>
+
+              {/* Terms & Conditions */}
+              <div className="space-y-2 pt-4">
+                <h4 className="text-xs font-bold text-center uppercase tracking-wider">Terms & Conditions</h4>
+                <ul className="text-[10px] leading-relaxed text-gray-500 space-y-1 list-disc pl-4">
+                  <li>Consultation fee is valid for today only.</li>
+                  <li>Follow-up visits may attract additional charges.</li>
+                  <li>Please carry this receipt for any future reference.</li>
+                  <li>All disputes are subject to local jurisdiction only.</li>
+                </ul>
+              </div>
+
+              {/* Signatures */}
+              <div className="flex justify-between pt-12 items-end">
+                <div className="text-center">
+                  <div className="border-t border-gray-300 w-40 mb-1"></div>
+                  <p className="text-xs font-medium text-gray-600">Patient Signature</p>
+                </div>
+                <div className="text-center">
+                  <div className="border-t border-gray-300 w-40 mb-1"></div>
+                  <p className="text-xs font-medium text-gray-600">Authorized Signature</p>
+                </div>
+              </div>
+
+              {/* Print Button */}
+              <div className="flex justify-center pt-6 gap-3 print:hidden">
+                <Button 
+                  onClick={() => window.print()}
+                  className="bg-blue-600 hover:bg-blue-700 h-10 px-8"
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print Receipt
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setShowPrintDialog(false)
+                    router.push('/admin/front-office/patients')
+                  }}
+                  className="h-10 px-8"
+                >
+                  Close & Continue
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </PrivateRoute>
   )

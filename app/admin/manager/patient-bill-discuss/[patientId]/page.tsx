@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   User,
   Phone,
@@ -23,7 +24,8 @@ import {
   IndianRupee,
   Search,
   ChevronDown,
-  CalendarIcon
+  CalendarIcon,
+  Printer
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import PrivateRoute from "@/components/auth/PrivateRoute"
@@ -77,6 +79,8 @@ export default function PatientBillDiscuss() {
   const [locationData, setLocationData] = useState<any>(null)
   const [planSearch, setPlanSearch] = useState("")
   const [showPlanDropdown, setShowPlanDropdown] = useState(false)
+  const [showSimpleReceipt, setShowSimpleReceipt] = useState(false)
+  const [simpleReceiptData, setSimpleReceiptData] = useState<any>(null)
   const [filteredPlans, setFilteredPlans] = useState<any[]>([])
 
   useEffect(() => {
@@ -145,9 +149,9 @@ export default function PatientBillDiscuss() {
     }
   }
 
-  const calculateAge = (dob: string) => {
+  const calculateAge = (date: any) => {
     const today = new Date()
-    const birthDate = new Date(dob)
+    const birthDate = new Date(date)
     const age = today.getFullYear() - birthDate.getFullYear()
     const monthDiff = today.getMonth() - birthDate.getMonth()
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
@@ -321,9 +325,26 @@ export default function PatientBillDiscuss() {
 
       if (response.ok) {
         alert('Payment details saved successfully!')
+        const result = await response.json()
+        
+        // Show simple receipt
+        setSimpleReceiptData({
+          patientId: patient?.id,
+          name: patient?.name,
+          gender: patient?.gender,
+          mobile: patient?.phone,
+          amount: paymentData.paidAmount,
+          fee: planSearch, // Treatment Plan
+          type: paymentMethods.find(m => (m.code || m.name?.toLowerCase()) === selectedPaymentMethods[0]?.id)?.name || selectedPaymentMethods[0]?.id,
+          address: patient?.address1 || 'N/A',
+          dob: patient?.date_of_birth ? format(new Date(patient.date_of_birth), 'dd/MM/yyyy') : 'N/A',
+          age: patient?.age,
+          renewalDate: nextRenewalDate ? format(parseISO(nextRenewalDate), "dd/MM/yyyy") : 'N/A'
+        })
+        setShowSimpleReceipt(true)
+
         fetchPatientExamination()
         fetchInstallments()
-        setShowReceipt(true)
       } else {
         alert('Failed to save payment details')
       }
@@ -399,6 +420,23 @@ export default function PatientBillDiscuss() {
       if (response.ok) {
         const result = await response.json()
         alert('Payment added successfully!')
+        
+        // Show simple receipt
+        setSimpleReceiptData({
+          patientId: patient?.id,
+          name: patient?.name,
+          gender: patient?.gender,
+          mobile: patient?.phone,
+          amount: parseFloat(additionalPaymentAmount),
+          fee: planSearch, // Treatment Plan
+          type: paymentMethods.find(m => (m.code || m.name?.toLowerCase()) === additionalPaymentMethod)?.name || additionalPaymentMethod,
+          address: patient?.address1 || 'N/A',
+          dob: patient?.date_of_birth ? format(new Date(patient.date_of_birth), 'dd/MM/yyyy') : 'N/A',
+          age: patient?.age,
+          renewalDate: nextRenewalDate ? format(parseISO(nextRenewalDate), "dd/MM/yyyy") : 'N/A'
+        })
+        setShowSimpleReceipt(true)
+
         setAdditionalPaymentMethod('')
         setAdditionalPaymentAmount('')
         setPaymentNotes('')
@@ -415,7 +453,6 @@ export default function PatientBillDiscuss() {
 
         fetchPatientExamination()
         fetchInstallments()
-        setShowReceipt(true)
       } else {
         alert('Failed to add payment')
       }
@@ -1097,81 +1134,88 @@ export default function PatientBillDiscuss() {
               <div className="max-w-4xl mx-auto">
                 <style jsx>{`
                 @media print {
-                  @page { margin: 0; size: A4; }
-                  html, body { height: auto !important; overflow: visible !important; }
-                  body > div:not(.print-receipt-modal) { display: none !important; }
-                  .print-receipt-modal { display: block !important; position: static !important; width: 100% !important; height: auto !important; background: white !important; }
+                  @page { margin: 10mm; size: A4; }
+                  body > *:not(.print-receipt-modal) { display: none !important; }
+                  .print-receipt-modal { 
+                    display: block !important; 
+                    position: static !important; 
+                    width: 100% !important; 
+                    height: auto !important; 
+                    background: white !important; 
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    overflow: visible !important;
+                  }
+                  .receipt-content { position: relative; width: 100%; display: block !important; }
+                  .print\\:hidden { display: none !important; }
                   .fixed { position: static !important; }
-                  .bg-black, .bg-opacity-50 { background: transparent !important; }
-                  .print\:hidden { display: none !important; }
                 }
               `}</style>
-                <div className="receipt-content text-center mb-6">
+                <div className="text-center space-y-2 mb-6">
                   <div className="flex justify-center mb-4">
                     <img src="/images/patientrecipts.jpeg" alt="Hospital Logo" className="w-50 h-40 object-contain mx-auto" />
                   </div>
-
-                  <p className="text-sm text-gray-600">ISO 9001:2015 Certified</p>
-                  <p className="text-sm text-gray-600">{receiptData.location?.address || 'Address not available'}</p>
-                  <p className="text-sm text-gray-600">Helpline: {receiptData.location?.phone || 'Phone not available'}</p>
-                  <hr className="my-4" />
-                  <h3 className="text-lg font-semibold">Payment Receipt</h3>
+                  <p className="text-sm font-semibold text-gray-700">ISO 9001:2015 Certified</p>
+                  <p className="text-sm text-gray-600">{locationData?.address || receiptData.location?.address || '10-5-53, 1st Floor, Upstairs, Surya Tea Stall, Palnadu Bus Stand Centre, Main Road, Narasaraopeta, Andhra Pradesh 522601'}</p>
+                  <p className="text-sm text-gray-600">Helpline: {locationData?.phone || receiptData.location?.phone || '9059051906'}</p>
+                  <div className="border-b-2 border-gray-100 my-4"></div>
+                  <h3 className="text-xl font-bold uppercase tracking-wider">Payment Receipt</h3>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-                  <div>
+                <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm mb-6">
+                  <div className="space-y-1">
                     <p><strong>Date:</strong> {receiptData.date ? format(new Date(receiptData.date), "dd/MM/yyyy") : format(new Date(), "dd/MM/yyyy")}</p>
-                    <p><strong>Name:</strong> {receiptData.patient.first_name || ''} {receiptData.patient.last_name || ''}</p>
-                    <p><strong>Age/DOB:</strong> {receiptData.patient.date_of_birth ? `${calculateAge(receiptData.patient.date_of_birth)} Y / ${format(new Date(receiptData.patient.date_of_birth), "dd/MM/yyyy")}` : ''}</p>
+                    <p><strong>Name:</strong> {(receiptData.patient.first_name || '') + ' ' + (receiptData.patient.last_name || '').toUpperCase()}</p>
+                    <p><strong>Age/DOB:</strong> {receiptData.patient.date_of_birth ? `${calculateAge(receiptData.patient.date_of_birth)} Y / ${format(new Date(receiptData.patient.date_of_birth), "dd/MM/yyyy")}` : 'N/A'}</p>
                     <p><strong>Renewal Date:</strong> {receiptData.nextRenewalDatePro ? format(new Date(receiptData.nextRenewalDatePro), "dd/MM/yyyy") : (currentExamination?.nextRenewalDatePro ? format(new Date(currentExamination.nextRenewalDatePro), "dd/MM/yyyy") : 'N/A')}</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <p><strong>UHID:</strong> {receiptData.patient.patient_id || ''}</p>
                     <p><strong>Mobile:</strong> {receiptData.patient.mobile || ''}</p>
                     <p><strong>Address:</strong> {receiptData.patient.address1 || ''}</p>
                   </div>
                 </div>
 
-                <table className="w-full border-collapse border border-gray-300 mb-4">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border border-gray-300 p-2">S.No.</th>
-                      <th className="border border-gray-300 p-2">Mode</th>
-                      <th className="border border-gray-300 p-2">Amount(Rs)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {receiptData.installments ? receiptData.installments.map((installment, index) => (
-                      <tr key={installment.id}>
-                        <td className="border border-gray-300 p-2 text-center">{index + 1}</td>
-                        <td className="border border-gray-300 p-2 text-center">{installment.paymentMethod || installment.payment_method}</td>
-                        <td className="border border-gray-300 p-2 text-right">{installment.amount}</td>
+                <div className="border border-gray-300 rounded-sm mb-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-300">
+                        <th className="p-3 text-center border-r border-gray-300 w-16">S.No.</th>
+                        <th className="p-3 text-center border-r border-gray-300">Mode</th>
+                        <th className="p-3 text-right">Amount(Rs)</th>
                       </tr>
-                    )) : receiptData.installment && (
-                      <tr>
-                        <td className="border border-gray-300 p-2 text-center">1</td>
-                        <td className="border border-gray-300 p-2 text-center">{receiptData.installment.paymentMethod || receiptData.installment.payment_method}</td>
-                        <td className="border border-gray-300 p-2 text-right">{receiptData.installment.amount}</td>
+                    </thead>
+                    <tbody>
+                      {receiptData.installments ? receiptData.installments.map((installment: any, index: number) => (
+                        <tr key={installment.id} className="border-b border-gray-300">
+                          <td className="p-3 text-center border-r border-gray-300">{index + 1}</td>
+                          <td className="p-3 text-center border-r border-gray-300">{installment.paymentMethod || installment.payment_method}</td>
+                          <td className="p-3 text-right">{parseFloat(installment.amount).toFixed(2)}</td>
+                        </tr>
+                      )) : receiptData.installment && (
+                        <tr className="border-b border-gray-300">
+                          <td className="p-3 text-center border-r border-gray-300">1</td>
+                          <td className="p-3 text-center border-r border-gray-300">{receiptData.installment.paymentMethod || receiptData.installment.payment_method}</td>
+                          <td className="p-3 text-right">{parseFloat(receiptData.installment.amount).toFixed(2)}</td>
+                        </tr>
+                      )}
+                      <tr className="font-bold">
+                        <td colSpan={2} className="p-3 text-right border-r border-gray-300">
+                          {receiptData.isDailyReceipt ? 'Today\'s Payment' : 'Paid Amount'} (Rupees {receiptData.paidAmount} Only)
+                        </td>
+                        <td className="p-3 text-right">{parseFloat(receiptData.paidAmount).toFixed(2)}</td>
                       </tr>
-                    )}
-                    <tr className="font-bold">
-                      <td colSpan={2} className="border border-gray-300 p-2 text-right">
-                        {receiptData.isDailyReceipt ? 'Today\'s Payment' : 'Paid Amount'} (Rupees {receiptData.paidAmount} Only)
-                      </td>
-                      <td className="border border-gray-300 p-2 text-right">{receiptData.paidAmount}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                    </tbody>
+                  </table>
+                </div>
 
-                <div className="text-sm mb-4">
+                <div className="text-sm mb-6">
                   <p>Received with thanks Rs. {receiptData.paidAmount}/- from Mr. {receiptData.patient.first_name} {receiptData.patient.last_name}.</p>
                 </div>
 
-
-
-                <div className="mt-8 text-xs">
-                  <h4 className="font-bold mb-3 text-center">TERMS & CONDITIONS</h4>
-                  <ul className="space-y-1 text-justify">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-bold text-center uppercase">TERMS & CONDITIONS</h4>
+                  <ul className="text-[10px] leading-relaxed text-gray-700 space-y-1 text-justify">
                     <li>• The facilities of joining the card includes any number of consultations with physician.</li>
                     <li>• Only the bearer can avail the facilities of the card. The card facilities are given only to the one on whose name the card is made.</li>
                     <li>• The fee is non transferable, non refundable and non extendable.</li>
@@ -1183,18 +1227,18 @@ export default function PatientBillDiscuss() {
                     <li>• During critical emergencies patients / attendants are advised to inform the attending physician.</li>
                     <li>• Case Sheet Record are(Digital) and kept with the Doctor (in Server) till the end of the course of the treatment.</li>
                     <li>• This Corporate Clinic, promises to provide Best Service and Treatment to all Patients.</li>
-                    <li>• All disputes are subject to Narasaraopet Court Jurisdication only.E&OE.</li>
+                    <li>• All disputes are subject to Narasaraopet Court Jurisdiction only. E&OE.</li>
                   </ul>
                 </div>
 
-                <div className="flex justify-between mt-8 text-sm">
-                  <div>
-                    <p>Patients Signature</p>
-                    <div className="border-b border-gray-400 w-32 mt-4"></div>
+                <div className="flex justify-between pt-12 text-sm">
+                  <div className="text-center">
+                    <div className="border-t border-gray-400 w-48 mb-1"></div>
+                    <p className="font-medium">Patients Signature</p>
                   </div>
-                  <div>
-                    <p>Authorised Signature</p>
-                    <div className="border-b border-gray-400 w-32 mt-4"></div>
+                  <div className="text-center">
+                    <div className="border-t border-gray-400 w-48 mb-1"></div>
+                    <p className="font-medium">Authorised Signature</p>
                   </div>
                 </div>
 
@@ -1209,6 +1253,152 @@ export default function PatientBillDiscuss() {
               </div>
             </div>
           </div>
+        )}
+        {showSimpleReceipt && simpleReceiptData && (
+          <Dialog open={showSimpleReceipt} onOpenChange={setShowSimpleReceipt}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto print:max-h-none print:overflow-visible print:border-none print:shadow-none print:p-0">
+              <DialogHeader>
+                <DialogTitle className="print:hidden">Payment Successful</DialogTitle>
+              </DialogHeader>
+              <div className="receipt-content p-4 space-y-6">
+                <style jsx>{`
+                  @media print {
+                    @page { margin: 10mm; size: A4; }
+                    body > *:not([data-radix-portal]), 
+                    [data-radix-portal] > *:not([role="dialog"]) { 
+                      display: none !important; 
+                    }
+                    .print\\:hidden { display: none !important; }
+                    [role="dialog"] { 
+                      position: static !important;
+                      display: block !important;
+                      width: 100% !important;
+                      max-width: none !important;
+                      max-height: none !important; 
+                      overflow: visible !important; 
+                      border: none !important; 
+                      box-shadow: none !important;
+                      padding: 0 !important;
+                      margin: 0 !important;
+                      transform: none !important;
+                      visibility: visible !important;
+                    }
+                    .receipt-content { display: block !important; visibility: visible !important; }
+                    [data-radix-overlay] { display: none !important; }
+                  }
+                `}</style>
+                
+                {/* Logo and Header */}
+                <div className="text-center space-y-2">
+                  <div className="flex justify-center mb-2">
+                    <img src="/images/patientrecipts.jpeg" alt="Hospital Logo" className="w-48 h-32 object-contain" />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-700">ISO 9001:2015 Certified</p>
+                  <p className="text-sm text-gray-600">{locationData?.address || '10-5-53, 1st Floor, Upstairs, Surya Tea Stall, Palnadu Bus Stand Centre, Main Road, Narasaraopeta, Andhra Pradesh 522601'}</p>
+                  <p className="text-sm text-gray-600">Helpline: {locationData?.phone || '9059051906'}</p>
+                  <div className="border-b-2 border-gray-100 my-4"></div>
+                  <h3 className="text-xl font-bold uppercase tracking-wider">Payment Receipt</h3>
+                </div>
+
+                {/* Patient Info Grid */}
+                <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm">
+                  <div className="space-y-1">
+                    <p><strong>Date:</strong> {format(new Date(), 'dd/MM/yyyy')}</p>
+                    <p><strong>Name:</strong> {simpleReceiptData.name?.toUpperCase()}</p>
+                    <p><strong>Age/DOB:</strong> {simpleReceiptData.age} Y / {simpleReceiptData.dob}</p>
+                    <p><strong>Renewal Date:</strong> {simpleReceiptData.renewalDate}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p><strong>UHID:</strong> {simpleReceiptData.patientId}</p>
+                    <p><strong>Mobile:</strong> {simpleReceiptData.mobile}</p>
+                    <p><strong>Address:</strong> {simpleReceiptData.address}</p>
+                  </div>
+                </div>
+
+                {/* Table */}
+                <div className="border border-gray-300 rounded-sm">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-300">
+                        <th className="p-3 text-center border-r border-gray-300 w-16">S.No.</th>
+                        <th className="p-3 text-center border-r border-gray-300">Mode</th>
+                        <th className="p-3 text-right">Amount(Rs)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-gray-300">
+                        <td className="p-3 text-center border-r border-gray-300">1</td>
+                        <td className="p-3 text-center border-r border-gray-300">{simpleReceiptData.fee} ({simpleReceiptData.type})</td>
+                        <td className="p-3 text-right">{parseFloat(simpleReceiptData.amount || '0').toFixed(2)}</td>
+                      </tr>
+                      <tr className="font-bold">
+                        <td colSpan={2} className="p-3 text-right border-r border-gray-300">
+                          Paid Amount (Rupees {simpleReceiptData.amount} Only)
+                        </td>
+                        <td className="p-3 text-right">{parseFloat(simpleReceiptData.amount || '0').toFixed(2)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <p className="text-sm">Received with thanks Rs. {simpleReceiptData.amount}/- from Mr. {simpleReceiptData.name}.</p>
+
+                {/* Terms and Conditions */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-bold text-center uppercase">Terms & Conditions</h4>
+                  <ul className="text-[10px] leading-relaxed text-gray-700 space-y-1">
+                    <li>• The facilities of joining the card includes any number of consultations with physician.</li>
+                    <li>• Only the bearer can avail the facilities of the card. The card facilities are given only to the one on whose name the card is made.</li>
+                    <li>• The fee is non transferable, non refundable and non extendable.</li>
+                    <li>• Patients are strictly advised to use medicines as per attending physicians recommendation. We assume patients have the responsibility to inform the attending physician about the status of the health or any serious disorder during the course of treatment.</li>
+                    <li>• We expect & would appreciate patients to visit the clinic as per the due date of their consultations.</li>
+                    <li>• Patients are requested to co-operate with the mode of treatment, as sometimes, the speed of recovery is slow (the time of recovery may vary).</li>
+                    <li>• The duration of treatment and results may vary from patient.</li>
+                    <li>• The Doctor and the clinic has given no guarantee to me (Patient) about the results and duration of the treatment.</li>
+                    <li>• During critical emergencies patients / attendants are advised to inform the attending physician.</li>
+                    <li>• Case Sheet Record are(Digital) and kept with the Doctor (in Server) till the end of the course of the treatment.</li>
+                    <li>• This Corporate Clinic, promises to provide Best Service and Treatment to all Patients.</li>
+                    <li>• All disputes are subject to Narasaraopet Court Jurisdiction only. E&OE.</li>
+                  </ul>
+                </div>
+
+                {/* Signatures */}
+                <div className="flex justify-between pt-12 text-sm">
+                  <div className="text-center">
+                    <div className="border-t border-gray-400 w-48 mb-1"></div>
+                    <p className="font-medium">Patients Signature</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="border-t border-gray-400 w-48 mb-1"></div>
+                    <p className="font-medium">Authorised Signature</p>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-6 print:hidden">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                        window.print()
+                    }}
+                    className="flex-1"
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    Print Receipt
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowSimpleReceipt(false)
+                      router.push('/admin/manager/patient-bill-discuss')
+                    }}
+                    className="flex-1 bg-red-600 hover:bg-red-700"
+                  >
+                    Continue
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </PrivateRoute>
