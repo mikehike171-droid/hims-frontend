@@ -1457,6 +1457,32 @@ export const settingsApi = {
       throw error;
     }
   },
+
+  getAcceptedPolicies: async (userId: number) => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/hr-policies/accepted-policies?userId=${userId}`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error("getAcceptedPolicies error:", error);
+      return [];
+    }
+  },
+
+  acceptHRPolicy: async (data: { userId: number; policyId: number; locationId: number }) => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/hr-policies/accept`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error("acceptHRPolicy error:", error);
+      throw error;
+    }
+  },
 };
 
 // Type definitions
