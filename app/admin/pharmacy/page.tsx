@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Pill, ChevronDown, ChevronUp, Check, X } from "lucide-react"
+import { Pill, ChevronDown, ChevronUp, Check, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import PrivateRoute from "@/components/auth/PrivateRoute"
 import { settingsApi } from "@/lib/settingsApi"
@@ -15,6 +15,8 @@ export default function PharmacyPage() {
   const [prescriptions, setPrescriptions] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [expandedPrescriptions, setExpandedPrescriptions] = useState<Set<number>>(new Set())
+  const [page, setPage] = useState(1)
+  const pageSize = 10
   const hasLoadedRef = useRef(false)
 
   useEffect(() => {
@@ -29,6 +31,7 @@ export default function PharmacyPage() {
       setLoading(true)
       const data = await settingsApi.getPharmacyPrescriptions()
       setPrescriptions(data || [])
+      setPage(1)
     } catch (error) {
       console.error('Error fetching prescriptions:', error)
     } finally {
@@ -38,14 +41,6 @@ export default function PharmacyPage() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString()
-  }
-
-  const formatTiming = (morning: boolean, afternoon: boolean, night: boolean) => {
-    const timings = []
-    if (morning) timings.push('Morning')
-    if (afternoon) timings.push('Afternoon')
-    if (night) timings.push('Night')
-    return timings.join(', ') || '-'
   }
 
   const toggleExpanded = (prescriptionId: number) => {
@@ -66,7 +61,6 @@ export default function PharmacyPage() {
         title: "Success",
         description: `Prescription ${statusText} successfully`,
       })
-      // Refresh prescriptions to remove the updated one from pending list
       await fetchPrescriptions()
     } catch (error: any) {
       toast({
@@ -78,6 +72,10 @@ export default function PharmacyPage() {
       setLoading(false)
     }
   }
+
+  const totalRecords = prescriptions.length
+  const totalPages = Math.ceil(totalRecords / pageSize)
+  const paginatedPrescriptions = prescriptions.slice((page - 1) * pageSize, page * pageSize)
 
   return (
     <PrivateRoute modulePath="admin/pharmacy" action="view">
@@ -91,123 +89,214 @@ export default function PharmacyPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Pill className="h-5 w-5" />
-              <span>Patient Prescriptions</span>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Pill className="h-5 w-5" />
+                <span>Patient Prescriptions ({loading ? '...' : totalRecords})</span>
+              </div>
+              {!loading && totalRecords > 0 && (
+                <div className="text-sm font-normal text-gray-600">
+                  Page {page} of {totalPages || 1}
+                </div>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
-              {loading ? (
-                <div className="text-center py-8">Loading prescriptions...</div>
-              ) : prescriptions.length === 0 ? (
-                <div className="text-center py-8">No prescriptions found</div>
-              ) : (
-                prescriptions.map((prescription, index) => (
-                  <div key={prescription.prescription_id} className="border rounded-lg p-4">
-                    <div
-                      className="mb-4 pb-2 border-b cursor-pointer hover:bg-gray-50 p-2 rounded"
-                      onClick={() => toggleExpanded(prescription.prescription_id)}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-2">
-                          <div>
-                            <h3 className="text-lg font-semibold">{prescription.patient_name}</h3>
-                            <p className="text-sm text-gray-600">Date: {formatDate(prescription.created_at)}</p>
-                          </div>
-                          {expandedPrescriptions.has(prescription.prescription_id) ? (
-                            <ChevronUp className="h-5 w-5 text-gray-500" />
-                          ) : (
-                            <ChevronDown className="h-5 w-5 text-gray-500" />
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <div className="flex gap-2 mb-2">
-                            <Button
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleStatusUpdate(prescription.prescription_id, 1, 'received')
-                              }}
-                              disabled={loading}
-                            >
-                              <Check className="h-4 w-4 mr-1" />
-                              Received
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleStatusUpdate(prescription.prescription_id, 2, 'cancelled')
-                              }}
-                              disabled={loading}
-                            >
-                              <X className="h-4 w-4 mr-1" />
-                              Cancel
-                            </Button>
-                          </div>
-                          <Badge variant="outline" className="mb-1">
-                            {prescription.medicine_days} days
-                          </Badge>
-                          <p className="text-sm text-gray-600">
-                            Next: {prescription.next_appointment_date ? formatDate(prescription.next_appointment_date) : '-'}
-                          </p>
-                        </div>
-                      </div>
-                      {prescription.notes_to_pharmacy && (
-                        <p className="text-sm text-gray-700 mt-2">
-                          <strong>Notes:</strong> {prescription.notes_to_pharmacy}
-                        </p>
-                      )}
-                    </div>
+            {loading ? (
+              <div className="text-center py-8">Loading prescriptions...</div>
+            ) : totalRecords === 0 ? (
+              <div className="text-center py-8">No prescriptions found</div>
+            ) : (
+              <div className="space-y-4">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-8"></TableHead>
+                        <TableHead>Patient Name</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Medicine Days</TableHead>
+                        <TableHead>Notes to Pharmacy</TableHead>
+                        <TableHead>Next Appointment</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedPrescriptions.map((prescription) => (
+                        <PRescriptionRow 
+                          key={prescription.prescription_id} 
+                          prescription={prescription} 
+                          expandedPrescriptions={expandedPrescriptions}
+                          toggleExpanded={toggleExpanded}
+                          formatDate={formatDate}
+                          handleStatusUpdate={handleStatusUpdate}
+                          loading={loading}
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
 
-                    {expandedPrescriptions.has(prescription.prescription_id) && (
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Medicine Type</TableHead>
-                              <TableHead>Medicine</TableHead>
-                              <TableHead>Potency</TableHead>
-                              <TableHead>Dosage</TableHead>
-                              <TableHead>Timing</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {prescription.medicines && prescription.medicines.length > 0 ? (
-                              prescription.medicines.map((medicine: any, medIndex: number) => (
-                                <TableRow key={medIndex}>
-                                  <TableCell>{medicine.medicine_type || '-'}</TableCell>
-                                  <TableCell className="font-medium">{medicine.medicine || '-'}</TableCell>
-                                  <TableCell>{medicine.potency || '-'}</TableCell>
-                                  <TableCell>{medicine.dosage || '-'}</TableCell>
-                                  <TableCell>
-                                    {[
-                                      medicine.morning && 'Morning',
-                                      medicine.afternoon && 'Afternoon',
-                                      medicine.night && 'Night'
-                                    ].filter(Boolean).join(', ') || '-'}
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            ) : (
-                              <TableRow>
-                                <TableCell colSpan={5} className="text-center text-gray-500">No medicines</TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
+                {/* Pagination */}
+                {totalRecords > pageSize && (
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <div className="text-sm text-gray-600">
+                      Showing {Math.min(((page - 1) * pageSize) + 1, totalRecords)} to {Math.min(page * pageSize, totalRecords)} of {totalRecords} prescriptions
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-2" />
+                        Previous
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => {
+                          const pageNum = i + 1;
+                          if (
+                            pageNum === 1 || 
+                            pageNum === totalPages || 
+                            (pageNum >= page - 1 && pageNum <= page + 1)
+                          ) {
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={page === pageNum ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setPage(pageNum)}
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          } else if (
+                            pageNum === page - 2 || 
+                            pageNum === page + 2
+                          ) {
+                            return <span key={pageNum} className="px-2">...</span>;
+                          }
+                          return null;
+                        })}
                       </div>
-                    )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        disabled={page >= totalPages}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </div>
                   </div>
-                ))
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
     </PrivateRoute>
+  )
+}
+
+function PRescriptionRow({ prescription, expandedPrescriptions, toggleExpanded, formatDate, handleStatusUpdate, loading }: any) {
+  return (
+    <>
+      <TableRow
+        className="cursor-pointer hover:bg-gray-50"
+        onClick={() => toggleExpanded(prescription.prescription_id)}
+      >
+        <TableCell>
+          {expandedPrescriptions.has(prescription.prescription_id) ? (
+            <ChevronUp className="h-4 w-4 text-gray-500" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-gray-500" />
+          )}
+        </TableCell>
+        <TableCell className="font-semibold">{prescription.patient_name}</TableCell>
+        <TableCell>{formatDate(prescription.created_at)}</TableCell>
+        <TableCell>
+          <Badge variant="outline">{prescription.medicine_days} days</Badge>
+        </TableCell>
+        <TableCell className="max-w-xs">
+          {prescription.notes_to_pharmacy ? (
+            <span className="text-sm text-gray-700">{prescription.notes_to_pharmacy}</span>
+          ) : (
+            <span className="text-sm text-gray-400">-</span>
+          )}
+        </TableCell>
+        <TableCell>
+          {prescription.next_appointment_date
+            ? formatDate(prescription.next_appointment_date)
+            : <span className="text-gray-400">-</span>}
+        </TableCell>
+        <TableCell className="text-right">
+          <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
+            <Button
+              size="sm"
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => handleStatusUpdate(prescription.prescription_id, 1, 'received')}
+              disabled={loading}
+            >
+              <Check className="h-4 w-4 mr-1" />
+              Received
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => handleStatusUpdate(prescription.prescription_id, 2, 'cancelled')}
+              disabled={loading}
+            >
+              <X className="h-4 w-4 mr-1" />
+              Cancel
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+
+      {expandedPrescriptions.has(prescription.prescription_id) && (
+        <TableRow>
+          <TableCell colSpan={7} className="bg-gray-50 px-8 pb-4">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Medicines</p>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Medicine Type</TableHead>
+                  <TableHead>Medicine</TableHead>
+                  <TableHead>Potency</TableHead>
+                  <TableHead>Dosage</TableHead>
+                  <TableHead>Timing</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {prescription.medicines && prescription.medicines.length > 0 ? (
+                  prescription.medicines.map((medicine: any, medIndex: number) => (
+                    <TableRow key={medIndex}>
+                      <TableCell>{medicine.medicine_type || '-'}</TableCell>
+                      <TableCell className="font-medium">{medicine.medicine || '-'}</TableCell>
+                      <TableCell>{medicine.potency || '-'}</TableCell>
+                      <TableCell>{medicine.dosage || '-'}</TableCell>
+                      <TableCell>
+                        {[
+                          medicine.morning && 'Morning',
+                          medicine.afternoon && 'Afternoon',
+                          medicine.night && 'Night'
+                        ].filter(Boolean).join(', ') || '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-gray-500">No medicines</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   )
 }

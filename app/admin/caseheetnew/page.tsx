@@ -40,22 +40,7 @@ interface PatientData {
   title?: string
 }
 
-const medicineDaysOptions = [
-  { id: '1', title: '1 Day' },
-  { id: '3', title: '3 Days' },
-  { id: '5', title: '5 Days' },
-  { id: '7', title: '7 Days' },
-  { id: '10', title: '10 Days' },
-  { id: '13', title: '13 Days' },
-  { id: '14', title: '14 Days' },
-  { id: '15', title: '15 Days' },
-  { id: '28', title: '28 Days' },
-  { id: '30', title: '30 Days' },
-  { id: '60', title: '60 Days' },
-  { id: '90', title: '90 Days' },
-  { id: '180', title: '180 Days' },
-  { id: '360', title: '360 Days' },
-]
+
 
 export default function CaseSheetPage() {
   const [activeTab, setActiveTab] = useState("presenting-complaints")
@@ -133,8 +118,8 @@ export default function CaseSheetPage() {
     night: false,
     sos: false,
     biochemicMotherTincher: '',
-    medicineDays: '13',
-    nextAppointmentDate: ''
+    medicineDays: '15',
+    nextAppointmentDate: new Date(new Date().setDate(new Date().getDate() + 15)).toISOString().split('T')[0]
   })
   const [notesToPro, setNotesToPro] = useState('')
   const [notesToPharmacy, setNotesToPharmacy] = useState('')
@@ -154,6 +139,7 @@ export default function CaseSheetPage() {
   const [editingComplaintId, setEditingComplaintId] = useState<number | null>(null)
   const [editingMedicineId, setEditingMedicineId] = useState<number | null>(null)
   const [editingPrescriptionId, setEditingPrescriptionId] = useState<number | null>(null)
+  const [medicineDaysOptions, setMedicineDaysOptions] = useState<any[]>([])
   const searchParams = useSearchParams()
   const patientId = searchParams.get('patientId') || searchParams.get('id')
 
@@ -306,6 +292,28 @@ export default function CaseSheetPage() {
       }
     } catch (error) {
       console.error('Error fetching dosages:', error)
+    }
+  }
+
+  const fetchMedicineDaysOptions = async () => {
+    try {
+      const token = localStorage.getItem('authToken')
+      const response = await fetch(`${authService.getSettingsApiUrl()}/medicine-days`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setMedicineDaysOptions(result.map((item: any) => ({
+          id: item.days,
+          title: `${item.days} Day${item.days !== '1' ? 's' : ''}`
+        })))
+      }
+    } catch (error) {
+      console.error('Error fetching medicine days options:', error)
     }
   }
 
@@ -484,9 +492,10 @@ export default function CaseSheetPage() {
       fetchSocialHistoryCategories()
       fetchPatientSocialHistory()
       fetchPatientPresentingComplaints()
+      fetchMedicineDaysOptions()
     }
     // Set default next appointment date
-    const defaultDate = calculateNextAppointmentDate('13')
+    const defaultDate = calculateNextAppointmentDate('15')
     setCommonMedicine(prev => ({ ...prev, nextAppointmentDate: defaultDate }))
   }, [patientId])
 
@@ -1586,6 +1595,7 @@ export default function CaseSheetPage() {
       fetchMedicines()
       fetchPotencies()
       fetchDosages()
+      fetchMedicineDaysOptions()
     } else if (value === 'presenting-complaints') {
       fetchPatientPresentingComplaints()
     }
@@ -1602,7 +1612,8 @@ export default function CaseSheetPage() {
       fetchPatientSocialHistory(),
       fetchPatientExaminations(),
       fetchPatientPrescriptions(),
-      fetchPatientPresentingComplaints()
+      fetchPatientPresentingComplaints(),
+      fetchMedicineDaysOptions()
     ])
   }
 
@@ -4293,7 +4304,7 @@ export default function CaseSheetPage() {
 
                                     setCommonMedicine(prev => ({
                                       ...prev,
-                                      medicineDays: prescription.medicine_days?.toString() || '13',
+                                      medicineDays: prescription.medicine_days?.toString() || '15',
                                       nextAppointmentDate: prescription.next_appointment_date || prev.nextAppointmentDate
                                     }))
 

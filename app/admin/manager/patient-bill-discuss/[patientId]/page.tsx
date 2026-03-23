@@ -339,7 +339,8 @@ export default function PatientBillDiscuss() {
           address: patient?.address1 || 'N/A',
           dob: patient?.date_of_birth ? format(new Date(patient.date_of_birth), 'dd/MM/yyyy') : 'N/A',
           age: patient?.age,
-          renewalDate: nextRenewalDate ? format(parseISO(nextRenewalDate), "dd/MM/yyyy") : 'N/A'
+          renewalDate: nextRenewalDate ? format(parseISO(nextRenewalDate), "dd/MM/yyyy") : 'N/A',
+          dueAmount: paymentData.dueAmount
         })
         setShowSimpleReceipt(true)
 
@@ -433,7 +434,8 @@ export default function PatientBillDiscuss() {
           address: patient?.address1 || 'N/A',
           dob: patient?.date_of_birth ? format(new Date(patient.date_of_birth), 'dd/MM/yyyy') : 'N/A',
           age: patient?.age,
-          renewalDate: nextRenewalDate ? format(parseISO(nextRenewalDate), "dd/MM/yyyy") : 'N/A'
+          renewalDate: nextRenewalDate ? format(parseISO(nextRenewalDate), "dd/MM/yyyy") : 'N/A',
+          dueAmount: result.dueAmount
         })
         setShowSimpleReceipt(true)
 
@@ -1134,7 +1136,7 @@ export default function PatientBillDiscuss() {
               <div className="max-w-4xl mx-auto">
                 <style jsx>{`
                 @media print {
-                  @page { margin: 10mm; size: A4; }
+                  @page { margin: 0; size: A4; }
                   body > *:not(.print-receipt-modal) { display: none !important; }
                   .print-receipt-modal { 
                     display: block !important; 
@@ -1146,7 +1148,7 @@ export default function PatientBillDiscuss() {
                     margin: 0 !important;
                     overflow: visible !important;
                   }
-                  .receipt-content { position: relative; width: 100%; display: block !important; }
+                  .receipt-content { position: relative; width: 100%; display: block !important; padding: 10mm !important; padding-top: 15mm !important; page-break-inside: avoid; }
                   .print\\:hidden { display: none !important; }
                   .fixed { position: static !important; }
                 }
@@ -1173,6 +1175,9 @@ export default function PatientBillDiscuss() {
                     <p><strong>UHID:</strong> {receiptData.patient.patient_id || ''}</p>
                     <p><strong>Mobile:</strong> {receiptData.patient.mobile || ''}</p>
                     <p><strong>Address:</strong> {receiptData.patient.address1 || ''}</p>
+                    {currentExamination && Math.max(0, (currentExamination.totalAmount || 0) - (currentExamination.discountAmount || 0) - (currentExamination.paidAmount || 0)) > 0 && (
+                      <p className="text-red-600 font-medium"><strong>Due Amount:</strong> ₹{Math.max(0, (currentExamination.totalAmount || 0) - (currentExamination.discountAmount || 0) - (currentExamination.paidAmount || 0)).toFixed(2)}</p>
+                    )}
                   </div>
                 </div>
 
@@ -1263,7 +1268,7 @@ export default function PatientBillDiscuss() {
               <div className="receipt-content p-4 space-y-6">
                 <style jsx>{`
                   @media print {
-                    @page { margin: 10mm; size: A4; }
+                    @page { margin: 0; size: A4; }
                     body > *:not([data-radix-portal]), 
                     [data-radix-portal] > *:not([role="dialog"]) { 
                       display: none !important; 
@@ -1283,7 +1288,7 @@ export default function PatientBillDiscuss() {
                       transform: none !important;
                       visibility: visible !important;
                     }
-                    .receipt-content { display: block !important; visibility: visible !important; }
+                    .receipt-content { display: block !important; visibility: visible !important; padding: 10mm !important; padding-top: 15mm !important; page-break-inside: avoid; }
                     [data-radix-overlay] { display: none !important; }
                   }
                 `}</style>
@@ -1312,6 +1317,9 @@ export default function PatientBillDiscuss() {
                     <p><strong>UHID:</strong> {simpleReceiptData.patientId}</p>
                     <p><strong>Mobile:</strong> {simpleReceiptData.mobile}</p>
                     <p><strong>Address:</strong> {simpleReceiptData.address}</p>
+                    {simpleReceiptData.dueAmount > 0 && (
+                      <p className="text-red-600 font-medium"><strong>Due Amount:</strong> ₹{parseFloat(simpleReceiptData.dueAmount || '0').toFixed(2)}</p>
+                    )}
                   </div>
                 </div>
 

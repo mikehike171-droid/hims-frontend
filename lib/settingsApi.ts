@@ -1483,6 +1483,45 @@ export const settingsApi = {
       throw error;
     }
   },
+
+  // Medicine Days
+  getMedicineDays: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/medicine-days`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getMedicineDays error:', error);
+      return [];
+    }
+  },
+
+  createMedicineDay: async (data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/medicine-days`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  updateMedicineDay: async (id: number, data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/medicine-days/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  deleteMedicineDay: async (id: number) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/medicine-days/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return await handleApiResponse(response);
+  },
 };
 
 // Type definitions
