@@ -21,6 +21,9 @@ interface TodayCollection {
   installmentamount: string
   paymentdate: string
   paymentmethod: string
+  firstname: string
+  lastname: string
+  custompatientid: string
 }
 
 export default function TodayCollectionsPage() {
@@ -61,9 +64,11 @@ export default function TodayCollectionsPage() {
 
     if (searchTerm) {
       filtered = filtered.filter(collection => 
-        collection.patientid.toString().includes(searchTerm) ||
-        collection.examinationid.toString().includes(searchTerm) ||
-        collection.paymentmethod.toLowerCase().includes(searchTerm.toLowerCase())
+        collection.patientid?.toString().includes(searchTerm) ||
+        collection.examinationid?.toString().includes(searchTerm) ||
+        collection.paymentmethod.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        collection.custompatientid?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `${collection.firstname} ${collection.lastname}`.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
@@ -193,7 +198,7 @@ export default function TodayCollectionsPage() {
             <div>
               <Label>Search</Label>
               <Input
-                placeholder="Search by Patient ID, Examination ID..."
+                placeholder="Search by Patient ID, Name, Method..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -231,6 +236,8 @@ export default function TodayCollectionsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Examination Date</TableHead>
+                <TableHead>Patient ID</TableHead>
+                <TableHead>Patient Name</TableHead>
                 <TableHead>Payment Time</TableHead>
                 <TableHead>Payment Method</TableHead>
                 <TableHead>Amount</TableHead>
@@ -245,7 +252,7 @@ export default function TodayCollectionsPage() {
                 </TableRow>
               ) : filteredCollections.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                     No collections found for the selected date range.
                   </TableCell>
                 </TableRow>
@@ -253,6 +260,8 @@ export default function TodayCollectionsPage() {
                 filteredCollections.map((collection) => (
                   <TableRow key={`${collection.installmentid}-${collection.examinationid}`}>
                     <TableCell>{formatDate(collection.examinationdate)}</TableCell>
+                    <TableCell className="font-medium">{collection.custompatientid || 'N/A'}</TableCell>
+                    <TableCell>{`${collection.firstname || ''} ${collection.lastname || ''}`.trim() || 'Unknown'}</TableCell>
                     <TableCell>{formatTime(collection.paymentdate)}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{collection.paymentmethod}</Badge>

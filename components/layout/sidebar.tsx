@@ -385,7 +385,7 @@ const DesktopSidebar = memo(() => {
   }, [mounted])
 
   return (
-    <div className="hidden lg:flex h-full w-64 flex-col bg-card border-r border-border">
+    <div className="hidden lg:flex h-full w-64 flex-col bg-card border-r border-border overflow-hidden">
       {/* Logo */}
       <div className="flex items-center justify-center gap-2 border-b border-border px-6 h-16">
         <img

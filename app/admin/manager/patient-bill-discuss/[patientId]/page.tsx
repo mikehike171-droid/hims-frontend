@@ -839,11 +839,17 @@ export default function PatientBillDiscuss() {
                 <div className="relative">
                   <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                   <Input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="0.00"
                     className="pl-10"
                     value={totalAmount || ''}
-                    onChange={(e) => setTotalAmount(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                        setTotalAmount(val === '' ? 0 : parseFloat(val));
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -853,11 +859,17 @@ export default function PatientBillDiscuss() {
                 <div className="relative">
                   <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                   <Input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="0.00"
                     className="pl-10"
                     value={discount || ''}
-                    onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                        setDiscount(val === '' ? 0 : parseFloat(val));
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -904,14 +916,18 @@ export default function PatientBillDiscuss() {
                         <div className="flex-1 relative">
                           <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                           <Input
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="0.00"
                             className="pl-10"
                             value={payment.amount || ''}
                             onChange={(e) => {
-                              const newPayments = [...selectedPaymentMethods]
-                              newPayments[index].amount = parseFloat(e.target.value) || 0
-                              setSelectedPaymentMethods(newPayments)
+                              const val = e.target.value;
+                              if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                const newPayments = [...selectedPaymentMethods]
+                                newPayments[index].amount = val === '' ? 0 : parseFloat(val)
+                                setSelectedPaymentMethods(newPayments)
+                              }
                             }}
                           />
                         </div>
@@ -1017,11 +1033,17 @@ export default function PatientBillDiscuss() {
                       <div className="relative">
                         <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                         <Input
-                          type="number"
+                          type="text"
+                          inputMode="decimal"
                           placeholder="0.00"
                           className="pl-10"
                           value={additionalPaymentAmount}
-                          onChange={(e) => setAdditionalPaymentAmount(e.target.value)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                              setAdditionalPaymentAmount(val);
+                            }
+                          }}
                         />
                       </div>
                     </div>

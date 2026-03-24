@@ -98,8 +98,8 @@ export default function PatientBillDiscussPage() {
         currentLocId ? parseInt(currentLocId) : 1,
         page,
         10,
-        fDate || undefined,
-        tDate || undefined,
+        sTerm ? undefined : (fDate || undefined),
+        sTerm ? undefined : (tDate || undefined),
         sTerm || undefined,
         sField,
         sOrder
@@ -224,7 +224,7 @@ export default function PatientBillDiscussPage() {
               <div className="relative flex-1 min-w-[300px] max-w-sm">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search by name or mobile..."
+                  placeholder="Search by name, mobile or patient ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -303,6 +303,15 @@ export default function PatientBillDiscussPage() {
                     <TableHead className="w-[80px]">S.No</TableHead>
                     <TableHead 
                       className="cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort('custom_patient_id')}
+                    >
+                      <div className="flex items-center">
+                        Patient ID
+                        <SortIcon field="custom_patient_id" />
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort('patient_name')}
                     >
                       <div className="flex items-center">
@@ -361,17 +370,20 @@ export default function PatientBillDiscussPage() {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8">Loading examinations...</TableCell>
+                      <TableCell colSpan={9} className="text-center py-8">Loading examinations...</TableCell>
                     </TableRow>
                   ) : examinations.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8">No examinations found</TableCell>
+                      <TableCell colSpan={9} className="text-center py-8">No examinations found</TableCell>
                     </TableRow>
                   ) : (
                     examinations.map((examination, index) => (
                       <TableRow key={examination.id || index}>
                         <TableCell className="font-medium">
                           {index + 1}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {examination.custom_patient_id || 'N/A'}
                         </TableCell>
                         <TableCell className="font-medium">
                           {examination.patient_name || 'Unknown Patient'}

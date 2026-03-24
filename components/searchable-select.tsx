@@ -1,16 +1,22 @@
 "use client"
 
 import * as React from "react"
-import { Plus } from "lucide-react"
+import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface SearchableSelectProps {
   value: string
@@ -29,40 +35,56 @@ export function SearchableSelect({
   className,
   valueField = 'title'
 }: SearchableSelectProps) {
-  const [search, setSearch] = React.useState("")
   const [open, setOpen] = React.useState(false)
 
-  const filteredOptions = options.filter((option) =>
-    option.title.toLowerCase().includes(search.toLowerCase())
+  const selectedOption = options.find(
+    (option) => String(valueField === 'id' ? option.id : option.title) === value
   )
 
   return (
-    <Select value={value} onValueChange={onValueChange} open={open} onOpenChange={setOpen}>
-      <SelectTrigger className={className}>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent className="p-0">
-        <div className="p-2 border-b">
-          <Input
-            placeholder={`Search ...`}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-9"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-        <div className="max-h-64 overflow-auto p-1">
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map((option) => (
-              <SelectItem key={option.id} value={String(valueField === 'id' ? option.id : option.title)} className="cursor-pointer">
-                {option.title}
-              </SelectItem>
-            ))
-          ) : (
-            <div className="py-6 text-center text-sm text-gray-500">No results found</div>
-          )}
-        </div>
-      </SelectContent>
-    </Select>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn("w-full justify-between font-normal", className)}
+        >
+          {selectedOption ? selectedOption.title : placeholder}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0" align="start">
+        <Command>
+          <CommandInput placeholder={`Search ...`} />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup>
+              {options.map((option) => {
+                const optionValue = String(valueField === 'id' ? option.id : option.title)
+                return (
+                  <CommandItem
+                    key={option.id}
+                    value={option.title} // cmsk uses the text for searching
+                    onSelect={() => {
+                      onValueChange(optionValue)
+                      setOpen(false)
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === optionValue ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {option.title}
+                  </CommandItem>
+                )
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   )
 }

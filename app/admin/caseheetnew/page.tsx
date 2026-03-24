@@ -3962,7 +3962,7 @@ export default function CaseSheetPage() {
                   <CardTitle>Medication</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4">
-                  <div className="flex items-end mb-4">
+                  <div className="flex items-end mb-4 gap-4">
                     <div className="w-48">
                       <Label className="text-sm font-medium">Medicine Type</Label>
                       <SearchableSelect
@@ -3970,7 +3970,7 @@ export default function CaseSheetPage() {
                         onValueChange={(value) => setPrescriptionData({ ...prescriptionData, medicineType: value })}
                         options={medicationTypes}
                         placeholder="Select Medicine Type"
-                        className="rounded-r-none border-r-0"
+                        className=""
                       />
                     </div>
                     <div className="w-40">
@@ -3980,7 +3980,7 @@ export default function CaseSheetPage() {
                         onValueChange={(value) => setPrescriptionData({ ...prescriptionData, medicine: value })}
                         options={medicines}
                         placeholder="--Select--"
-                        className="rounded-none border-r-0"
+                        className=""
                       />
                     </div>
                     <div className="w-40">
@@ -3990,7 +3990,7 @@ export default function CaseSheetPage() {
                         onValueChange={(value) => setPrescriptionData({ ...prescriptionData, potency: value })}
                         options={potencies}
                         placeholder="--Select--"
-                        className="rounded-none border-r-0"
+                        className=""
                       />
                     </div>
                     <div className="w-40">
@@ -4000,7 +4000,7 @@ export default function CaseSheetPage() {
                         onValueChange={(value) => setPrescriptionData({ ...prescriptionData, dosage: value })}
                         options={dosages}
                         placeholder="--Select--"
-                        className="rounded-l-none"
+                        className=""
                       />
                     </div>
                     <div>

@@ -59,7 +59,7 @@ export default function ConditionalLayout({
   return (
     <BranchProvider>
       <UserDepartmentProvider>
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen w-full overflow-hidden bg-gray-50">
           <Sidebar />
           <main className="flex-1 overflow-hidden flex flex-col">
             {/* Header */}
