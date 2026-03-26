@@ -327,23 +327,6 @@ export default function PatientBillDiscuss() {
         alert('Payment details saved successfully!')
         const result = await response.json()
         
-        // Show simple receipt
-        setSimpleReceiptData({
-          patientId: patient?.id,
-          name: patient?.name,
-          gender: patient?.gender,
-          mobile: patient?.phone,
-          amount: paymentData.paidAmount,
-          fee: planSearch, // Treatment Plan
-          type: paymentMethods.find(m => (m.code || m.name?.toLowerCase()) === selectedPaymentMethods[0]?.id)?.name || selectedPaymentMethods[0]?.id,
-          address: patient?.address1 || 'N/A',
-          dob: patient?.date_of_birth ? format(new Date(patient.date_of_birth), 'dd/MM/yyyy') : 'N/A',
-          age: patient?.age,
-          renewalDate: nextRenewalDate ? format(parseISO(nextRenewalDate), "dd/MM/yyyy") : 'N/A',
-          dueAmount: paymentData.dueAmount
-        })
-        setShowSimpleReceipt(true)
-
         fetchPatientExamination()
         fetchInstallments()
       } else {
@@ -422,22 +405,10 @@ export default function PatientBillDiscuss() {
         const result = await response.json()
         alert('Payment added successfully!')
         
-        // Show simple receipt
-        setSimpleReceiptData({
-          patientId: patient?.id,
-          name: patient?.name,
-          gender: patient?.gender,
-          mobile: patient?.phone,
-          amount: parseFloat(additionalPaymentAmount),
-          fee: planSearch, // Treatment Plan
-          type: paymentMethods.find(m => (m.code || m.name?.toLowerCase()) === additionalPaymentMethod)?.name || additionalPaymentMethod,
-          address: patient?.address1 || 'N/A',
-          dob: patient?.date_of_birth ? format(new Date(patient.date_of_birth), 'dd/MM/yyyy') : 'N/A',
-          age: patient?.age,
-          renewalDate: nextRenewalDate ? format(parseISO(nextRenewalDate), "dd/MM/yyyy") : 'N/A',
-          dueAmount: result.dueAmount
-        })
-        setShowSimpleReceipt(true)
+        // Show the installment receipt
+        if (result.installmentId) {
+          handleShowInstallmentReceipt(result.installmentId)
+        }
 
         setAdditionalPaymentMethod('')
         setAdditionalPaymentAmount('')
@@ -1191,7 +1162,14 @@ export default function PatientBillDiscuss() {
                     <p><strong>Date:</strong> {receiptData.date ? format(new Date(receiptData.date), "dd/MM/yyyy") : format(new Date(), "dd/MM/yyyy")}</p>
                     <p><strong>Name:</strong> {(receiptData.patient.first_name || '') + ' ' + (receiptData.patient.last_name || '').toUpperCase()}</p>
                     <p><strong>Age/DOB:</strong> {receiptData.patient.date_of_birth ? `${calculateAge(receiptData.patient.date_of_birth)} Y / ${format(new Date(receiptData.patient.date_of_birth), "dd/MM/yyyy")}` : 'N/A'}</p>
-                    <p><strong>Renewal Date:</strong> {receiptData.nextRenewalDatePro ? format(new Date(receiptData.nextRenewalDatePro), "dd/MM/yyyy") : (currentExamination?.nextRenewalDatePro ? format(new Date(currentExamination.nextRenewalDatePro), "dd/MM/yyyy") : 'N/A')}</p>
+                    <p><strong>Renewal Date:</strong> {
+                      (receiptData.examination?.next_renewal_date_pro || receiptData.examination?.nextRenewalDatePro || receiptData.nextRenewalDatePro) 
+                        ? format(new Date(receiptData.examination?.next_renewal_date_pro || receiptData.examination?.nextRenewalDatePro || receiptData.nextRenewalDatePro), "dd/MM/yyyy") 
+                        : (currentExamination?.nextRenewalDatePro 
+                          ? format(new Date(currentExamination.nextRenewalDatePro), "dd/MM/yyyy") 
+                          : 'N/A'
+                        )
+                    }</p>
                   </div>
                   <div className="space-y-1">
                     <p><strong>UHID:</strong> {receiptData.patient.patient_id || ''}</p>

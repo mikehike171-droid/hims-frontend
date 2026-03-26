@@ -268,6 +268,7 @@ function PRescriptionRow({ prescription, expandedPrescriptions, toggleExpanded, 
                   <TableHead>Potency</TableHead>
                   <TableHead>Dosage</TableHead>
                   <TableHead>Timing</TableHead>
+                  <TableHead>Notes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -285,11 +286,12 @@ function PRescriptionRow({ prescription, expandedPrescriptions, toggleExpanded, 
                           medicine.night && 'Night'
                         ].filter(Boolean).join(', ') || '-'}
                       </TableCell>
+                      <TableCell>{medicine.notes || '-'}</TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-gray-500">No medicines</TableCell>
+                    <TableCell colSpan={6} className="text-center text-gray-500">No medicines</TableCell>
                   </TableRow>
                 )}
               </TableBody>

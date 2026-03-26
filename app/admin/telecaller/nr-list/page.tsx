@@ -43,8 +43,8 @@ export default function NRListPage() {
     }
   }
   
-  const [fromDate, setFromDate] = useState<string>(getCurrentMonthDates().from)
-  const [toDate, setToDate] = useState<string>(getCurrentMonthDates().to)
+  const [fromDate, setFromDate] = useState<string>('')
+  const [toDate, setToDate] = useState<string>('')
   const fetchingRef = useRef(false)
   const [pagination, setPagination] = useState({
     page: 1,

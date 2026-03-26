@@ -46,6 +46,14 @@ export default function MastersIndexPage() {
       href: "/admin/masters/user-types",
       color: "text-orange-600",
       bgColor: "bg-orange-100"
+    },
+    {
+      title: "Appointment Types",
+      description: "Manage categories of appointments",
+      icon: CalendarDays,
+      href: "/admin/masters/appointment-types",
+      color: "text-red-600",
+      bgColor: "bg-red-100"
     }
   ]
 

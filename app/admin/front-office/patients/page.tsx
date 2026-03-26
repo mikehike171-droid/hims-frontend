@@ -52,6 +52,8 @@ export default function PatientListPage() {
   const router = useRouter()
   const fetchingRef = useRef(false)
   const [locationData, setLocationData] = useState<any>(null)
+  const [fromDate, setFromDate] = useState<Date>(new Date())
+  const [toDate, setToDate] = useState<Date>(new Date())
   const [showRegistrationReceipt, setShowRegistrationReceipt] = useState(false)
   const [selectedPatientForReceipt, setSelectedPatientForReceipt] = useState<any>(null)
 
@@ -62,7 +64,7 @@ export default function PatientListPage() {
   useEffect(() => {
     fetchPatients();
     fetchLocationData();
-  }, [currentPage, sortField, sortOrder])
+  }, [currentPage, sortField, sortOrder, fromDate, toDate])
 
   const fetchLocationData = async () => {
     try {
@@ -123,7 +125,12 @@ export default function PatientListPage() {
       if (locationId) params.append('locationId', locationId.toString())
       params.append('page', currentPage.toString())
       params.append('limit', pageSize.toString())
-      if (searchTerm) params.append('search', searchTerm)
+      if (searchTerm) {
+        params.append('search', searchTerm)
+      } else {
+        if (fromDate) params.append('fromDate', format(fromDate, "yyyy-MM-dd"))
+        if (toDate) params.append('toDate', format(toDate, "yyyy-MM-dd"))
+      }
       if (sortField) params.append('sort_field', sortField)
       if (sortOrder) params.append('sort_order', sortOrder)
 
@@ -280,6 +287,58 @@ export default function PatientListPage() {
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>From Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal border-gray-200",
+                        !fromDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
+                      {fromDate ? format(fromDate, "dd/MM/yyyy") : <span>From Date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-xl bg-white" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={fromDate}
+                      onSelect={(date: Date | undefined) => date && setFromDate(date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>To Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal border-gray-200",
+                        !toDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
+                      {toDate ? format(toDate, "dd/MM/yyyy") : <span>To Date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-xl bg-white" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={toDate}
+                      onSelect={(date: Date | undefined) => date && setToDate(date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <Button

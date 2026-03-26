@@ -113,5 +113,29 @@ export const appointmentsApi = {
       console.error('createAppointment error:', error);
       throw error;
     }
+  },
+
+  getAppointmentTypes: async () => {
+    try {
+      const locationId = authService.getLocationId();
+      const params = new URLSearchParams();
+      if (locationId) params.append('locationId', locationId);
+
+      const response = await fetch(
+        `${authService.getSettingsApiUrl()}/appointment-types?${params.toString()}`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('getAppointmentTypes error:', error);
+      return [];
+    }
   }
 };

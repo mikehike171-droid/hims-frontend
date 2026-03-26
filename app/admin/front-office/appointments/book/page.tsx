@@ -41,10 +41,20 @@ export default function BookAppointmentPage() {
   const [filteredTimeSlots, setFilteredTimeSlots] = useState<string[]>([])
   const [timeSearch, setTimeSearch] = useState("")
   const [showTimeDropdown, setShowTimeDropdown] = useState(false)
+  const [appointmentTypes, setAppointmentTypes] = useState<any[]>([])
 
   useEffect(() => {
     generateTimeSlots()
+    fetchAppointmentTypes()
   }, [])
+
+  const fetchAppointmentTypes = async () => {
+    const types = await appointmentsApi.getAppointmentTypes()
+    setAppointmentTypes(types)
+    if (types.length > 0) {
+      setAppointmentType(types[0].code)
+    }
+  }
 
   const generateTimeSlots = () => {
     const slots = []
@@ -371,9 +381,19 @@ export default function BookAppointmentPage() {
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="consultation">Consultation</SelectItem>
-                          <SelectItem value="follow-up">Follow-up</SelectItem>
-                          <SelectItem value="emergency">Emergency</SelectItem>
+                          {appointmentTypes.length > 0 ? (
+                            appointmentTypes.map((type) => (
+                              <SelectItem key={type.id} value={type.code}>
+                                {type.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <>
+                              <SelectItem value="consultation">Consultation</SelectItem>
+                              <SelectItem value="follow-up">Follow-up</SelectItem>
+                              <SelectItem value="emergency">Emergency</SelectItem>
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -396,7 +416,7 @@ export default function BookAppointmentPage() {
                           <Calendar
                             mode="single"
                             selected={appointmentDate ? parseISO(appointmentDate) : undefined}
-                            onSelect={(date) => {
+                            onSelect={(date: Date | undefined) => {
                               if (date) {
                                 // Keep internal state as YYYY-MM-DD for consistency with previous behavior and API expectations
                                 setAppointmentDate(format(date, "yyyy-MM-dd"))

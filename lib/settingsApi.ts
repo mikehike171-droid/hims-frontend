@@ -1522,6 +1522,47 @@ export const settingsApi = {
     });
     return await handleApiResponse(response);
   },
+
+  // Appointment Types
+  getAppointmentTypes: async (locationId?: number) => {
+    try {
+      const params = new URLSearchParams();
+      if (locationId) params.append('locationId', locationId.toString());
+      const response = await fetch(`${authService.getSettingsApiUrl()}/appointment-types?${params}`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getAppointmentTypes error:', error);
+      return [];
+    }
+  },
+
+  createAppointmentType: async (data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/appointment-types`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  updateAppointmentType: async (id: number, data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/appointment-types/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  deleteAppointmentType: async (id: number) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/appointment-types/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return await handleApiResponse(response);
+  },
 };
 
 // Type definitions
