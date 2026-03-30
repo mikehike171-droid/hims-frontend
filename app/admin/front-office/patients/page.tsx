@@ -708,7 +708,7 @@ export default function PatientListPage() {
 
                 {/* Actions */}
                 <div className="flex justify-center pt-6 gap-3 print:hidden">
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={() => window.print()}
                     className="h-10 px-8"
@@ -716,7 +716,7 @@ export default function PatientListPage() {
                     <Printer className="h-4 w-4 mr-2" />
                     Print Receipt
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => setShowRegistrationReceipt(false)}
                     className="h-10 px-8 bg-red-600 hover:bg-red-700"
                   >

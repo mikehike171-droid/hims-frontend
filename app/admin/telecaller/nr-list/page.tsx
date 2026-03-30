@@ -26,6 +26,7 @@ export default function NRListPage() {
   const [nrList, setNrList] = useState<NRListItem[]>([])
   const [loading, setLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [searchTerm, setSearchTerm] = useState('')
   
   const getCurrentMonthDates = () => {
     const now = new Date()
@@ -71,14 +72,18 @@ export default function NRListPage() {
       const token = authService.getCurrentToken()
       let url = `${authService.getSettingsApiUrl()}/patient-examination/nr-list/all?page=${page}&limit=10`
       
-      if (fromDate) {
-        const [day, month, year] = fromDate.split('/')
-        url += `&fromDate=${year}-${month}-${day}`
-      }
-      
-      if (toDate) {
-        const [day, month, year] = toDate.split('/')
-        url += `&toDate=${year}-${month}-${day}`
+      if (searchTerm) {
+        url += `&search=${encodeURIComponent(searchTerm)}`
+      } else {
+        if (fromDate) {
+          const [day, month, year] = fromDate.split('/')
+          url += `&fromDate=${year}-${month}-${day}`
+        }
+        
+        if (toDate) {
+          const [day, month, year] = toDate.split('/')
+          url += `&toDate=${year}-${month}-${day}`
+        }
       }
       
       const response = await fetch(url, {
@@ -169,13 +174,28 @@ export default function NRListPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="space-y-2">
+              <Label htmlFor="searchTerm" className="text-sm font-medium">Search Patient:</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="searchTerm"
+                  placeholder="Name, ID, Mobile..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && fetchNRList(1)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="fromDate" className="text-sm font-medium">From Date:</Label>
               <div className="relative">
                 <input
                   id="fromDateInput"
                   type="date"
+                  disabled={!!searchTerm}
                   value={fromDate ? (() => {
                     const [day, month, year] = fromDate.split('/')
                     return `${year}-${month}-${day}`
@@ -187,24 +207,26 @@ export default function NRListPage() {
                     const year = date.getFullYear()
                     setFromDate(`${day}/${month}/${year}`)
                   }}
-                  className="absolute left-0 top-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  className="absolute left-0 top-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
                 />
                 <Input
                   type="text"
                   placeholder="DD/MM/YYYY"
                   value={fromDate}
                   readOnly
-                  className="w-40"
+                  disabled={!!searchTerm}
+                  className="w-full"
                 />
                 <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="space-y-2">
               <Label htmlFor="toDate" className="text-sm font-medium">To Date:</Label>
               <div className="relative">
                 <input
                   id="toDateInput"
                   type="date"
+                  disabled={!!searchTerm}
                   value={toDate ? (() => {
                     const [day, month, year] = toDate.split('/')
                     return `${year}-${month}-${day}`
@@ -216,28 +238,30 @@ export default function NRListPage() {
                     const year = date.getFullYear()
                     setToDate(`${day}/${month}/${year}`)
                   }}
-                  className="absolute left-0 top-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  className="absolute left-0 top-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
                 />
                 <Input
                   type="text"
                   placeholder="DD/MM/YYYY"
                   value={toDate}
                   readOnly
-                  className="w-40"
+                  disabled={!!searchTerm}
+                  className="w-full"
                 />
                 <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               </div>
             </div>
-            <Button
-              onClick={() => fetchNRList(1)}
-              variant="default"
-              size="sm"
-              className="flex items-center space-x-1"
-              disabled={loading}
-            >
-              <Search className="h-4 w-4" />
-              <span>Search</span>
-            </Button>
+            <div className="flex items-end h-full">
+              <Button
+                onClick={() => fetchNRList(1)}
+                variant="default"
+                className="w-full"
+                disabled={loading}
+              >
+                <Search className="h-4 w-4 mr-2" />
+                Search
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -334,41 +358,58 @@ export default function NRListPage() {
       {pagination.total > 0 && (
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm text-gray-600">
-                Showing {((currentPage - 1) * pagination.limit) + 1} to {Math.min(currentPage * pagination.limit, pagination.total)} of {pagination.total} patients
+                Showing {((currentPage - 1) * (pagination.limit || 10)) + 1} to {Math.min(currentPage * (pagination.limit || 10), pagination.total)} of {pagination.total} patients
               </div>
-              {pagination.totalPages > 0 && (
+              {pagination.totalPages > 1 && (
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handlePrevPage}
                     disabled={!pagination.hasPrev}
-                    className="w-8 h-8 p-0"
+                    className="flex items-center gap-1"
                   >
                     <ChevronLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline">Previous</span>
                   </Button>
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => fetchNRList(page)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {page}
-                      </Button>
-                    ))}
+                    {(() => {
+                      const pages = [];
+                      const maxVisible = 5;
+                      const halfVisible = Math.floor(maxVisible / 2);
+                      let start = Math.max(1, currentPage - halfVisible);
+                      let end = Math.min(pagination.totalPages, start + maxVisible - 1);
+
+                      if (end - start + 1 < maxVisible) {
+                        start = Math.max(1, end - maxVisible + 1);
+                      }
+
+                      for (let i = start; i <= end; i++) {
+                        pages.push(
+                          <Button
+                            key={i}
+                            variant={currentPage === i ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => fetchNRList(i)}
+                            className="w-8 h-8 p-0"
+                          >
+                            {i}
+                          </Button>
+                        );
+                      }
+                      return pages;
+                    })()}
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleNextPage}
                     disabled={!pagination.hasNext}
-                    className="w-8 h-8 p-0"
+                    className="flex items-center gap-1"
                   >
+                    <span className="hidden sm:inline">Next</span>
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>

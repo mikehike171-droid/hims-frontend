@@ -17,6 +17,11 @@ export default function RenewalPage() {
   const [loading, setLoading] = useState(false)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalRecords, setTotalRecords] = useState(0)
+  const [limit] = useState(10)
 
   // Set default dates to current month
   // Set default dates to current month
@@ -35,16 +40,34 @@ export default function RenewalPage() {
     fetchRenewalPatientsWithDates(fromDateStr, toDateStr)
   }, [])
 
-  const fetchRenewalPatientsWithDates = async (from: string, to: string) => {
+  const fetchRenewalPatientsWithDates = async (from: string, to: string, search: string = searchTerm, pageNum: number = page) => {
     try {
       setLoading(true)
       const locationId = authService.getLocationId()
-      const data = await settingsApi.getRenewalPatients(
+
+      // If search is present, don't pass dates to API
+      const apiFrom = search ? undefined : from
+      const apiTo = search ? undefined : to
+
+      const response = await settingsApi.getRenewalPatients(
         locationId ? parseInt(locationId) : 1,
-        from,
-        to
+        apiFrom,
+        apiTo,
+        search,
+        pageNum,
+        limit
       )
-      setRenewalPatients(data || [])
+      
+      if (response && response.data) {
+        setRenewalPatients(response.data)
+        setTotalPages(response.totalPages || 1)
+        setTotalRecords(response.total || 0)
+        setPage(response.page || pageNum)
+      } else {
+        setRenewalPatients([])
+        setTotalPages(1)
+        setTotalRecords(0)
+      }
     } catch (error) {
       console.error('Error fetching renewal patients:', error)
     } finally {
@@ -53,8 +76,16 @@ export default function RenewalPage() {
   }
 
   const fetchRenewalPatients = async () => {
+    setPage(1)
     if (fromDate && toDate) {
-      await fetchRenewalPatientsWithDates(fromDate, toDate)
+      await fetchRenewalPatientsWithDates(fromDate, toDate, searchTerm, 1)
+    }
+  }
+
+  const handlePageChange = async (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage)
+      await fetchRenewalPatientsWithDates(fromDate, toDate, searchTerm, newPage)
     }
   }
 
@@ -98,13 +129,27 @@ export default function RenewalPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label>Search Patient</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Name, ID, or Mobile..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                    onKeyDown={(e) => e.key === 'Enter' && fetchRenewalPatients()}
+                  />
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label>From Date</Label>
                 <Input
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
+                  disabled={!!searchTerm}
                 />
               </div>
               <div className="space-y-2">
@@ -113,6 +158,7 @@ export default function RenewalPage() {
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
+                  disabled={!!searchTerm}
                 />
               </div>
               <div className="flex items-end">
@@ -130,7 +176,7 @@ export default function RenewalPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Patients with Renewal Dates ({renewalPatients.length})</CardTitle>
+            <CardTitle>Patients with Renewal Dates ({totalRecords})</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -157,10 +203,17 @@ export default function RenewalPage() {
                     renewalPatients.map((patient: any) => (
                       <TableRow key={patient.patient_id}>
                         <TableCell className="font-medium">
-                          {patient.firstName && patient.lastName
-                            ? `${patient.firstName} ${patient.lastName}`
-                            : `Patient ID: ${patient.patientId}`
-                          }
+                          <div className="flex flex-col">
+                            <span>
+                              {patient.firstName || patient.lastName
+                                ? `${patient.firstName || ''} ${patient.lastName || ''}`.trim()
+                                : `Patient ID: ${patient.patientId}`
+                              }
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {patient.patientIdStr || patient.patientId}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell>{patient.mobileNumber ? `xxxxxx${patient.mobileNumber.slice(-4)}` : 'N/A'}</TableCell>
                         <TableCell>{formatDate(patient.nextRenewalDatePro)}</TableCell>
@@ -184,6 +237,52 @@ export default function RenewalPage() {
                   )}
                 </TableBody>
               </Table>
+            )}
+
+            {/* Pagination Controls */}
+            {!loading && totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6">
+                <p className="text-sm text-muted-foreground">
+                  Showing {(page - 1) * limit + 1} to {Math.min(page * limit, totalRecords)} of {totalRecords} records
+                </p>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 1}
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                      .map((p, i, arr) => {
+                        return (
+                          <div key={p} className="flex items-center">
+                            {i > 0 && arr[i-1] !== p - 1 && <span className="px-2">...</span>}
+                            <Button
+                              variant={page === p ? "default" : "outline"}
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => handlePageChange(p)}
+                            >
+                              {p}
+                            </Button>
+                          </div>
+                        )
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>

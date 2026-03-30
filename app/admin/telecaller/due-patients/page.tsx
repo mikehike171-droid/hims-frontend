@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Phone, User, RefreshCw, ChevronLeft, ChevronRight, IndianRupee } from "lucide-react"
@@ -27,6 +28,7 @@ export default function DuePatientsPage() {
   const [duePatients, setDuePatients] = useState<DuePatientItem[]>([])
   const [loading, setLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [searchTerm, setSearchTerm] = useState('')
   const fetchingRef = useRef(false)
   const [pagination, setPagination] = useState({
     page: 1,
@@ -51,7 +53,13 @@ export default function DuePatientsPage() {
       fetchingRef.current = true
       setLoading(true)
       const token = authService.getCurrentToken()
-      const response = await fetch(`${authService.getSettingsApiUrl()}/patient-examination/due-patients/all?page=${page}&limit=10`, {
+      let url = `${authService.getSettingsApiUrl()}/patient-examination/due-patients/all?page=${page}&limit=10`
+      
+      if (searchTerm) {
+        url += `&search=${encodeURIComponent(searchTerm)}`
+      }
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -130,6 +138,18 @@ export default function DuePatientsPage() {
           <Button onClick={handleRefresh} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-4 max-w-sm">
+          <Input
+            placeholder="Search by Name, ID, or Mobile..."
+            value={searchTerm}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && fetchDuePatients(1)}
+          />
+          <Button onClick={() => fetchDuePatients(1)}>
+            Search
           </Button>
         </div>
 
@@ -230,17 +250,32 @@ export default function DuePatientsPage() {
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: pagination.totalPages || 1 }, (_, i) => i + 1).map((page) => (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => fetchDuePatients(page)}
-                      className="w-8 h-8 p-0"
-                    >
-                      {page}
-                    </Button>
-                  ))}
+                  {(() => {
+                    const pages = [];
+                    const maxVisible = 5;
+                    const halfVisible = Math.floor(maxVisible / 2);
+                    let start = Math.max(1, currentPage - halfVisible);
+                    let end = Math.min(pagination.totalPages, start + maxVisible - 1);
+
+                    if (end - start + 1 < maxVisible) {
+                      start = Math.max(1, end - maxVisible + 1);
+                    }
+
+                    for (let i = start; i <= end; i++) {
+                      pages.push(
+                        <Button
+                          key={i}
+                          variant={currentPage === i ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => fetchDuePatients(i)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {i}
+                        </Button>
+                      );
+                    }
+                    return pages;
+                  })()}
                 </div>
                 <Button
                   variant="outline"

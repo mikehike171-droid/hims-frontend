@@ -1127,12 +1127,15 @@ export const settingsApi = {
   },
 
   // Renewal Patients
-  getRenewalPatients: async (locationId?: number, fromDate?: string, toDate?: string) => {
+  getRenewalPatients: async (locationId?: number, fromDate?: string, toDate?: string, search?: string, page: number = 1, limit: number = 10) => {
     try {
       const params = new URLSearchParams();
       if (locationId) params.append('locationId', locationId.toString());
       if (fromDate) params.append('fromDate', fromDate);
       if (toDate) params.append('toDate', toDate);
+      if (search) params.append('search', search);
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
 
       const response = await fetch(`${authService.getSettingsApiUrl()}/renewal/patients?${params}`, {
         headers: getAuthHeaders(),

@@ -147,11 +147,13 @@ export default function FrontOfficeAppointments() {
         filters.locationId = parseInt(locationId)
       }
 
-      if (fromDate) {
-        filters.fromDate = format(fromDate, "yyyy-MM-dd")
-      }
-      if (toDate) {
-        filters.toDate = format(toDate, "yyyy-MM-dd")
+      if (!searchTerm) {
+        if (fromDate) {
+          filters.fromDate = format(fromDate, "yyyy-MM-dd")
+        }
+        if (toDate) {
+          filters.toDate = format(toDate, "yyyy-MM-dd")
+        }
       }
       if (statusFilter !== "all") {
         filters.status = statusFilter
