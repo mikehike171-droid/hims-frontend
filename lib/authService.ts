@@ -2,7 +2,7 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
 const API_Domain_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
 //const SETTINGS_API_URL = process.env.NEXT_PUBLIC_SETTINGS_API_URL || 'http://localhost:3002/api';
-const SETTINGS_API_URL = process.env.NEXT_PUBLIC_SETTINGS_API_URL || 'http://13.63.125.161:3002/api';
+const SETTINGS_API_URL = process.env.NEXT_PUBLIC_SETTINGS_API_URL || 'http://13.48.6.129:3002/api';
 //const SETTINGS_API_URL = process.env.NEXT_PUBLIC_SETTINGS_API_URL || 'https://outstanding-sparkle-production.up.railway.app/api';
 //const PATIENT_API_URL = process.env.NEXT_PUBLIC_PATIENT_API_URL || 'http://localhost:3003';
 const FRONT_OFFICE_API_URL = process.env.NEXT_PUBLIC_FRONT_OFFICE_API_URL || 'http://localhost:3003';
