@@ -30,6 +30,7 @@ export default function DuePatientsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
   const fetchingRef = useRef(false)
+  const [locationId, setLocationId] = useState<string | null>(authService.getLocationId())
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -53,10 +54,15 @@ export default function DuePatientsPage() {
       fetchingRef.current = true
       setLoading(true)
       const token = authService.getCurrentToken()
+      const currentLocationId = authService.getLocationId()
       let url = `${authService.getSettingsApiUrl()}/patient-examination/due-patients/all?page=${page}&limit=10`
       
       if (searchTerm) {
         url += `&search=${encodeURIComponent(searchTerm)}`
+      }
+
+      if (currentLocationId) {
+        url += `&location_id=${currentLocationId}`
       }
 
       const response = await fetch(url, {
@@ -85,6 +91,14 @@ export default function DuePatientsPage() {
 
   useEffect(() => {
     fetchDuePatients(1)
+
+    // Re-fetch when location changes
+    const handleLocationChange = () => {
+      setLocationId(authService.getLocationId())
+      fetchDuePatients(1)
+    }
+    window.addEventListener('locationChanged', handleLocationChange)
+    return () => window.removeEventListener('locationChanged', handleLocationChange)
   }, [])
 
   const handleRefresh = () => {

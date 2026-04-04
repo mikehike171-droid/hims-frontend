@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { ChevronLeft, ChevronRight, DollarSign, RefreshCw, Minus, TrendingDown, Download } from 'lucide-react'
+import { ChevronLeft, ChevronRight, DollarSign, RefreshCw, Minus, TrendingDown, Download, CreditCard } from 'lucide-react'
 import authService from '@/lib/authService'
 import settingsApi, { ApprovedExpense } from '@/lib/settingsApi'
 import PrivateRoute from "@/components/auth/PrivateRoute"
@@ -196,58 +196,50 @@ export default function CashbookPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowTable(!showTable)}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-l-4 border-green-600 shadow-md cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowTable(!showTable)}>
           <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <DollarSign className="h-8 w-8 text-green-600" />
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-green-100 rounded-full">
+                <DollarSign className="h-6 w-6 text-green-600" />
+              </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-black text-green-700">
                   {formatCurrency(getTotalCash())}
                 </div>
-                <div className="text-sm text-gray-600">Total Cash Collections</div>
+                <div className="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Cash Income</div>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="border-l-4 border-red-500 shadow-md">
           <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Minus className="h-8 w-8 text-red-600" />
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-red-100 rounded-full">
+                <TrendingDown className="h-6 w-6 text-red-600" />
+              </div>
               <div>
-                <div className="text-2xl font-bold text-red-600">
+                <div className="text-2xl font-black text-red-700">
                   {formatCurrency(getTotalApprovedExpenses())}
                 </div>
-                <div className="text-sm text-gray-600">Approved Expenses</div>
+                <div className="text-sm font-bold text-gray-500 uppercase tracking-wider">Approved Expenses</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={`border-l-4 ${getRemainingBalance() >= 0 ? 'border-blue-500 text-blue-700' : 'border-red-600 text-red-700'} shadow-md`}>
           <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <TrendingDown className={`h-8 w-8 ${getRemainingBalance() >= 0 ? 'text-blue-600' : 'text-red-600'}`} />
+            <div className="flex items-center space-x-3">
+              <div className={`p-3 ${getRemainingBalance() >= 0 ? 'bg-blue-100' : 'bg-red-100'} rounded-full`}>
+                <RefreshCw className={`h-6 w-6 ${getRemainingBalance() >= 0 ? 'text-blue-600' : 'text-red-600'}`} />
+              </div>
               <div>
-                <div className={`text-2xl font-bold ${getRemainingBalance() >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                <div className="text-2xl font-black">
                   {formatCurrency(getRemainingBalance())}
                 </div>
-                <div className="text-sm text-gray-600">Remaining Balance</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Badge variant="default" className="bg-green-600 text-lg px-3 py-1">CASH ONLY</Badge>
-              <div>
-                <div className="text-2xl font-bold text-green-600">
-                  {pagination.total}
-                </div>
-                <div className="text-sm text-gray-600">Cash Transactions</div>
+                <div className="text-sm font-bold text-gray-400 uppercase tracking-wider">Closing Balance</div>
               </div>
             </div>
           </CardContent>

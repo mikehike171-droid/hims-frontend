@@ -24,7 +24,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Printer
+  Printer,
+  Trash2
 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import Link from "next/link"
@@ -56,6 +57,23 @@ export default function PatientListPage() {
   const [toDate, setToDate] = useState<Date>(new Date())
   const [showRegistrationReceipt, setShowRegistrationReceipt] = useState(false)
   const [selectedPatientForReceipt, setSelectedPatientForReceipt] = useState<any>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    const user = authService.getUserInfo()
+    if (user) {
+      // Primary: use the is_admin flag set by the backend during login
+      if (user.is_admin === true) {
+        setIsAdmin(true)
+      } else {
+        // Fallback: check role_name for 'admin' keyword
+        const roleName = (user.role_name || user.role || user.user_type || '').toLowerCase()
+        if (roleName.includes('admin')) {
+          setIsAdmin(true)
+        }
+      }
+    }
+  }, [])
 
   const handleCaseSheetClick = (patientId: string) => {
     router.push(`/admin/caseheetnew?patientId=${patientId}`)
@@ -186,7 +204,7 @@ export default function PatientListPage() {
             age: calculateAge(patient.patient_date_of_birth),
             gender: patient.patient_gender ? (patient.patient_gender.toLowerCase() === 'm' ? 'Male' : patient.patient_gender.toLowerCase() === 'f' ? 'Female' : 'Other') : 'N/A',
             lastVisit: patient.patient_updated_at,
-            status: 'Active',
+            status: patient.patient_status || 'active',
             nextRenewalDate: patient.next_renewal_date_pro,
             dueAmount: patient.due_amount,
             address1: patient.patient_address1,
@@ -252,6 +270,40 @@ export default function PatientListPage() {
       month: '2-digit',
       year: 'numeric'
     })
+  }
+
+  const handleDeactivate = async (patientId: string, patientName: string) => {
+    if (!window.confirm(`Are you sure you want to deactivate patient ${patientName}?`)) {
+      return
+    }
+
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('authToken')
+      const url = `${authService.getSettingsApiUrl()}/patients/${patientId}`
+
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'inactive' }),
+      })
+
+      if (response.ok) {
+        alert('Patient deactivated successfully')
+        fetchPatients()
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.message || 'Failed to deactivate patient'}`)
+      }
+    } catch (error) {
+      console.error('Error deactivating patient:', error)
+      alert('An error occurred while deactivating the patient')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -473,7 +525,7 @@ export default function PatientListPage() {
                           {patient.amount ? `₹${Number(patient.amount).toLocaleString('en-IN')}` : '₹0'}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={patient.status === 'Active' ? 'default' : 'secondary'}>
+                          <Badge variant={patient.status?.toLowerCase() === 'active' ? 'default' : 'secondary'}>
                             {patient.status}
                           </Badge>
                         </TableCell>
@@ -510,6 +562,17 @@ export default function PatientListPage() {
                             >
                               <FileText className="h-4 w-4" />
                             </Button>
+                            {isAdmin && patient.status !== 'inactive' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                title="Deactivate Patient"
+                                onClick={() => handleDeactivate(patient.id, patient.name)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

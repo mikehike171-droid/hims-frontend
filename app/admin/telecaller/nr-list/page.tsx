@@ -70,8 +70,13 @@ export default function NRListPage() {
       fetchingRef.current = true
       setLoading(true)
       const token = authService.getCurrentToken()
+      const currentLocationId = authService.getLocationId()
       let url = `${authService.getSettingsApiUrl()}/patient-examination/nr-list/all?page=${page}&limit=10`
       
+      if (currentLocationId) {
+        url += `&location_id=${currentLocationId}`
+      }
+
       if (searchTerm) {
         url += `&search=${encodeURIComponent(searchTerm)}`
       } else {
@@ -112,6 +117,13 @@ export default function NRListPage() {
 
   useEffect(() => {
     fetchNRList(1)
+
+    // Re-fetch when location changes
+    const handleLocationChange = () => {
+      fetchNRList(1)
+    }
+    window.addEventListener('locationChanged', handleLocationChange)
+    return () => window.removeEventListener('locationChanged', handleLocationChange)
   }, [])
 
   const handleRefresh = () => {
