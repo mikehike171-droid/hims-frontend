@@ -3,6 +3,8 @@
 import './globals.css'
 import { useEffect } from 'react'
 
+import { LanguageProvider } from "@/i18n/LanguageContext";
+
 export default function RootLayout({
   children,
 }: {
@@ -16,7 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans">
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   )

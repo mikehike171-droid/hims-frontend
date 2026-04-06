@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Open+Sans:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 210 29% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 29% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 29% 15%;
+
+    --primary: 140 60% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 140 50% 90%;
+    --secondary-foreground: 140 60% 38%;
+
+    --muted: 210 20% 96%;
+    --muted-foreground: 210 10% 45%;
+
+    --accent: 36 100% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 140 50% 85%;
+    --input: 140 50% 85%;
+    --ring: 140 60% 38%;
+
+    --radius: 0.5rem;
+
+  /* Hide Google Translate Bar and Branding */
+  .goog-te-banner-frame.skiptranslate,
+  .goog-te-banner-frame,
+  .goog-te-banner,
+  .goog-te-menu-value,
+  .goog-te-gadget-icon,
+  .goog-te-gadget-simple,
+  iframe.goog-te-banner-frame,
+  .VIpgJd-ZVi9od-l4eHX-hSRGPd,
+  .VIpgJd-ZVi9od-aZ61S-hSRGPd,
+  .VIpgJd-ZVi9od-ORHb-OHege,
+  .skiptranslate,
+  div.skiptranslate[style*="top: 0"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    left: -10000px !important;
+  }
+
+  body, html {
+    top: 0px !important;
+    position: static !important;
+    margin-top: 0px !important;
+    padding-top: 0px !important;
+    min-height: 100vh !important;
+    /* Prevent content copying */
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+  }
+
+  /* Ensure buttons and inputs remain interactive */
+  button, a, input, select, textarea, .pointer-events-auto {
+    user-select: auto !important;
+    -webkit-user-select: auto !important;
+  }
+
+    /* Hide the tooltip that appears on hover */
+    #goog-gt-tt, 
+    .goog-te-balloon-frame,
+    .goog-tooltip,
+    .goog-tooltip:hover,
+    .goog-te-balloon-frame.skiptranslate,
+    #goog-gt- {
+      display: none !important;
+      visibility: hidden !important;
+    }
+
+    /* Hide the blue highlight background on hovered translated text */
+    .goog-text-highlight {
+      background: none !important;
+      background-color: transparent !important;
+      box-shadow: none !important;
+    }
+
+    .goog-te-gadget, 
+    .goog-te-gadget-simple, 
+    #google_translate_element {
+      display: none !important;
+    }
+
+    --hero-gradient: linear-gradient(135deg, hsl(140 60% 38%) 0%, hsl(140 65% 28%) 100%);
+    --teal-light: 140 50% 55%;
+    --teal-dark: 140 65% 28%;
+    --gold: 36 100% 52%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+  }
+}
+
+@layer components {
+  .section-heading {
+    @apply text-3xl md:text-4xl font-bold text-primary text-center;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .section-subheading {
+    @apply text-base md:text-lg text-muted-foreground text-center max-w-3xl mx-auto mt-3;
+  }
+
+  .hero-gradient {
+    background: var(--hero-gradient);
+  }
+
+  .stat-card {
+    @apply flex flex-col items-center text-center p-6;
+  }
+
+  .treatment-card {
+    @apply rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 bg-card;
+  }
+}

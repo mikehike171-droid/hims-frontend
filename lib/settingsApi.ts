@@ -1566,6 +1566,198 @@ export const settingsApi = {
     });
     return await handleApiResponse(response);
   },
+
+  // Treatments
+  getTreatments: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/settings/treatments`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getTreatments error:', error);
+      return [];
+    }
+  },
+
+  getTreatment: async (id: number) => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/settings/treatments/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getTreatment error:', error);
+      throw error;
+    }
+  },
+
+  createTreatment: async (data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/treatments`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  updateTreatment: async (id: number, data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/treatments/${id}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  deleteTreatment: async (id: number) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/treatments/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return await handleApiResponse(response);
+  },
+
+  uploadTreatmentImage: async (file: File) => {
+    const url = `${authService.getSettingsApiUrl()}/settings/treatments/upload-image`;
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: getAuthHeaders().Authorization,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to upload image");
+    }
+
+    return response.json();
+  },
+
+  getPublicTreatments: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/public-treatments`);
+      if (!response.ok) {
+        throw new Error(`Public API Error: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('getPublicTreatments error:', error);
+      return [];
+    }
+  },
+
+  // Blogs
+  getBlogs: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/settings/blogs`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getBlogs error:', error);
+      return [];
+    }
+  },
+
+  getBlog: async (id: number) => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/settings/blogs/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getBlog error:', error);
+      throw error;
+    }
+  },
+
+  createBlog: async (data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/blogs`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  updateBlog: async (id: number, data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/blogs/${id}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  deleteBlog: async (id: number) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/blogs/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return await handleApiResponse(response);
+  },
+
+  uploadBlogImage: async (file: File) => {
+    const url = `${authService.getSettingsApiUrl()}/settings/blogs/upload-image`;
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: getAuthHeaders().Authorization,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to upload image");
+    }
+
+    return response.json();
+  },
+
+  getPublicBlogs: async (limit?: number, offset?: number) => {
+    try {
+      let url = `${authService.getSettingsApiUrl()}/public-blogs`;
+      const params = new URLSearchParams();
+      if (limit !== undefined) params.append('limit', limit.toString());
+      if (offset !== undefined) params.append('offset', offset.toString());
+      
+      const queryString = params.toString();
+      if (queryString) url += `?${queryString}`;
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Public API Error: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('getPublicBlogs error:', error);
+      return [];
+    }
+  },
+
+  getPublicBlogByTitle: async (title: string) => {
+    try {
+      const url = `${authService.getSettingsApiUrl()}/public-blogs/detail/${encodeURIComponent(title)}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Public Detail API Error: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('getPublicBlogByTitle error:', error);
+      return null;
+    }
+  },
 };
 
 // Type definitions
