@@ -13,7 +13,7 @@ import {
   User,
   Phone,
   Mail,
-  Calendar as LucideCalendar,
+  LucideCalendar,
   CreditCard,
   Banknote,
   Smartphone,
@@ -25,7 +25,9 @@ import {
   Search,
   ChevronDown,
   CalendarIcon,
-  Printer
+  Printer,
+  FileText,
+  Trash2
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import PrivateRoute from "@/components/auth/PrivateRoute"
@@ -34,6 +36,7 @@ import { format, parseISO, addMonths } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table"
 import { settingsApi } from "@/lib/settingsApi"
 
 
@@ -82,6 +85,11 @@ export default function PatientBillDiscuss() {
   const [showSimpleReceipt, setShowSimpleReceipt] = useState(false)
   const [simpleReceiptData, setSimpleReceiptData] = useState<any>(null)
   const [filteredPlans, setFilteredPlans] = useState<any[]>([])
+  const [allExaminations, setAllExaminations] = useState<any[]>([])
+  const [editingExamId, setEditingExamId] = useState<number | null>(null)
+  const [tempExamDate, setTempExamDate] = useState<string>("")
+  const [showAdditionalMultiPayment, setShowAdditionalMultiPayment] = useState(false)
+  const [selectedAdditionalPaymentMethods, setSelectedAdditionalPaymentMethods] = useState<{ id: string, amount: number }[]>([])
 
   useEffect(() => {
     fetchTreatmentPlans()
@@ -173,6 +181,7 @@ export default function PatientBillDiscuss() {
       if (response.ok) {
         const data = await response.json()
         const examinations = Array.isArray(data) ? data : []
+        setAllExaminations(examinations)
         const latestExam = examinations[0] // Get the latest examination
         if (latestExam) {
           setCurrentExamination(latestExam)
@@ -379,14 +388,25 @@ export default function PatientBillDiscuss() {
   }
 
   const handleAddPayment = async () => {
-    if (!currentExamination || !additionalPaymentMethod || !additionalPaymentAmount) {
+    if (!currentExamination) return
+
+    if (!showAdditionalMultiPayment && (!additionalPaymentMethod || !additionalPaymentAmount)) {
       alert('Please select payment method and enter amount')
+      return
+    }
+
+    if (showAdditionalMultiPayment && selectedAdditionalPaymentMethods.length === 0) {
+      alert('Please add at least one payment method')
       return
     }
 
     try {
       setLoading(true)
       const token = localStorage.getItem('authToken')
+      
+      const payments = showAdditionalMultiPayment 
+        ? selectedAdditionalPaymentMethods.map(p => ({ paymentMethod: p.id, amount: p.amount }))
+        : [{ paymentMethod: additionalPaymentMethod, amount: parseFloat(additionalPaymentAmount) }];
 
       const response = await fetch(`${authService.getSettingsApiUrl()}/patient-examination/${currentExamination.id}/add-payment`, {
         method: 'POST',
@@ -395,8 +415,7 @@ export default function PatientBillDiscuss() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          paymentMethod: additionalPaymentMethod,
-          amount: parseFloat(additionalPaymentAmount),
+          payments: payments,
           notes: paymentNotes
         })
       })
@@ -405,14 +424,16 @@ export default function PatientBillDiscuss() {
         const result = await response.json()
         alert('Payment added successfully!')
         
-        // Show the installment receipt
-        if (result.installmentId) {
-          handleShowInstallmentReceipt(result.installmentId)
+        // Show the first installment receipt if any
+        if (result.installments && result.installments.length > 0) {
+          handleShowInstallmentReceipt(result.installments[0].id)
         }
 
         setAdditionalPaymentMethod('')
         setAdditionalPaymentAmount('')
         setPaymentNotes('')
+        setShowAdditionalMultiPayment(false)
+        setSelectedAdditionalPaymentMethods([])
         setShowAddPayment(false)
 
         // Update current examination with new amounts
@@ -438,45 +459,11 @@ export default function PatientBillDiscuss() {
   }
 
   const fetchInstallments = async () => {
-    if (!currentExamination) {
-      // Try to fetch with patientId if currentExamination not loaded yet
-      if (patientId) {
-        try {
-          const token = localStorage.getItem('authToken')
-          const examResponse = await fetch(`${authService.getSettingsApiUrl()}/patient-examination/${patientId}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          })
-
-          if (examResponse.ok) {
-            const examData = await examResponse.json()
-            const latestExam = Array.isArray(examData) ? examData[0] : examData
-            if (latestExam) {
-              const installmentResponse = await fetch(`${authService.getSettingsApiUrl()}/patient-examination/${latestExam.id}/installments`, {
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json',
-                },
-              })
-
-              if (installmentResponse.ok) {
-                const data = await installmentResponse.json()
-                setInstallments(data)
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching installments:', error)
-        }
-      }
-      return
-    }
+    if (!patientId) return
 
     try {
       const token = localStorage.getItem('authToken')
-      const response = await fetch(`${authService.getSettingsApiUrl()}/patient-examination/${currentExamination.id}/installments`, {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/patient-examination/patient/${patientId}/all-installments`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -799,6 +786,68 @@ export default function PatientBillDiscuss() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
+              <LucideCalendar className="h-5 w-5" />
+              Examination History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Doctor Plan</TableHead>
+                    <TableHead>PRO Plan</TableHead>
+                    <TableHead>Total Amount</TableHead>
+                    <TableHead>Due Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allExaminations.map((exam) => (
+                    <TableRow key={exam.id} className={cn(currentExamination?.id === exam.id && "bg-blue-50")}>
+                      <TableCell className="font-medium">
+                        <span className="font-bold">
+                          {(() => {
+                            const dateVal = exam.created_at || exam.createdAt
+                            return dateVal ? format(new Date(dateVal), "dd/MM/yyyy") : 'N/A'
+                          })()}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const val = exam.treatment_plan_months_doctor || exam.treatmentPlanMonthsDoctor
+                          return val ? `${val} Month${val > 1 ? 's' : ''}` : '-'
+                        })()}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const val = exam.treatment_plan_months_pro || exam.treatmentPlanMonthsPro
+                          return val ? `${val} Month${val > 1 ? 's' : ''}` : '-'
+                        })()}
+                      </TableCell>
+                      <TableCell>
+                        ₹{(() => {
+                          const val = exam.total_amount || exam.totalAmount || 0
+                          return parseFloat(val.toString()).toFixed(2)
+                        })()}
+                      </TableCell>
+                      <TableCell className="text-red-600">
+                        ₹{(() => {
+                          const val = exam.due_amount || exam.dueAmount || 0
+                          return parseFloat(val.toString()).toFixed(2)
+                        })()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5" />
               Payment Details
             </CardTitle>
@@ -970,70 +1019,202 @@ export default function PatientBillDiscuss() {
               </div>
 
               {!showAddPayment ? (
-                <Button onClick={() => setShowAddPayment(true)} className="bg-green-600 hover:bg-green-700">
-                  Add Payment
-                </Button>
+                <div className="flex justify-start">
+                  <Button onClick={() => setShowAddPayment(true)} className="bg-green-600 hover:bg-green-700">
+                    Add Additional Payment
+                  </Button>
+                </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label>Payment Method</Label>
-                      <Select value={additionalPaymentMethod} onValueChange={setAdditionalPaymentMethod}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select payment method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {paymentMethods.map((method) => {
-                            const methodValue = method.code || method.name?.toLowerCase() || ''
-                            const IconComponent = getPaymentIcon(methodValue)
-                            return (
-                              <SelectItem key={method.id} value={methodValue}>
-                                <div className="flex items-center gap-2">
-                                  <IconComponent className="h-4 w-4" />
-                                  {method.name}
-                                </div>
-                              </SelectItem>
-                            )
-                          })}
-                        </SelectContent>
-                      </Select>
+                <div className="space-y-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-green-800 uppercase tracking-wider">New Payment Entry</h3>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="multi-payment-toggle" className="text-xs font-medium text-green-700 cursor-pointer">Multiple Payment Methods</Label>
+                      <input 
+                        id="multi-payment-toggle"
+                        type="checkbox"
+                        checked={showAdditionalMultiPayment}
+                        onChange={(e) => {
+                          setShowAdditionalMultiPayment(e.target.checked)
+                          if (e.target.checked && selectedAdditionalPaymentMethods.length === 0) {
+                            setSelectedAdditionalPaymentMethods([{ id: 'cash', amount: 0 }])
+                          }
+                        }}
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                      />
                     </div>
+                  </div>
 
-                    <div>
-                      <Label>Amount</Label>
-                      <div className="relative">
-                        <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          placeholder="0.00"
-                          className="pl-10"
-                          value={additionalPaymentAmount}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                              setAdditionalPaymentAmount(val);
-                            }
-                          }}
-                        />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-3 bg-white rounded border border-green-100">
+                      <Label className="text-gray-500 text-xs uppercase tracking-wider">Previous Paid</Label>
+                      <div className="text-lg font-bold text-gray-700">₹{currentExamination.paidAmount || 0}</div>
+                    </div>
+                    <div className="p-3 bg-white rounded border border-green-200">
+                      <Label className="text-green-600 text-xs uppercase tracking-wider">Additional Payment</Label>
+                      <div className="text-lg font-bold text-green-600">
+                        ₹{(showAdditionalMultiPayment 
+                          ? selectedAdditionalPaymentMethods.reduce((sum, p) => sum + p.amount, 0)
+                          : parseFloat(additionalPaymentAmount || '0')
+                        ).toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="p-3 bg-white rounded border border-green-100">
+                      <Label className="text-gray-500 text-xs uppercase tracking-wider">New Total Paid</Label>
+                      <div className="text-xl font-black text-blue-600">
+                        ₹{(parseFloat(currentExamination.paidAmount || '0') + 
+                          (showAdditionalMultiPayment 
+                            ? selectedAdditionalPaymentMethods.reduce((sum, p) => sum + p.amount, 0)
+                            : parseFloat(additionalPaymentAmount || '0')
+                          )
+                        ).toFixed(2)}
                       </div>
                     </div>
                   </div>
+
+                  {!showAdditionalMultiPayment ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Payment Method</Label>
+                        <Select value={additionalPaymentMethod} onValueChange={setAdditionalPaymentMethod}>
+                          <SelectTrigger className="bg-white">
+                            <SelectValue placeholder="Select payment method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {paymentMethods.map((method) => {
+                              const methodValue = method.code || method.name?.toLowerCase() || ''
+                              const IconComponent = getPaymentIcon(methodValue)
+                              return (
+                                <SelectItem key={method.id} value={methodValue}>
+                                  <div className="flex items-center gap-2">
+                                    <IconComponent className="h-4 w-4" />
+                                    {method.name}
+                                  </div>
+                                </SelectItem>
+                              )
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label>Amount</Label>
+                        <div className="relative">
+                          <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                          <Input
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="0.00"
+                            className="pl-10 bg-white"
+                            value={additionalPaymentAmount}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                setAdditionalPaymentAmount(val);
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-semibold text-green-600 uppercase border-b pb-1">Payment Breakdown</h4>
+                      {selectedAdditionalPaymentMethods.map((payment, index) => {
+                        const IconComponent = getPaymentIcon(payment.id)
+                        return (
+                          <div key={index} className="flex items-center gap-2 p-2 bg-white rounded border border-green-100">
+                            <Select 
+                              value={payment.id} 
+                              onValueChange={(value) => {
+                                const newMethods = [...selectedAdditionalPaymentMethods]
+                                newMethods[index].id = value
+                                setSelectedAdditionalPaymentMethods(newMethods)
+                              }}
+                            >
+                              <SelectTrigger className="w-[180px] h-9">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {paymentMethods.map((method) => {
+                                  const methodValue = method.code || method.name?.toLowerCase() || ''
+                                  return (
+                                    <SelectItem key={method.id} value={methodValue}>
+                                      {method.name}
+                                    </SelectItem>
+                                  )
+                                })}
+                              </SelectContent>
+                            </Select>
+                            <div className="flex-1 relative">
+                              <IndianRupee className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                              <Input
+                                type="text"
+                                className="pl-8 h-9"
+                                value={payment.amount || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                    const newMethods = [...selectedAdditionalPaymentMethods]
+                                    newMethods[index].amount = val === '' ? 0 : parseFloat(val)
+                                    setSelectedAdditionalPaymentMethods(newMethods)
+                                  }
+                                }}
+                              />
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedAdditionalPaymentMethods(
+                                  selectedAdditionalPaymentMethods.filter((_, i) => i !== index)
+                                )
+                              }}
+                              className="text-red-500 hover:text-red-700 h-9 w-9 p-0"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )
+                      })}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedAdditionalPaymentMethods([...selectedAdditionalPaymentMethods, { id: 'cash', amount: 0 }])}
+                        className="w-full border-dashed border-green-300 text-green-600 hover:bg-green-50"
+                      >
+                        + Add Method
+                      </Button>
+                    </div>
+                  )}
 
                   <div>
                     <Label>Notes (Optional)</Label>
                     <Input
                       placeholder="Payment notes..."
+                      className="bg-white"
                       value={paymentNotes}
                       onChange={(e) => setPaymentNotes(e.target.value)}
                     />
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button onClick={handleAddPayment} disabled={loading} className="bg-green-600 hover:bg-green-700">
-                      {loading ? 'Adding...' : 'Add Payment'}
+                  <div className="flex gap-2 pt-2">
+                    <Button 
+                      onClick={handleAddPayment} 
+                      disabled={loading} 
+                      className="bg-green-600 hover:bg-green-700 flex-1"
+                    >
+                      {loading ? 'Adding...' : 'Confirm Payments'}
                     </Button>
-                    <Button variant="outline" onClick={() => setShowAddPayment(false)}>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setShowAddPayment(false)
+                        setShowAdditionalMultiPayment(false)
+                        setSelectedAdditionalPaymentMethods([])
+                      }} 
+                      className="bg-white"
+                    >
                       Cancel
                     </Button>
                   </div>
@@ -1057,9 +1238,10 @@ export default function PatientBillDiscuss() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-2">#</th>
+                      <th className="text-left p-2">Payment Date</th>
+                      <th className="text-left p-2">Exam Date</th>
                       <th className="text-left p-2">Payment Method</th>
                       <th className="text-left p-2">Amount</th>
-                      <th className="text-left p-2">Date</th>
                       <th className="text-left p-2">Notes</th>
                       <th className="text-left p-2">Receipt</th>
                     </tr>
@@ -1068,11 +1250,14 @@ export default function PatientBillDiscuss() {
                     {installments.map((installment) => (
                       <tr key={installment.id} className="border-b hover:bg-gray-50">
                         <td className="p-2 font-medium">#{installment.installmentNumber}</td>
-                        <td className="p-2">{installment.paymentMethod}</td>
-                        <td className="p-2 font-medium text-green-600">₹{installment.amount}</td>
-                        <td className="p-2 text-sm text-gray-600">
-                          {format(new Date(installment.paymentDate), "dd/MM/yyyy")}
+                        <td className="p-2">
+                          {format(new Date(installment.paymentDate), "dd/MM/yyyy HH:mm")}
                         </td>
+                        <td className="p-2 text-gray-500">
+                          {installment.examinationDate ? format(new Date(installment.examinationDate), "dd/MM/yyyy") : 'N/A'}
+                        </td>
+                        <td className="p-2 capitalize">{installment.paymentMethod}</td>
+                        <td className="p-2 font-bold">₹{parseFloat(installment.amount.toString()).toFixed(2)}</td>
                         <td className="p-2 text-sm">{installment.notes || '-'}</td>
                         <td className="p-2">
                           <Button

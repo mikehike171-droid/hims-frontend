@@ -90,12 +90,14 @@ const WhyUsSection = () => {
           ))}
         </div>
 
-        {/* Bottom CTA or Subtle Indicator */}
-        <div className={`mt-20 text-center transition-all duration-1000 ${isVisible ? "opacity-100" : "opacity-0"}`} style={{ transitionDelay: "1000ms" }}>
-          <div className="inline-flex items-center gap-3 text-slate-400 font-medium tracking-widest text-xs uppercase">
-            <div className="w-12 h-px bg-slate-200" />
-            {t('Empowering Your Health Naturally')}
-            <div className="w-12 h-px bg-slate-200" />
+        {/* Bottom CTA Highlight */}
+        <div className={`mt-16 text-center transition-all duration-1000 ${isVisible ? "opacity-100" : "opacity-0"}`} style={{ transitionDelay: "1000ms" }}>
+          <div className="inline-flex items-center gap-6 px-12 py-5 bg-slate-50 rounded-full border border-slate-100 shadow-sm group hover:bg-primary/5 transition-all duration-500">
+            <div className="h-[2px] w-12 bg-primary/20 group-hover:w-16 transition-all" />
+            <span className="text-[14px] md:text-[18px] font-black text-slate-400 uppercase tracking-[0.4em] group-hover:text-primary transition-colors">
+              {t('Empowering Your Health Naturally')}
+            </span>
+            <div className="h-[2px] w-12 bg-primary/20 group-hover:w-16 transition-all" />
           </div>
         </div>
       </div>

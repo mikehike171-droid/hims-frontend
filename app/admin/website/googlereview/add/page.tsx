@@ -1,0 +1,186 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ArrowLeft, Save, Star, User, Calendar, MapPin } from "lucide-react"
+import { settingsApi } from "@/lib/settingsApi"
+import { toast } from "@/components/ui/use-toast"
+import PrivateRoute from "@/components/auth/PrivateRoute"
+
+export default function AddGoogleReviewPage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    reviewer_name: "",
+    reviewer_stats: "Local Guide",
+    review_date: "Recently",
+    review_text: "",
+    rating: 5,
+    branch_name: "Miryalaguda",
+    status: "active"
+  })
+
+  const handleSave = async () => {
+    if (!formData.reviewer_name || !formData.review_text) {
+      toast({
+        title: "Error",
+        description: "Name and Review text are required",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      setLoading(true)
+      await settingsApi.createGoogleReview(formData)
+      toast({
+        title: "Success",
+        description: "Review added successfully",
+      })
+      router.push('/admin/website/googlereview')
+    } catch (error) {
+      console.error('Error creating review:', error)
+      toast({
+        title: "Error",
+        description: "Failed to add review",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <PrivateRoute modulePath="admin/website" action="view">
+      <div className="p-6 space-y-6 max-w-2xl mx-auto">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <h1 className="text-3xl font-bold text-gray-900">Add New Review</h1>
+        </div>
+
+        <Card className="border-none shadow-xl overflow-hidden rounded-3xl">
+          <CardHeader className="bg-primary/5 pb-8">
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <Star className="h-5 w-5 fill-primary" />
+              <span>Review Details</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6 pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="reviewer_name" className="text-xs font-black uppercase tracking-widest text-slate-400">Reviewer Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="reviewer_name"
+                    placeholder="e.g. Rahul Sharma"
+                    className="pl-10 h-11 bg-slate-50/50 border-slate-100 rounded-xl focus:ring-primary/20"
+                    value={formData.reviewer_name}
+                    onChange={(e) => setFormData({ ...formData, reviewer_name: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="branch" className="text-xs font-black uppercase tracking-widest text-slate-400">Branch</Label>
+                <Select 
+                  value={formData.branch_name} 
+                  onValueChange={(val) => setFormData({ ...formData, branch_name: val })}
+                >
+                  <SelectTrigger className="h-11 bg-slate-50/50 border-slate-100 rounded-xl focus:ring-primary/20">
+                    <SelectValue placeholder="Select Branch" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                    <SelectItem value="Miryalaguda">Miryalaguda</SelectItem>
+                    <SelectItem value="Narasaraopet">Narasaraopet</SelectItem>
+                    <SelectItem value="Ongole">Ongole</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="reviewer_stats" className="text-xs font-black uppercase tracking-widest text-slate-400">Reviewer Stats</Label>
+                <Input
+                  id="reviewer_stats"
+                  placeholder="e.g. Local Guide · 5 reviews"
+                  className="h-11 bg-slate-50/50 border-slate-100 rounded-xl"
+                  value={formData.reviewer_stats}
+                  onChange={(e) => setFormData({ ...formData, reviewer_stats: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="review_date" className="text-xs font-black uppercase tracking-widest text-slate-400">Date Display</Label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="review_date"
+                    placeholder="e.g. 3 months ago"
+                    className="pl-10 h-11 bg-slate-50/50 border-slate-100 rounded-xl"
+                    value={formData.review_date}
+                    onChange={(e) => setFormData({ ...formData, review_date: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="rating" className="text-xs font-black uppercase tracking-widest text-slate-400">Rating (1-5)</Label>
+              <div className="flex items-center gap-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star 
+                      key={s} 
+                      className={`h-6 w-6 cursor-pointer transition-all ${s <= formData.rating ? 'text-yellow-500 fill-yellow-500 scale-110' : 'text-slate-200'}`}
+                      onClick={() => setFormData({ ...formData, rating: s })}
+                    />
+                  ))}
+                </div>
+                <span className="text-sm font-bold text-slate-500">{formData.rating} Stars selected</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="review_text" className="text-xs font-black uppercase tracking-widest text-slate-400">Review Text</Label>
+              <Textarea
+                id="review_text"
+                placeholder="What did the patient say?"
+                className="min-h-[120px] bg-slate-50/50 border-slate-100 rounded-2xl p-4 focus:ring-primary/20"
+                value={formData.review_text}
+                onChange={(e) => setFormData({ ...formData, review_text: e.target.value })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-bold text-slate-700">Display Status</Label>
+                <p className="text-xs text-slate-400 font-medium italic">Make this review visible on the homepage</p>
+              </div>
+              <Switch
+                checked={formData.status === 'active'}
+                onCheckedChange={(checked) => setFormData({ ...formData, status: checked ? 'active' : 'inactive' })}
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-end gap-3 bg-slate-50/50 p-8 border-t border-slate-100">
+            <Button variant="outline" className="rounded-xl px-6" onClick={() => router.back()}>Cancel</Button>
+            <Button onClick={handleSave} disabled={loading} className="bg-primary hover:bg-primary/90 text-white rounded-xl px-8 shadow-lg shadow-primary/20">
+              <Save className="h-4 w-4 mr-2" />
+              {loading ? "Saving..." : "Save Review"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    </PrivateRoute>
+  )
+}

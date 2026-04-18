@@ -46,10 +46,22 @@ const BlogSection = () => {
   return (
     <section className="py-12 bg-white" id="blogs" ref={ref}>
       <div className="container mx-auto px-4">
-        <div className={`transition-all duration-700 ${isVisible ? "animate-fade-in-up opacity-100" : "opacity-0"}`}>
-          <h2 className="section-heading text-center mb-12">{t('Our Blogs')}</h2>
+        <div className={`text-center mb-16 transition-all duration-1000 ${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="h-[2px] w-8 bg-[#1B7A43]/20" />
+            <span className="text-[10px] font-black text-[#1B7A43] uppercase tracking-[0.4em]">{t('Latest Insights')}</span>
+            <div className="h-[2px] w-8 bg-[#1B7A43]/20" />
+          </div>
+
+          <h2 className="text-4xl md:text-5xl font-black text-[#1B7A43] uppercase font-heading leading-tight mb-4">
+            {t('Clinical Stories & Insights')}
+          </h2>
+
+          <p className="text-slate-500 text-lg max-w-2xl mx-auto font-medium">
+            {t('Expert perspectives on permanent healing and wellness through Advanced Homeopathy.')}
+          </p>
         </div>
-        
+
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {loading ? (
             // Skeleton Loader
@@ -102,7 +114,7 @@ const BlogSection = () => {
 
         {!loading && blogs.length > 0 && (
           <div className="flex justify-center mt-12 animate-fade-in-up">
-            <Link 
+            <Link
               href="/blogs"
               className="bg-[#1B7A43] text-white px-10 py-4 rounded-full font-bold uppercase text-xs tracking-widest hover:scale-105 hover:bg-[#155e34] hover:shadow-xl transition-all duration-300 inline-flex items-center shadow-lg"
             >

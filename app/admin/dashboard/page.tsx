@@ -21,14 +21,14 @@ import {
   Stethoscope,
   Pill
 } from "lucide-react"
-import { 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   Legend,
   AreaChart,
   Area
@@ -46,7 +46,7 @@ export default function AdminDashboard() {
   const [dueYearlyFlow, setDueYearlyFlow] = useState<any[]>([])
   const [paymentMethodFlow, setPaymentMethodFlow] = useState<any[]>([])
   const [paymentMethods, setPaymentMethods] = useState<string[]>([])
-  
+
   const hasFetched = useRef(false)
 
   useEffect(() => {
@@ -73,9 +73,9 @@ export default function AdminDashboard() {
           setAppointmentCount(data.appointments.month?.toString() || "0");
           setRevenue(data.financials.revenue?.toLocaleString() || "0");
           setDueAmount(data.financials.dueAmount?.toLocaleString() || "0");
-          
+
           const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-          
+
           // Format flow data
           setPatientYearlyFlow(data.patientYearlyFlow.map((item: any) => ({
             name: monthNames[item.month - 1],
@@ -239,36 +239,36 @@ export default function AdminDashboard() {
                     >
                       <defs>
                         <linearGradient id="colorPatients" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                      <XAxis 
-                        dataKey="name" 
-                        axisLine={false} 
-                        tickLine={false} 
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
                         tick={{ fill: '#6b7280', fontSize: 12 }}
                       />
-                      <YAxis 
-                        axisLine={false} 
-                        tickLine={false} 
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
                         tick={{ fill: '#6b7280', fontSize: 12 }}
                       />
-                      <Tooltip 
-                        contentStyle={{ 
-                          borderRadius: '8px', 
-                          border: 'none', 
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-                        }} 
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: '8px',
+                          border: 'none',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }}
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="patients" 
-                        stroke="#3b82f6" 
+                      <Area
+                        type="monotone"
+                        dataKey="patients"
+                        stroke="#3b82f6"
                         strokeWidth={3}
-                        fillOpacity={1} 
-                        fill="url(#colorPatients)" 
+                        fillOpacity={1}
+                        fill="url(#colorPatients)"
                         animationDuration={1500}
                       />
                     </AreaChart>
@@ -297,36 +297,36 @@ export default function AdminDashboard() {
                     >
                       <defs>
                         <linearGradient id="colorAppointments" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                      <XAxis 
-                        dataKey="name" 
-                        axisLine={false} 
-                        tickLine={false} 
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
                         tick={{ fill: '#6b7280', fontSize: 12 }}
                       />
-                      <YAxis 
-                        axisLine={false} 
-                        tickLine={false} 
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
                         tick={{ fill: '#6b7280', fontSize: 12 }}
                       />
-                      <Tooltip 
-                        contentStyle={{ 
-                          borderRadius: '8px', 
-                          border: 'none', 
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-                        }} 
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: '8px',
+                          border: 'none',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }}
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="appointments" 
-                        stroke="#10b981" 
+                      <Area
+                        type="monotone"
+                        dataKey="appointments"
+                        stroke="#10b981"
                         strokeWidth={3}
-                        fillOpacity={1} 
-                        fill="url(#colorAppointments)" 
+                        fillOpacity={1}
+                        fill="url(#colorAppointments)"
                         animationDuration={1500}
                       />
                     </AreaChart>
@@ -355,37 +355,37 @@ export default function AdminDashboard() {
                     >
                       <defs>
                         <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#a855f7" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#a855f7" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                      <XAxis 
-                        dataKey="name" 
-                        axisLine={false} 
-                        tickLine={false} 
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
                         tick={{ fill: '#6b7280', fontSize: 12 }}
                       />
-                      <YAxis 
-                        axisLine={false} 
-                        tickLine={false} 
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
                         tick={{ fill: '#6b7280', fontSize: 12 }}
                       />
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value: any) => [`₹${value.toLocaleString()}`, 'Revenue']}
-                        contentStyle={{ 
-                          borderRadius: '8px', 
-                          border: 'none', 
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-                        }} 
+                        contentStyle={{
+                          borderRadius: '8px',
+                          border: 'none',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }}
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="revenue" 
-                        stroke="#a855f7" 
+                      <Area
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="#a855f7"
                         strokeWidth={3}
-                        fillOpacity={1} 
-                        fill="url(#colorRevenue)" 
+                        fillOpacity={1}
+                        fill="url(#colorRevenue)"
                         animationDuration={1500}
                       />
                     </AreaChart>
@@ -414,37 +414,37 @@ export default function AdminDashboard() {
                     >
                       <defs>
                         <linearGradient id="colorDue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#f97316" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#f97316" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                      <XAxis 
-                        dataKey="name" 
-                        axisLine={false} 
-                        tickLine={false} 
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
                         tick={{ fill: '#6b7280', fontSize: 12 }}
                       />
-                      <YAxis 
-                        axisLine={false} 
-                        tickLine={false} 
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
                         tick={{ fill: '#6b7280', fontSize: 12 }}
                       />
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value: any) => [`₹${value.toLocaleString()}`, 'Due Amount']}
-                        contentStyle={{ 
-                          borderRadius: '8px', 
-                          border: 'none', 
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-                        }} 
+                        contentStyle={{
+                          borderRadius: '8px',
+                          border: 'none',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }}
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="due" 
-                        stroke="#f97316" 
+                      <Area
+                        type="monotone"
+                        dataKey="due"
+                        stroke="#f97316"
                         strokeWidth={3}
-                        fillOpacity={1} 
-                        fill="url(#colorDue)" 
+                        fillOpacity={1}
+                        fill="url(#colorDue)"
                         animationDuration={1500}
                       />
                     </AreaChart>
@@ -473,41 +473,41 @@ export default function AdminDashboard() {
                     margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fill: '#6b7280', fontSize: 13 }}
                     />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fill: '#6b7280', fontSize: 13 }}
                       tickFormatter={(value) => `₹${value >= 1000 ? (value / 1000) + 'k' : value}`}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: any) => [`₹${value.toLocaleString()}`, 'Amount']}
-                      contentStyle={{ 
-                        borderRadius: '12px', 
-                        border: 'none', 
+                      contentStyle={{
+                        borderRadius: '12px',
+                        border: 'none',
                         boxShadow: '0 8px 16px rgba(0,0,0,0.12)',
                         padding: '12px'
-                      }} 
+                      }}
                     />
-                    <Legend 
-                      verticalAlign="top" 
-                      height={36} 
+                    <Legend
+                      verticalAlign="top"
+                      height={36}
                       iconType="circle"
                       wrapperStyle={{ paddingBottom: '20px' }}
                     />
                     {paymentMethods.map((method, index) => {
                       const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
                       return (
-                        <Bar 
-                          key={method} 
-                          dataKey={method} 
-                          stackId="a" 
-                          fill={colors[index % colors.length]} 
+                        <Bar
+                          key={method}
+                          dataKey={method}
+                          stackId="a"
+                          fill={colors[index % colors.length]}
                           radius={index === paymentMethods.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
                           animationDuration={1500}
                         />

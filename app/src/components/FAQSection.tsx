@@ -19,11 +19,22 @@ const FAQSection = () => {
   const { ref, isVisible } = useScrollAnimation();
 
   return (
-    <section className="py-6" ref={ref}>
-      <div className="container mx-auto px-4 max-w-3xl">
-        <div className={`transition-all duration-700 ${isVisible ? "animate-fade-in-up opacity-100" : "opacity-0"}`}>
-          <h2 className="section-heading">Frequently Asked Questions</h2>
-          <p className="section-subheading">Have a question? We are here to answer them for you!</p>
+    <section className="py-20" ref={ref}>
+      <div className="container mx-auto px-4 max-w-4xl">
+        <div className={`text-center mb-12 transition-all duration-1000 ${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="h-[2px] w-8 bg-primary/20" />
+            <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Knowledge Base</span>
+            <div className="h-[2px] w-8 bg-primary/20" />
+          </div>
+          
+          <h2 className="text-4xl md:text-5xl font-black text-primary uppercase font-heading leading-tight mb-4">
+            Medical Insights & FAQs
+          </h2>
+          
+          <p className="text-slate-500 text-lg max-w-2xl mx-auto font-medium">
+            We are here to clear your doubts and guide you towards a journey of permanent healing.
+          </p>
         </div>
 
         <Accordion type="single" collapsible className={`mt-10 transition-all duration-700 ${isVisible ? "animate-fade-in-up opacity-100" : "opacity-0"}`} style={{ animationDelay: "200ms" }}>

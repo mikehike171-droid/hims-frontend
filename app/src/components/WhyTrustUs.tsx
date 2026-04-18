@@ -111,7 +111,7 @@ const WhyTrustUs = () => {
                   {t('Our trusted remedies are based on a holistic approach that carefully considers the physical, mental, and emotional aspects of every individual while treating the root cause of the condition.')}
                 </p>
                 <p>
-                  {t('As the')} <strong className="text-primary underline decoration-primary/30 underline-offset-4">{t('Best Homeopathy Clinic in Hyderabad')}</strong>, {t('we focus on delivering personalized care that goes beyond symptom relief to promote complete well-being.')}
+                  {t('As the')} <strong className="text-primary underline decoration-primary/30 underline-offset-4">{t('Best Homeopathy Clinic in UniCare')}</strong>, {t('we focus on delivering personalized care that goes beyond symptom relief to promote complete well-being.')}
                 </p>
               </div>
             </div>

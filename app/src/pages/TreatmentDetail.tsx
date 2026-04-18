@@ -1,5 +1,8 @@
+"use client"
+
 import React, { useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "next/navigation";
+import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AppointmentForm from "@/components/AppointmentForm";
@@ -29,7 +32,7 @@ const TreatmentDetail = () => {
         <div className="flex-grow flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-[#1a2e5a] mb-4">Treatment Not Found</h1>
-            <Link to="/" className="text-emerald-600 font-bold hover:underline">Return to Home</Link>
+            <Link href="/" className="text-emerald-600 font-bold hover:underline">Return to Home</Link>
           </div>
         </div>
         <Footer />
@@ -54,7 +57,7 @@ const TreatmentDetail = () => {
         
         <div className="container mx-auto px-4 relative z-20">
           <nav className="flex items-center gap-2 text-blue-200 text-sm mb-6">
-            <Link to="/" className="hover:text-white transition-colors">Home</Link>
+            <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight size={14} />
             <span className="text-white font-medium">{treatment.title}</span>
           </nav>
@@ -67,13 +70,13 @@ const TreatmentDetail = () => {
               {t(treatment.shortDesc)}
             </p>
             <div className="mt-10 flex flex-wrap gap-4 animate-fade-in delay-200">
-              <a 
-                href="#appointment" 
-                className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-xl font-bold shadow-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2"
+              <button 
+                onClick={() => window.dispatchEvent(new CustomEvent("open-appointment-popup"))}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-xl font-bold shadow-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 cursor-pointer"
               >
                 {t('Book Free Consultation')}
                 <ArrowRight size={20} />
-              </a>
+              </button>
               <a 
                 href="tel:+917337557851" 
                 className="bg-white/10 hover:bg-white/20 backdrop-blur text-white border border-white/30 px-8 py-4 rounded-xl font-bold transition-all duration-300 inline-flex items-center gap-2"
@@ -153,7 +156,7 @@ const TreatmentDetail = () => {
                 {Object.values(treatmentsData).filter(t_item => t_item.id !== id).map((t_item) => (
                   <Link 
                     key={t_item.id}
-                    to={`/treatment/${t_item.id}`}
+                    href={`/treatment/${t_item.id}`}
                     className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 text-[#1a2e5a] font-medium transition-all group"
                   >
                     <span>{t(t_item.title)}</span>

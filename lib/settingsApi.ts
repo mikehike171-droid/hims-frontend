@@ -1652,6 +1652,19 @@ export const settingsApi = {
     }
   },
 
+  getPublicTreatmentBySlug: async (slug: string) => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/public-treatments/${slug}`);
+      if (!response.ok) {
+        throw new Error(`Public Detail API Error: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('getPublicTreatmentBySlug error:', error);
+      return null;
+    }
+  },
+
   // Blogs
   getBlogs: async () => {
     try {
@@ -1724,6 +1737,70 @@ export const settingsApi = {
     return response.json();
   },
 
+  // Google Reviews (Admin)
+  getGoogleReviews: async (page = 1, limit = 10) => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/settings/google-reviews?page=${page}&limit=${limit}`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getGoogleReviews error:', error);
+      return { data: [], total: 0, page: 1, limit: 10 };
+    }
+  },
+
+  getGoogleReview: async (id: number) => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/settings/google-reviews/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getGoogleReview error:', error);
+      throw error;
+    }
+  },
+
+  createGoogleReview: async (data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/google-reviews`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  updateGoogleReview: async (id: number, data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/google-reviews/${id}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  deleteGoogleReview: async (id: number) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/google-reviews/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return await handleApiResponse(response);
+  },
+
+  // Public Google Reviews (Frontend)
+  getPublicGoogleReviews: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/public/google-reviews`);
+      if (!response.ok) throw new Error('Failed to fetch public reviews');
+      return await response.json();
+    } catch (error) {
+      console.error('getPublicGoogleReviews error:', error);
+      return { Miryalaguda: [], Narasaraopet: [], Ongole: [] };
+    }
+  },
+
+
   getPublicBlogs: async (limit?: number, offset?: number) => {
     try {
       let url = `${authService.getSettingsApiUrl()}/public-blogs`;
@@ -1758,7 +1835,251 @@ export const settingsApi = {
       return null;
     }
   },
+
+  // About Content
+  getAbout: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/about`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getAbout error:', error);
+      return [];
+    }
+  },
+
+  getPublicAbout: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/public-about`);
+      if (!response.ok) {
+        throw new Error(`Public About API Error: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('getPublicAbout error:', error);
+      return null;
+    }
+  },
+
+  createAbout: async (data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/about`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  updateAbout: async (id: number, data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/about/${id}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  deleteAbout: async (id: number) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/about/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return await handleApiResponse(response);
+  },
+
+  uploadAboutImages: async (files: File[]) => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('images', file);
+    });
+
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${authService.getSettingsApiUrl()}/about/upload-images`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Upload failed: ${errorText}`);
+    }
+
+    return await response.json();
+  },
+
+  // Branches (Clinics)
+  getBranches: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/settings/branches`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getBranches error:', error);
+      return [];
+    }
+  },
+
+  getPublicBranches: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/public/branches`);
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getPublicBranches error:', error);
+      return [];
+    }
+  },
+
+  getBranch: async (id: number) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/branches/${id}`, {
+      headers: getAuthHeaders(),
+    });
+    return await handleApiResponse(response);
+  },
+
+  getPublicBranchBySlug: async (slug: string) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/public/branches/${slug}`);
+    return await handleApiResponse(response);
+  },
+
+  createBranch: async (data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/branches`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  updateBranch: async (id: number, data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/branches/${id}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  deleteBranch: async (id: number) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/branches/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return response.ok;
+  },
+
+  uploadBranchImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/branches/upload-image`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+      },
+      body: formData,
+    });
+    return await handleApiResponse(response);
+  },
+
+  // Hero Sections
+  getHeroSections: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/public/hero-sections`);
+      if (!response.ok) throw new Error('Failed to fetch hero sections');
+      return await response.json();
+    } catch (error) {
+      console.error('getHeroSections error:', error);
+      return [];
+    }
+  },
+
+  getAdminHeroSections: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/settings/hero-sections`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getAdminHeroSections error:', error);
+      return [];
+    }
+  },
+
+  getHeroSection: async (id: number) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/hero-sections/${id}`, {
+      headers: getAuthHeaders(),
+    });
+    return await handleApiResponse(response);
+  },
+
+  createHeroSection: async (data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/hero-sections`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  updateHeroSection: async (id: number, data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/hero-sections/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  deleteHeroSection: async (id: number) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/hero-sections/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return response.ok;
+  },
+
+  uploadHeroImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    const response = await fetch(`${authService.getSettingsApiUrl()}/settings/hero-sections/upload-image`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+      },
+      body: formData,
+    });
+    return await handleApiResponse(response);
+  },
+
+  seedHeroSections: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/public/hero-sections/seed`, {
+        method: 'POST',
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('seedHeroSections error:', error);
+      return false;
+    }
+  },
+
+  getExternalReviews: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/public/reviews/external`);
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getExternalReviews error:', error);
+      return [];
+    }
+  },
 };
+
 
 // Type definitions
 export interface User {

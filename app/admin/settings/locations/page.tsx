@@ -49,7 +49,7 @@ export default function LocationsPage() {
     try {
       const selectedBranchId = authService.getSelectedBranchId()
       const locationId = selectedBranchId ? parseInt(selectedBranchId) : undefined
-      const data = await settingsApi.getLocations(locationId)
+      const data = await settingsApi.getLocations()
       setLocations(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching locations:', error)

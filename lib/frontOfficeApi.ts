@@ -283,4 +283,56 @@ export const frontOfficeApi = {
       return [];
     }
   },
+
+  getEnquiries: async (fromDate?: string, toDate?: string): Promise<any[]> => {
+    try {
+      const params = new URLSearchParams();
+      if (fromDate) params.append('fromDate', fromDate);
+      if (toDate) params.append('toDate', toDate);
+      
+      const response = await fetch(
+        `${authService.getSettingsApiUrl()}/enquiry?${params.toString()}`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getEnquiries error:', error);
+      return [];
+    }
+  },
+
+  saveEnquiry: async (enquiryData: any): Promise<any> => {
+    try {
+      const response = await fetch(
+        `${authService.getSettingsApiUrl()}/enquiry`,
+        {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(enquiryData),
+        }
+      );
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('saveEnquiry error:', error);
+      throw error;
+    }
+  },
+
+  markAsRead: async (id: number): Promise<any> => {
+    try {
+      const response = await fetch(
+        `${authService.getSettingsApiUrl()}/enquiry/${id}/read`,
+        {
+          method: 'PATCH',
+          headers: getAuthHeaders(),
+        }
+      );
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('markAsRead error:', error);
+      return null;
+    }
+  },
 };

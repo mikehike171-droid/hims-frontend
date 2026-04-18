@@ -12,6 +12,7 @@ import FAQSection from "@/components/FAQSection";
 import BlogSection from "@/components/BlogSection";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
+import AppointmentPopup from "@/components/AppointmentPopup";
 
 const Index = () => (
   <div className="min-h-screen">
@@ -29,6 +30,7 @@ const Index = () => (
     <BlogSection />
     <Footer />
     <WhatsAppFloat />
+    <AppointmentPopup />
   </div>
 );
 

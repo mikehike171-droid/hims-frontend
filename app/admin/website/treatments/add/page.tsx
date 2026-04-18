@@ -8,7 +8,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { ArrowLeft, Save, Activity, ImagePlus, X } from "lucide-react"
+import { 
+  ArrowLeft, 
+  Save, 
+  Activity, 
+  ImagePlus, 
+  X, 
+  Plus, 
+  Trash2, 
+  Type, 
+  List,
+  HelpCircle
+} from "lucide-react"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
+import RichTextEditor from "@/components/ui/RichTextEditor"
 import { settingsApi } from "@/lib/settingsApi"
 import { toast } from "@/components/ui/use-toast"
 import PrivateRoute from "@/components/auth/PrivateRoute"
@@ -17,16 +36,52 @@ import authService from "@/lib/authService"
 export default function AddTreatmentPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     name: "",
     category: "",
     short_description: "",
     long_description: "",
     image_url: "",
-    sections: null,
-    faqs: null,
+    sections: [],
+    faqs: [],
     status: "active"
   })
+
+  // --- Sections Management ---
+  const addSection = () => {
+    const newSection = { title: "", type: "text", content: "" }
+    setFormData({ ...formData, sections: [...formData.sections, newSection] })
+  }
+
+  const removeSection = (index: number) => {
+    const newSections = [...formData.sections]
+    newSections.splice(index, 1)
+    setFormData({ ...formData, sections: newSections })
+  }
+
+  const updateSection = (index: number, field: string, value: string) => {
+    const newSections = [...formData.sections]
+    newSections[index][field] = value
+    setFormData({ ...formData, sections: newSections })
+  }
+
+  // --- FAQs Management ---
+  const addFaq = () => {
+    const newFaq = { question: "", answer: "" }
+    setFormData({ ...formData, faqs: [...formData.faqs, newFaq] })
+  }
+
+  const removeFaq = (index: number) => {
+    const newFaqs = [...formData.faqs]
+    newFaqs.splice(index, 1)
+    setFormData({ ...formData, faqs: newFaqs })
+  }
+
+  const updateFaq = (index: number, field: string, value: string) => {
+    const newFaqs = [...formData.faqs]
+    newFaqs[index][field] = value
+    setFormData({ ...formData, faqs: newFaqs })
+  }
 
   const handleSave = async () => {
     if (!formData.name) {
@@ -83,7 +138,7 @@ export default function AddTreatmentPage() {
 
   return (
     <PrivateRoute modulePath="admin/settings" action="view">
-      <div className="p-6 space-y-6 max-w-4xl mx-auto">
+      <div className="p-6 space-y-6 max-w-5xl mx-auto pb-20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={() => router.back()}>
@@ -94,160 +149,265 @@ export default function AddTreatmentPage() {
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              <span>Treatment Details</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Treatment Name <span className="text-red-500">*</span></Label>
-                <Input
-                  id="name"
-                  placeholder="e.g. Low Back Pain"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
-                  placeholder="e.g. Bone & Spine"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="short_desc">Short Description</Label>
-              <Textarea
-                id="short_desc"
-                placeholder="A brief summary for the table and cards"
-                className="h-20"
-                value={formData.short_description}
-                onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="long_desc">Long Description</Label>
-              <Textarea
-                id="long_desc"
-                placeholder="Detailed information for the explorer view"
-                className="h-40"
-                value={formData.long_description}
-                onChange={(e) => setFormData({ ...formData, long_description: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-4">
-              <Label htmlFor="image">Treatment Image</Label>
-              <div className="flex flex-col gap-4 p-4 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50 hover:bg-slate-50 hover:border-primary/20 transition-all group">
-                {formData.image_url ? (
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg border-4 border-white group-hover:shadow-xl transition-all">
-                    <img 
-                      src={formData.image_url.startsWith('http') ? formData.image_url : `${authService.getSettingsApiUrl().replace('/api', '')}${formData.image_url}`} 
-                      alt="Preview" 
-                      className="w-full h-full object-cover"
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Main Details (Left Col) */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-primary" />
+                  <span>General Information</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Treatment Name <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="name"
+                      placeholder="e.g. Adenomyosis"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
-                    <button 
-                      type="button"
-                      onClick={() => setFormData({ ...formData, image_url: "" })}
-                      className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow-lg active:scale-95 transition-all"
-                    >
-                      <X size={16} />
-                    </button>
                   </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center py-12 cursor-pointer">
-                    <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-400 group-hover:text-primary group-hover:scale-110 transition-all duration-500">
-                      <ImagePlus size={32} />
-                    </div>
-                    <div className="mt-4 text-center">
-                      <p className="text-sm font-bold text-slate-600 group-hover:text-primary transition-colors">Click to upload image</p>
-                      <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-black">JPG, PNG or GIF (Max 2MB)</p>
-                    </div>
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      accept="image/*"
-                      onChange={handleImageUpload}
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Input
+                      id="category"
+                      placeholder="e.g. Women's Health"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     />
-                  </label>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="short_desc">Description (Summary)</Label>
+                  <Textarea
+                    id="short_desc"
+                    placeholder="Short summary for cards..."
+                    className="h-20"
+                    value={formData.short_description}
+                    onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="long_desc">Main Clinical Overview (Rich Text)</Label>
+                  <RichTextEditor 
+                    value={formData.long_description}
+                    onChange={(val) => setFormData({ ...formData, long_description: val })}
+                    placeholder="Enter detailed clinical overview..."
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Dynamic Sections */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <CardTitle className="inline-flex items-center gap-2">
+                  <Layers className="h-5 w-5 text-primary" />
+                  <span>Content Sections</span>
+                </CardTitle>
+                <Button onClick={addSection} variant="outline" size="sm" className="bg-primary/5 border-primary/20 text-primary">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Section
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {formData.sections.length === 0 && (
+                  <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-xl text-slate-400">
+                    No custom sections added.
+                  </div>
                 )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="image_url">Or Image URL (Fallback)</Label>
-                <Input
-                  id="image_url"
-                  placeholder="https://example.com/image.jpg"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                />
-              </div>
-            </div>
+                {formData.sections.map((section: any, index: number) => (
+                  <div key={index} className="p-4 border border-slate-100 rounded-xl bg-slate-50/30 space-y-4 relative group">
+                    <button 
+                      onClick={() => removeSection(index)}
+                      className="absolute top-2 right-2 text-slate-300 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Section Title</Label>
+                        <Input 
+                          placeholder="e.g. Primary Symptoms" 
+                          value={section.title}
+                          onChange={(e) => updateSection(index, 'title', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Layout Type</Label>
+                        <Select 
+                          value={section.type} 
+                          onValueChange={(val) => updateSection(index, 'type', val)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">
+                              <div className="flex items-center gap-2">
+                                <Type size={14} /> Text Block
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="list">
+                              <div className="flex items-center gap-2">
+                                <List size={14} /> Grid Cards (Comma separated)
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>
+                        {section.type === 'list' ? 'List Content (Separate with commas)' : 'Text Content'}
+                      </Label>
+                      {section.type === 'text' ? (
+                        <RichTextEditor 
+                          value={section.content}
+                          onChange={(val) => updateSection(index, 'content', val)}
+                          placeholder="Enter section details..."
+                        />
+                      ) : (
+                        <Textarea 
+                          placeholder="Fever, Pain, Bloating..."
+                          className="h-24"
+                          value={section.content}
+                          onChange={(e) => updateSection(index, 'content', e.target.value)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="sections">Sections (JSON format)</Label>
-                <Textarea
-                  id="sections"
-                  placeholder='[{"title": "Overview", "content": "..."}]'
-                  className="h-32 font-mono text-xs"
-                  value={formData.sections ? JSON.stringify(formData.sections, null, 2) : ""}
-                  onChange={(e) => {
-                    try {
-                      const val = e.target.value ? JSON.parse(e.target.value) : null;
-                      setFormData({ ...formData, sections: val });
-                    } catch (err) {
-                      // Allow typing, but don't parse invalid JSON yet
-                    }
-                  }}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="faqs">FAQs (JSON format)</Label>
-                <Textarea
-                  id="faqs"
-                  placeholder='[{"question": "...", "answer": "..."}]'
-                  className="h-32 font-mono text-xs"
-                  value={formData.faqs ? JSON.stringify(formData.faqs, null, 2) : ""}
-                  onChange={(e) => {
-                    try {
-                      const val = e.target.value ? JSON.parse(e.target.value) : null;
-                      setFormData({ ...formData, faqs: val });
-                    } catch (err) {
-                    }
-                  }}
-                />
-              </div>
-            </div>
+            {/* Dynamic FAQs */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <CardTitle className="inline-flex items-center gap-2">
+                  <HelpCircle className="h-5 w-5 text-primary" />
+                  <span>Patient FAQs</span>
+                </CardTitle>
+                <Button onClick={addFaq} variant="outline" size="sm" className="bg-primary/5 border-primary/20 text-primary">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add FAQ
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {formData.faqs.length === 0 && (
+                  <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-xl text-slate-400">
+                    No FAQs added.
+                  </div>
+                )}
+                {formData.faqs.map((faq: any, index: number) => (
+                  <div key={index} className="p-4 border border-slate-100 rounded-xl bg-slate-50/30 space-y-3 relative group">
+                    <button 
+                      onClick={() => removeFaq(index)}
+                      className="absolute top-2 right-2 text-slate-300 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <div className="space-y-2">
+                      <Label>Question</Label>
+                      <Input 
+                        placeholder="e.g. Is this treatment permanent?" 
+                        value={faq.question}
+                        onChange={(e) => updateFaq(index, 'question', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Answer</Label>
+                      <Textarea 
+                        placeholder="Provide answer..." 
+                        className="h-20"
+                        value={faq.answer}
+                        onChange={(e) => updateFaq(index, 'answer', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="status"
-                checked={formData.status === 'active'}
-                onCheckedChange={(checked) => setFormData({ ...formData, status: checked ? 'active' : 'inactive' })}
-              />
-              <Label htmlFor="status" className="font-bold uppercase text-[10px] tracking-widest text-slate-500">
-                Display on Website ({formData.status})
-              </Label>
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-3 bg-slate-50/50 p-6">
-            <Button variant="outline" onClick={() => router.back()}>Cancel</Button>
-            <Button onClick={handleSave} disabled={loading} className="bg-primary">
-              <Save className="h-4 w-4 mr-2" />
-              {loading ? "Creating..." : "Save Treatment"}
-            </Button>
-          </CardFooter>
-        </Card>
+          {/* Sidebar (Right Col) */}
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <div className="space-y-2">
+                  <Label>Featured Image</Label>
+                  <div className="border-2 border-dashed border-slate-200 rounded-xl overflow-hidden bg-slate-50 group hover:border-primary/40 transition-all">
+                    {formData.image_url ? (
+                      <div className="relative aspect-square">
+                        <img 
+                          src={formData.image_url.startsWith('http') ? formData.image_url : `${authService.getSettingsApiUrl().replace('/api', '')}${formData.image_url}`} 
+                          alt="Preview" 
+                          className="w-full h-full object-cover"
+                        />
+                        <button 
+                          onClick={() => setFormData({ ...formData, image_url: "" })}
+                          className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center p-10 cursor-pointer">
+                        <ImagePlus size={32} className="text-slate-400 group-hover:text-primary transition-colors" />
+                        <span className="text-[10px] font-bold text-slate-500 mt-2 uppercase tracking-widest">Upload Image</span>
+                        <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                <hr className="border-slate-100" />
+
+                <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  <Label className="text-[10px] font-black uppercase tracking-widest">Active Status</Label>
+                  <Switch
+                    checked={formData.status === 'active'}
+                    onCheckedChange={(checked) => setFormData({ ...formData, status: checked ? 'active' : 'inactive' })}
+                  />
+                </div>
+
+                <Button onClick={handleSave} disabled={loading} className="w-full bg-primary h-12 text-[12px] font-black tracking-[0.1em] uppercase">
+                  {loading ? "..." : <><Save className="h-4 w-4 mr-2" /> Save Treatment</>}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </PrivateRoute>
+  )
+}
+
+function Layers(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.1 6.27a2 2 0 0 0 0 3.45l9.07 4.09a2 2 0 0 0 1.66 0l9.07-4.09a2 2 0 0 0 0-3.45z" />
+      <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />
+      <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
+    </svg>
   )
 }

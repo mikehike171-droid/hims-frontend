@@ -88,6 +88,7 @@ export default function CaseSheetPage() {
     nextRenewalDateDoctor: ''
   })
   const [editingExamId, setEditingExamId] = useState<number | null>(null)
+  const [editingExaminationId, setEditingExaminationId] = useState<number | null>(null)
   const [editingRenewalDate, setEditingRenewalDate] = useState<string>('')
   const [voiceTranscript, setVoiceTranscript] = useState('')
   const [examinations, setExaminations] = useState<any[]>([])
@@ -1743,6 +1744,46 @@ export default function CaseSheetPage() {
     }
   }
 
+  const resetExaminationForm = () => {
+    setExaminationData({
+      pastMedicalReports: '',
+      investigationsRequired: '',
+      physicalExamination: '',
+      bp: '',
+      pulse: '',
+      heartRate: '',
+      weight: '',
+      rr: '',
+      menstrualObstetricHistory: '',
+      treatmentPlanMonthsDoctor: '',
+      nextRenewalDateDoctor: ''
+    })
+    setSelectedReportFiles(null)
+    setEditingExaminationId(null)
+    // Reset the file input
+    const formFileInput = document.getElementById('form-report-upload') as HTMLInputElement
+    if (formFileInput) formFileInput.value = ''
+  }
+
+  const handleEditExamination = (exam: any) => {
+    setExaminationData({
+      pastMedicalReports: exam.pastMedicalReports || exam.past_medical_reports || '',
+      investigationsRequired: exam.investigationsRequired || exam.invest_req || '',
+      physicalExamination: exam.physicalExamination || exam.physical_exam || '',
+      bp: exam.bp || '',
+      pulse: exam.pulse || '',
+      heartRate: exam.heartRate || exam.heart_rate || '',
+      weight: exam.weight || '',
+      rr: exam.rr || '',
+      menstrualObstetricHistory: exam.menstrualObstetricHistory || exam.menstrual_obstetric_history || '',
+      treatmentPlanMonthsDoctor: (exam.treatmentPlanMonthsDoctor || exam.treatment_plan_months_doctor || '').toString(),
+      nextRenewalDateDoctor: exam.nextRenewalDateDoctor || exam.next_renewal_date_doctor || ''
+    })
+    setEditingExaminationId(exam.id)
+    // Scroll to top of form
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const handleExaminationSubmit = async () => {
     if (!patientId) return
 
@@ -1753,7 +1794,7 @@ export default function CaseSheetPage() {
     }
 
     try {
-      const newExam = await examinationApi.createExamination({
+      const data = {
         patientId: patientId,
         locationId: locationId,
         pastMedicalReports: examinationData.pastMedicalReports,
@@ -1767,22 +1808,31 @@ export default function CaseSheetPage() {
         menstrualObstetricHistory: examinationData.menstrualObstetricHistory,
         treatmentPlanMonthsDoctor: examinationData.treatmentPlanMonthsDoctor ? parseInt(examinationData.treatmentPlanMonthsDoctor) : null,
         nextRenewalDateDoctor: examinationData.nextRenewalDateDoctor || null,
-      })
+      }
+
+      let examResponse;
+      if (editingExaminationId) {
+        examResponse = await examinationApi.updateExamination(editingExaminationId, data)
+      } else {
+        examResponse = await examinationApi.createExamination(data)
+      }
+
+      const examId = editingExaminationId || examResponse?.id
 
       // Auto-upload selected report files if any
-      if (selectedReportFiles && selectedReportFiles.length > 0 && newExam?.id) {
+      if (selectedReportFiles && selectedReportFiles.length > 0 && examId) {
         try {
           const token = localStorage.getItem('authToken')
           const formData = new FormData()
           Array.from(selectedReportFiles).forEach(file => formData.append('files', file))
-          const uploadRes = await fetch(`${authService.getSettingsApiUrl()}/patient-examination/${newExam.id}/upload-reports`, {
+          const uploadRes = await fetch(`${authService.getSettingsApiUrl()}/patient-examination/${examId}/upload-reports`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
             body: formData,
           })
           if (uploadRes.ok) {
             const uploadData = await uploadRes.json()
-            setExaminationReports(prev => ({ ...prev, [newExam.id]: uploadData.files || [] }))
+            setExaminationReports(prev => ({ ...prev, [examId]: uploadData.files || [] }))
           }
         } catch (uploadErr) {
           console.error('Error uploading report files:', uploadErr)
@@ -1790,26 +1840,9 @@ export default function CaseSheetPage() {
       }
 
       // Reset form and refresh data
-      setExaminationData({
-        pastMedicalReports: '',
-        investigationsRequired: '',
-        physicalExamination: '',
-        bp: '',
-        pulse: '',
-        heartRate: '',
-        weight: '',
-        rr: '',
-        menstrualObstetricHistory: '',
-        treatmentPlanMonthsDoctor: '',
-        nextRenewalDateDoctor: ''
-      })
-      setSelectedReportFiles(null)
-      // Reset the file input
-      const formFileInput = document.getElementById('form-report-upload') as HTMLInputElement
-      if (formFileInput) formFileInput.value = ''
-
+      resetExaminationForm()
       fetchPatientExaminations()
-      alert('Examination saved successfully!')
+      alert(editingExaminationId ? 'Examination updated successfully!' : 'Examination saved successfully!')
     } catch (error) {
       console.error('Error saving examination:', error)
       alert('Failed to save examination')
@@ -3675,12 +3708,27 @@ export default function CaseSheetPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-3">
+                    {editingExaminationId && (
+                      <Button
+                        variant="outline"
+                        onClick={resetExaminationForm}
+                      >
+                        Cancel Edit
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                      onClick={resetExaminationForm}
+                    >
+                      Add New Examination
+                    </Button>
                     <Button
                       className="bg-blue-600 hover:bg-blue-700"
                       onClick={handleExaminationSubmit}
                     >
-                      Submit
+                      {editingExaminationId ? 'Update Examination' : 'Submit'}
                     </Button>
                   </div>
                 </CardContent>
@@ -3722,7 +3770,10 @@ export default function CaseSheetPage() {
                               "hover:bg-blue-50/30"
                             )}>
                               <td className="border border-gray-300 px-4 py-2">
-                                {new Date(examination.createdAt).toLocaleDateString()}
+                                {(() => {
+                                  const dateVal = examination.createdAt || examination.created_at
+                                  return dateVal ? format(new Date(dateVal), "dd/MM/yyyy") : 'N/A'
+                                })()}
                               </td>
                               <td className="border border-gray-300 px-4 py-2">{examination.bp || '-'}</td>
                               <td className="border border-gray-300 px-4 py-2">{examination.pulse || '-'}</td>
@@ -3812,10 +3863,10 @@ export default function CaseSheetPage() {
                                   ) : (
                                     <>
                                       <span className="text-sm">
-                                        {examination.nextRenewalDateDoctor || examination.next_renewal_date_doctor ?
-                                          format(new Date(examination.nextRenewalDateDoctor || examination.next_renewal_date_doctor), "dd/MM/yyyy")
-                                          : '-'
-                                        }
+                                        {(() => {
+                                          const dateVal = examination.nextRenewalDateDoctor || examination.next_renewal_date_doctor
+                                          return dateVal ? format(new Date(dateVal), "dd/MM/yyyy") : '-'
+                                        })()}
                                       </span>
                                       <Button
                                         size="sm"
@@ -3910,6 +3961,15 @@ export default function CaseSheetPage() {
                               {/* Action (Delete) column */}
                               <td className="border border-gray-300 px-4 py-2 text-center">
                                 <div className="flex justify-center gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                    onClick={() => handleEditExamination(examination)}
+                                    title="Edit examination"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
                                   {deletingExamId === examination.id ? (
                                     <>
                                       <Button
@@ -4237,99 +4297,110 @@ export default function CaseSheetPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {savedPrescriptions.map((prescription, index) => (
-                            <tr key={`saved-${prescription.medicine_id || index}-${index}`} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                              <td className="border border-gray-300 px-4 py-2">
-                                {new Date(prescription.created_at).toLocaleDateString()}
-                              </td>
-                              <td className="border border-gray-300 px-4 py-2">{prescription.medicine_type || '-'}</td>
-                              <td className="border border-gray-300 px-4 py-2">{prescription.medicine || '-'}</td>
-                              <td className="border border-gray-300 px-4 py-2">{prescription.potency || '-'}</td>
-                              <td className="border border-gray-300 px-4 py-2">{prescription.dosage || '-'}</td>
-                              <td className="border border-gray-300 px-4 py-2">
-                                {[
-                                  prescription.morning && 'Morning',
-                                  prescription.afternoon && 'Afternoon',
-                                  prescription.night && 'Night'
-                                ].filter(Boolean).join(', ') || '-'}
-                              </td>
-                              <td className="border border-gray-300 px-4 py-2">{prescription.medicine_days || '-'}</td>
-                              <td className="border border-gray-300 px-4 py-2">
-                                {prescription.next_appointment_date ?
-                                  new Date(prescription.next_appointment_date).toLocaleDateString()
-                                  : '-'
-                                }
-                              </td>
-                              <td className="border border-gray-300 px-4 py-2 max-w-xs">
-                                <div className="truncate" title={prescription.medicine_notes || prescription.notes_to_pro}>
-                                  {prescription.medicine_notes || prescription.notes_to_pro || '-'}
-                                </div>
-                              </td>
-                              <td className="border border-gray-300 px-4 py-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                  onClick={() => {
-                                    console.log('DEBUG: Edit Pencil clicked. prescription object:', prescription);
-                                    const medId = prescription.medicine_id || prescription.id;
-                                    const presId = prescription.prescription_id || prescription.id;
-
-                                    setEditingMedicineId(medId)
-                                    setEditingPrescriptionId(presId)
-
-                                    // Populate form data
-                                    setPrescriptionData({
-                                      medicineType: prescription.medicine_type || '',
-                                      medicine: prescription.medicine || '',
-                                      potency: prescription.potency || '',
-                                      dosage: prescription.dosage || '',
-                                      morning: !!prescription.morning,
-                                      afternoon: !!prescription.afternoon,
-                                      night: !!prescription.night,
-                                      notes: prescription.medicine_notes || ''
-                                    })
-
-                                    setPrescriptions([{
-                                      id: medId,
-                                      medicineType: prescription.medicine_type || '',
-                                      medicine: prescription.medicine || '',
-                                      potency: prescription.potency || '',
-                                      dosage: prescription.dosage || '',
-                                      morning: !!prescription.morning,
-                                      afternoon: !!prescription.afternoon,
-                                      night: !!prescription.night,
-                                      notes: prescription.medicine_notes || ''
-                                    }])
-
-                                    setCommonMedicine(prev => ({
-                                      ...prev,
-                                      medicineDays: prescription.medicine_days?.toString() || '15',
-                                      nextAppointmentDate: prescription.next_appointment_date || prev.nextAppointmentDate
-                                    }))
-
-                                    setNotesToPro(prescription.notes_to_pro || '')
-                                    setNotesToPharmacy(prescription.notes_to_pharmacy || '')
-
-                                    window.scrollTo({ top: 0, behavior: 'smooth' })
-                                  }}
-                                >
-                                  <Pencil className="h-4 w-4 text-blue-600" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 ml-1"
-                                  onClick={() => {
-                                    const presId = prescription.prescription_id || prescription.id;
-                                    handleDeletePrescription(presId)
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-600" />
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
+                          {savedPrescriptions.map((prescription, index, arr) => {
+                            let dateGroup = 0;
+                            for (let i = 1; i <= index; i++) {
+                              const prevDate = new Date(arr[i - 1].created_at).toLocaleDateString();
+                              const currDate = new Date(arr[i].created_at).toLocaleDateString();
+                              if (prevDate !== currDate) {
+                                dateGroup++;
+                              }
+                            }
+                            
+                            return (
+                              <tr key={`saved-${prescription.medicine_id || index}-${index}`} className={dateGroup % 2 === 0 ? 'bg-white' : 'bg-blue-50/40'}>
+                                <td className="border border-gray-300 px-4 py-2 font-bold text-primary">
+                                  {new Date(prescription.created_at).toLocaleDateString()}
+                                </td>
+                                <td className="border border-gray-300 px-4 py-2">{prescription.medicine_type || '-'}</td>
+                                <td className="border border-gray-300 px-4 py-2">{prescription.medicine || '-'}</td>
+                                <td className="border border-gray-300 px-4 py-2">{prescription.potency || '-'}</td>
+                                <td className="border border-gray-300 px-4 py-2">{prescription.dosage || '-'}</td>
+                                <td className="border border-gray-300 px-4 py-2">
+                                  {[
+                                    prescription.morning && 'Morning',
+                                    prescription.afternoon && 'Afternoon',
+                                    prescription.night && 'Night'
+                                  ].filter(Boolean).join(', ') || '-'}
+                                </td>
+                                <td className="border border-gray-300 px-4 py-2">{prescription.medicine_days || '-'}</td>
+                                <td className="border border-gray-300 px-4 py-2">
+                                  {prescription.next_appointment_date ?
+                                    new Date(prescription.next_appointment_date).toLocaleDateString()
+                                    : '-'
+                                  }
+                                </td>
+                                <td className="border border-gray-300 px-4 py-2 max-w-xs">
+                                  <div className="truncate" title={prescription.medicine_notes || prescription.notes_to_pro}>
+                                    {prescription.medicine_notes || prescription.notes_to_pro || '-'}
+                                  </div>
+                                </td>
+                                <td className="border border-gray-300 px-4 py-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      console.log('DEBUG: Edit Pencil clicked. prescription object:', prescription);
+                                      const medId = prescription.medicine_id || prescription.id;
+                                      const presId = prescription.prescription_id || prescription.id;
+  
+                                      setEditingMedicineId(medId)
+                                      setEditingPrescriptionId(presId)
+  
+                                      // Populate form data
+                                      setPrescriptionData({
+                                        medicineType: prescription.medicine_type || '',
+                                        medicine: prescription.medicine || '',
+                                        potency: prescription.potency || '',
+                                        dosage: prescription.dosage || '',
+                                        morning: !!prescription.morning,
+                                        afternoon: !!prescription.afternoon,
+                                        night: !!prescription.night,
+                                        notes: prescription.medicine_notes || ''
+                                      })
+  
+                                      setPrescriptions([{
+                                        id: medId,
+                                        medicineType: prescription.medicine_type || '',
+                                        medicine: prescription.medicine || '',
+                                        potency: prescription.potency || '',
+                                        dosage: prescription.dosage || '',
+                                        morning: !!prescription.morning,
+                                        afternoon: !!prescription.afternoon,
+                                        night: !!prescription.night,
+                                        notes: prescription.medicine_notes || ''
+                                      }])
+  
+                                      setCommonMedicine(prev => ({
+                                        ...prev,
+                                        medicineDays: prescription.medicine_days?.toString() || '15',
+                                        nextAppointmentDate: prescription.next_appointment_date || prev.nextAppointmentDate
+                                      }))
+  
+                                      setNotesToPro(prescription.notes_to_pro || '')
+                                      setNotesToPharmacy(prescription.notes_to_pharmacy || '')
+  
+                                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                                    }}
+                                  >
+                                    <Pencil className="h-4 w-4 text-blue-600" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 ml-1"
+                                    onClick={() => {
+                                      const presId = prescription.prescription_id || prescription.id;
+                                      handleDeletePrescription(presId)
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </td>
+                              </tr>
+                            )
+                          })}
                         </tbody>
                       </table>
                     </div>

@@ -51,7 +51,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
             [{ 'direction': 'rtl' }],
             [{ 'color': [] }, { 'background': [] }],
             [{ 'align': [] }],
-            ['link', 'clean'],
+            ['link', 'image', 'video', 'clean'],
           ],
         },
       });
@@ -126,6 +126,14 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
         }
         .ql-editor li {
           margin-bottom: 0.5em !important;
+        }
+        .ql-editor img {
+          max-width: 100% !important;
+          height: auto !important;
+          border-radius: 1rem !important;
+          margin: 1.5em auto !important;
+          display: block !important;
+          box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
         }
         .ql-editor.ql-blank::before {
           color: #94a3b8 !important;

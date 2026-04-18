@@ -24,6 +24,8 @@ const TreatmentExplorer = () => {
     "pcos": <Heart className="w-6 h-6" />,
   };
 
+  const displayedTreatments = treatments.slice(0, 5);
+
   useEffect(() => {
     const fetchTreatments = async () => {
       try {
@@ -44,12 +46,13 @@ const TreatmentExplorer = () => {
   }, []);
 
   useEffect(() => {
-    if (!isPaused && treatments.length > 0) {
+    if (!isPaused && displayedTreatments.length > 0) {
       timerRef.current = setInterval(() => {
-        setActiveId((prevId) => {
-          const currentIndex = treatments.findIndex(t => t.id === prevId);
-          const nextIndex = (currentIndex + 1) % treatments.length;
-          return treatments[nextIndex].id;
+        setActiveId((prevId: any) => {
+          const currentIndex = displayedTreatments.findIndex(t => t.id === prevId);
+          if (currentIndex === -1) return displayedTreatments[0]?.id;
+          const nextIndex = (currentIndex + 1) % displayedTreatments.length;
+          return displayedTreatments[nextIndex].id;
         });
       }, AUTO_PLAY_INTERVAL);
     }
@@ -57,7 +60,7 @@ const TreatmentExplorer = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isPaused, treatments]);
+  }, [isPaused, displayedTreatments]);
 
   const handleManualSelection = (id: any) => {
     setActiveId(id);
@@ -68,7 +71,15 @@ const TreatmentExplorer = () => {
   const getImageUrl = (url: string) => {
     if (!url) return "https://images.unsplash.com/photo-1576091160550-217359f42f8c?q=80&w=2670&auto=format&fit=crop";
     if (url.startsWith('http')) return url;
-    return `${authService.getSettingsApiUrl().replace('/api', '')}${url}`;
+    
+    // Remove '/api' from the end of the URL if it exists
+    const settingsUrl = authService.getSettingsApiUrl().replace(/\/api$/, '').replace(/\/api\/$/, '/');
+    if (!settingsUrl) return url;
+    
+    const baseUrl = settingsUrl.endsWith('/') ? settingsUrl : `${settingsUrl}/`;
+    const cleanedPath = url.startsWith('/') ? url.substring(1) : url;
+    
+    return `${baseUrl}${cleanedPath}`;
   };
 
   if (isLoading) {
@@ -102,7 +113,7 @@ const TreatmentExplorer = () => {
           </div>
           
           <div className="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 no-scrollbar">
-            {treatments.map((treatment) => (
+            {displayedTreatments.map((treatment) => (
               <button
                 key={treatment.id}
                 onClick={() => handleManualSelection(treatment.id)}
@@ -137,7 +148,18 @@ const TreatmentExplorer = () => {
                 </div>
               </button>
             ))}
+
+            {treatments.length > 5 && (
+              <Link
+                href="/specialties"
+                className="flex items-center justify-center gap-2 p-4 rounded-2xl transition-all duration-500 min-w-[140px] lg:min-w-0 text-primary bg-primary/5 hover:bg-primary/10 font-bold text-[10px] uppercase tracking-[0.2em] group/more"
+              >
+                {t('View All Treatments')}
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            )}
           </div>
+
 
           <div className="mt-auto pt-4 hidden lg:block opacity-20 text-center">
              <p className="text-[8px] text-slate-400 uppercase tracking-[0.4em] font-black">
@@ -183,9 +205,17 @@ const TreatmentExplorer = () => {
                 {t(activeTreatment.name)}
               </h4>
               <div className="mt-4">
-                 <p className="text-slate-500 text-[13px] md:text-[14px] leading-relaxed italic border-l-2 border-primary/10 pl-4 py-1">
-                   {t(activeTreatment.long_description)}
-                 </p>
+                  <div 
+                    className="text-slate-500 text-[13px] md:text-[14px] leading-relaxed italic border-l-2 border-primary/10 pl-4 py-1 prose prose-sm max-w-none line-clamp-5 overflow-hidden"
+                    dangerouslySetInnerHTML={{ __html: t(activeTreatment.long_description) }}
+                  />
+                  <Link 
+                    href={`/treatment/${activeTreatment.slug || activeTreatment.id}`}
+                    className="text-primary font-bold text-[10px] uppercase tracking-widest mt-2 hover:underline flex items-center gap-1 group/btn"
+                  >
+                    {t('Read Full Overview')}
+                    <div className="h-[1px] bg-primary w-4 group-hover/btn:w-6 transition-all duration-300" />
+                  </Link>
                  <div className="mt-5 flex items-center gap-2 text-[9px] font-black text-slate-300 uppercase tracking-widest">
                     <span>44 Lakh+ {t('Success Stories')}</span>
                  </div>
@@ -194,19 +224,19 @@ const TreatmentExplorer = () => {
             
             <div className="flex flex-col gap-2.5 pt-2">
               <Link
-                href={`/treatment/${activeTreatment.id}`}
+                href={`/treatment/${activeTreatment.slug || activeTreatment.id}`}
                 className="bg-primary text-white px-8 py-3.5 rounded-full font-black text-[10px] text-center flex items-center justify-center gap-2.5 hover:opacity-90 hover:-translate-y-0.5 transition-all shadow-lg active:scale-95 group"
               >
                 {t('EXPLORE DETAILS')}
                 <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </Link>
-              <a
-                href="#appointment"
-                className="bg-slate-50 text-slate-500 px-8 py-3.5 rounded-full font-black text-[10px] text-center border border-slate-100 hover:bg-primary/5 hover:text-primary hover:border-primary/10 transition-all active:scale-95 flex items-center justify-center gap-2.5"
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("open-appointment-popup"))}
+                className="bg-slate-50 text-slate-500 px-8 py-3.5 rounded-full font-black text-[10px] text-center border border-slate-100 hover:bg-primary/5 hover:text-primary hover:border-primary/10 transition-all active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer"
               >
                 <Activity size={14} />
                 {t('BOOK VISIT')}
-              </a>
+              </button>
             </div>
           </div>
 

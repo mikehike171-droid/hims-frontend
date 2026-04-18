@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useScrollAnimation } from "@/hooks/use-scroll-animation";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { settingsApi } from "@/lib/settingsApi";
 
 // Importing the 5 local homeopathy images from the assets folder
 import image1 from "@/assets/1.png";
@@ -18,22 +20,57 @@ const slides = [
   { id: 5, src: image5.src, alt: "Homeopathic Remedy 5" },
 ];
 
+const stripHtml = (html: string) => {
+  if (!html) return "";
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.body.textContent || "";
+};
+
 const WhatIsHomeopathy = () => {
-  const { ref, isVisible } = useScrollAnimation();
+   const { ref, isVisible } = useScrollAnimation();
   const { t } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [aboutData, setAboutData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fallback slides using local assets
+  const defaultSlides = slides;
+
+  // Compute dynamic slides from API data
+  const dynamicSlides = aboutData?.image_urls && aboutData.image_urls.length > 0
+    ? aboutData.image_urls.map((url: string, index: number) => ({
+      id: `dynamic-${index}`,
+      src: url.startsWith('http') ? url : url,
+      alt: `Homeopathic Remedy ${index + 1}`
+    }))
+    : defaultSlides;
+
+  const currentSlides = dynamicSlides;
 
   // Automatic Rotation Logic (every 10 seconds, one-by-one, continuous loop)
-  useEffect(() => {
+   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % slides.length);
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % currentSlides.length);
     }, 10000);
+
+    const fetchAbout = async () => {
+      try {
+        const data = await settingsApi.getPublicAbout();
+        if (data) setAboutData(data);
+      } catch (error) {
+        console.error("Error fetching about content:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAbout();
 
     return () => clearInterval(interval);
   }, []);
 
-  const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % slides.length);
-  const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
+  const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % currentSlides.length);
+  const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + currentSlides.length) % currentSlides.length);
 
   return (
     <section className="py-6 md:py-8 bg-white overflow-hidden" id="about" ref={ref}>
@@ -45,7 +82,7 @@ const WhatIsHomeopathy = () => {
             <div className="relative group overflow-hidden rounded-[2.5rem] shadow-2xl border-4 border-white aspect-[4/3] md:aspect-[16/10]">
               {/* Image Transition Layer */}
               <div className="w-full h-full relative">
-                {slides.map((slide, index) => (
+                {currentSlides.map((slide, index) => (
                   <img
                     key={slide.id}
                     src={slide.src}
@@ -77,7 +114,7 @@ const WhatIsHomeopathy = () => {
 
               {/* Elegant Pagination Dots */}
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3">
-                {slides.map((_, index) => (
+                {currentSlides.map((_, index) => (
                   <button
                     key={index}
                     onClick={() => setCurrentIndex(index)}
@@ -92,32 +129,49 @@ const WhatIsHomeopathy = () => {
 
           {/* Right Side: Content Area */}
           <div className={`lg:col-span-6 space-y-8 transition-all duration-1000 delay-300 ${isVisible ? "animate-fade-in-right opacity-100" : "opacity-0"}`}>
-            <div className="space-y-4">
+             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="h-1 w-12 bg-primary rounded-full" />
-                <span className="text-sm font-black uppercase tracking-widest text-primary">The Natural science</span>
+                <span className="text-sm font-black uppercase tracking-widest text-primary">
+                  {aboutData?.title?.includes('\n') 
+                    ? t(aboutData.title.split('\n')[0].trim()) 
+                    : t('The Natural science')}
+                </span>
               </div>
               <h2 className="text-3xl md:text-[2.8rem] font-black text-primary tracking-tight uppercase font-heading leading-[1.1]">
-                {t('WHAT IS HOMEOPATHY?')}
+                {aboutData?.title?.includes('\n') 
+                  ? t(aboutData.title.split('\n')[1].trim()) 
+                  : t(aboutData?.title || 'WHAT IS HOMEOPATHY?')}
               </h2>
             </div>
 
             <div className="space-y-6 text-gray-600 text-[1.1rem] leading-relaxed font-medium opacity-90">
-              <p className="border-l-4 border-primary/20 pl-8 py-4 italic font-semibold text-gray-700 bg-primary/5 rounded-r-2xl">
-                {t('Homeopathy is an alternative healthcare system acknowledged by many global health communities. It originated in Germany and is now widely practiced and respected in India. Homeopathy offers safe, natural treatment for many chronic conditions, with virtually no side effects. It works by strengthening the body\'s immune system and helping to develop resilience to fight long-term health issues.')}
-              </p>
-              <p className="whitespace-pre-line pl-1 opacity-80">
-                {t('Uni Care Group has 4 branches and over 30 qualified doctors. We follow an evidence-based homeopathic practice that considers both mental and physical health. Our treatments are cost-effective, provide rapid relief, and are centered around patient care.')}
-              </p>
+              {aboutData?.description ? (
+                <>
+                  <p className="border-l-4 border-primary/20 pl-8 py-4 italic font-semibold text-gray-700 bg-primary/5 rounded-r-2xl">
+                    {t(stripHtml(aboutData.description).split('\n\n')[0] || '')}
+                  </p>
+                  {stripHtml(aboutData.description).split('\n\n')[1] && (
+                    <p className="whitespace-pre-line pl-1 opacity-80 line-clamp-2">
+                      {t(stripHtml(aboutData.description).split('\n\n')[1])}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="border-l-4 border-primary/20 pl-8 py-4 italic font-semibold text-gray-700 bg-primary/5 rounded-r-2xl text-gray-400 animate-pulse bg-slate-100 h-24 rounded-lg" />
+                  <p className="pl-1 opacity-80 bg-slate-50 h-20 rounded-lg animate-pulse" />
+                </>
+              )}
             </div>
 
             <div className="pt-4">
-              <button className="group bg-primary hover:opacity-90 text-white px-12 py-5 rounded-[2rem] font-black uppercase tracking-wider shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center gap-4">
+              <Link href="/about" className="group bg-primary hover:opacity-90 text-white px-12 py-5 rounded-[2rem] font-black uppercase tracking-wider shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center gap-4 w-fit">
                 <span>{t('About Uni Care')}</span>
                 <div className="bg-white/20 p-1.5 rounded-full group-hover:bg-white/30 transition-colors">
                   <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
                 </div>
-              </button>
+              </Link>
             </div>
           </div>
 

@@ -1,93 +1,96 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/i18n/LanguageContext";
-import herosection1 from "@/assets/herosection1.png";
-import herosection2 from "@/assets/herosection2.png";
-import herosection3 from "@/assets/herosection3.png";
+import { settingsApi } from "@/lib/settingsApi";
+import authService from "@/lib/authService";
 
 type Slide = {
-  visual: React.ReactNode;
+  visual: string; // Changed to string (image URL)
   blobColor: string;
   title: string;
   sub: string;
   btn: string;
-  bgElement?: React.ReactNode;
-  bgDecor?: React.ReactNode;
+  btnLink?: string;
 };
-
-// Hero images are now high-quality transparent PNGs for a premium look
 
 const HeroScroller = () => {
   const { t } = useLanguage();
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
-
-  const slides: Slide[] = [
-    {
-      visual: (
-        <img
-          src={herosection1.src}
-          alt="UniCare Homeopathy Medicine"
-          className="relative z-20 w-full max-h-[440px] rounded-[2rem] object-cover drop-shadow-2xl"
-        />
-      ),
-      blobColor: "transparent",
-      title: 'HEALING YOU AS A WHOLE, NOT JUST THE DISEASE',
-      sub: '30-minute expert case-taking and personalised treatments for you and your family.',
-      btn: 'Book an Appointment',
-    },
-    {
-      visual: (
-        <img
-          src={herosection2.src}
-          alt="Homeopathy Care"
-          className="max-h-[500px] w-auto rounded-[2rem] object-cover drop-shadow-2xl animate-float"
-        />
-      ),
-      blobColor: "transparent",
-      title: 'HOMEOPATHY FOR YOU AND YOUR ENTIRE FAMILY',
-      sub: 'We listen, we understand, and we offer precise, holistic care for every health need.',
-      btn: 'Book an Appointment',
-    },
-    {
-      visual: (
-        <img
-          src={herosection3.src}
-          alt="Natural Remedies"
-          className="relative z-20 w-full max-h-[440px] rounded-[2rem] object-cover drop-shadow-xl"
-        />
-      ),
-      blobColor: "transparent",
-      title: 'HOMEOPATHY THAT TRULY UNDERSTANDS YOU',
-      sub: 'Compassionate care, detailed case analysis, and holistic healing with no side effects.',
-      btn: 'Book an Appointment',
-    },
-  ];
-
-  const goTo = useCallback((idx: number) => {
-    if (animating) return;
-    setAnimating(true);
-    setTimeout(() => { setCurrent(idx); setAnimating(false); }, 350);
-  }, [animating]);
-
-  const prev = () => goTo((current - 1 + slides.length) % slides.length);
-  const next = useCallback(() => goTo((current + 1) % slides.length), [current, goTo]);
+  const [slides, setSlides] = useState<Slide[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setInterval(next, 5000);
+    const fetchSlides = async () => {
+      try {
+        setLoading(true);
+        const data = await settingsApi.getHeroSections();
+        if (data && data.length > 0) {
+          const mappedSlides = data.map((item: any) => ({
+            visual: item.image_url.startsWith('http') ? item.image_url : `${authService.getSettingsApiUrl().replace('/api', '')}${item.image_url}`,
+            blobColor: "transparent",
+            title: item.title,
+            sub: item.subtitle,
+            btn: item.button_text,
+            btnLink: item.button_link,
+          }));
+          setSlides(mappedSlides);
+        }
+      } catch (error) {
+        console.error("Failed to fetch hero slides:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSlides();
+  }, []);
+
+  const goTo = useCallback((idx: number) => {
+    if (animating || slides.length === 0) return;
+    setAnimating(true);
+    setTimeout(() => { setCurrent(idx); setAnimating(false); }, 350);
+  }, [animating, slides.length]);
+
+  const prev = () => {
+    if (slides.length === 0) return;
+    goTo((current - 1 + slides.length) % slides.length);
+  };
+  
+  const next = useCallback(() => {
+    if (slides.length === 0) return;
+    goTo((current + 1) % slides.length);
+  }, [current, goTo, slides.length]);
+
+  useEffect(() => {
+    if (slides.length === 0) return;
+    const timer = setInterval(next, 7000);
     return () => clearInterval(timer);
-  }, [next]);
+  }, [next, slides.length]);
+
+  if (loading) {
+    return (
+      <div className="relative flex items-center justify-center bg-white" style={{ minHeight: 460 }}>
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (slides.length === 0) return null;
 
   const s = slides[current];
 
+  const handleBtnClick = () => {
+    if (s.btnLink) {
+      window.location.href = s.btnLink;
+    } else {
+      window.dispatchEvent(new CustomEvent("open-appointment-popup"));
+    }
+  };
+
   return (
     <section className="relative bg-white overflow-hidden" style={{ minHeight: 460 }}>
-
-      {/* Right Slide-Specific Decor (Removed) */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden h-full z-0">
-        {s.bgDecor}
-      </div>
 
       {/* Layout */}
       <div className="relative container mx-auto px-4 flex flex-col md:flex-row items-center min-h-[460px]">
@@ -118,10 +121,12 @@ const HeroScroller = () => {
           >
             {t(s.sub)}
           </p>
-          <Link href="/appointment"
-            className="inline-block mt-8 bg-primary text-white px-8 py-3 rounded-xl font-bold text-base shadow-md hover:opacity-90 transition-all duration-300 w-fit">
+          <button 
+            onClick={handleBtnClick}
+            className="inline-block mt-8 bg-primary text-white px-8 py-3 rounded-xl font-bold text-base shadow-md hover:opacity-90 transition-all duration-300 w-fit cursor-pointer"
+          >
             {t(s.btn)}
-          </Link>
+          </button>
         </div>
 
         {/* Visual */}
@@ -129,16 +134,17 @@ const HeroScroller = () => {
           className="flex-1 relative flex items-end justify-center z-20 overflow-hidden min-h-[460px]"
           style={{ opacity: animating ? 0 : 1, transition: "opacity 0.35s" }}
         >
-          {/* Versioning added to src to bypass cache */}
-          {s.visual}
+          <img
+            src={s.visual}
+            alt={s.title}
+            className="relative z-20 w-full max-h-[440px] rounded-[2rem] object-cover drop-shadow-2xl"
+          />
 
-          {/* Bottom-right decoration (fallback if slide has no specific wave) */}
-          {!s.bgDecor && (
-            <>
-              <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-[#22d3ee] opacity-30 blur-3xl rounded-full z-0" />
-              <div className="absolute -bottom-5 -right-5 w-48 h-48 bg-[#06b6d4] opacity-40 blur-2xl rounded-full z-0 animate-pulse" />
-            </>
-          )}
+          {/* Bottom-right decoration */}
+          <>
+            <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-[#22d3ee] opacity-30 blur-3xl rounded-full z-0" />
+            <div className="absolute -bottom-5 -right-5 w-48 h-48 bg-[#06b6d4] opacity-40 blur-2xl rounded-full z-0 animate-pulse" />
+          </>
         </div>
       </div>
 

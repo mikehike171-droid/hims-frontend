@@ -7,6 +7,7 @@ import WhatsAppFloat from "@/components/WhatsAppFloat";
 import { settingsApi } from "@/lib/settingsApi";
 import { useLanguage } from "@/i18n/LanguageContext";
 import authService from "@/lib/authService";
+import Link from "next/link";
 
 const AllSpecialties = () => {
   const { t } = useLanguage();
@@ -35,7 +36,7 @@ const AllSpecialties = () => {
   const getImageUrl = (url: string) => {
     if (!url) return "https://images.unsplash.com/photo-1576091160550-217359f42f8c?q=80&w=800&auto=format&fit=crop";
     if (url.startsWith('http')) return url;
-    return `${authService.getSettingsApiUrl().replace('/api', '')}${url}`;
+    return `${(authService.getSettingsApiUrl() || '').replace('/api', '')}${url}`;
   };
 
   return (
@@ -101,8 +102,5 @@ const AllSpecialties = () => {
     </div>
   );
 };
-
-// Simple internal Link shim since I'm using AllSpecialties inside a Next page
-import Link from "next/link";
 
 export default AllSpecialties;

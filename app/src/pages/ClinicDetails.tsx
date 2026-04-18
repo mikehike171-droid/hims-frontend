@@ -1,350 +1,418 @@
-import { useParams, Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+"use client"
+
+import React, { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Clock, 
+  ChevronRight, 
+  Star, 
+  Shield, 
+  Award,
+  Video,
+  Camera,
+  Map as MapIcon,
+  Calendar,
+  CheckCircle2,
+  ArrowRight,
+  Stethoscope,
+  Users,
+  Info,
+  Loader2
+} from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { useLanguage } from "@/i18n/LanguageContext";
-import { MapPin, Phone, Mail, ChevronRight, Activity, HeartPulse, ShieldCheck, CheckCircle2, ChevronRightCircle, User, Award, Building, Microscope, Globe, LayoutGrid, Heart, Wind, Zap } from "lucide-react";
-
-// Update clinicsInfo to match the branches in user request
-const clinicsInfo: Record<string, { name: string, address: string, phone: string, email: string, landmarks: {name: string, dist: string}[] }> = {
-  narasaraopet: {
-    name: "Narasaraopet",
-    address: "UniCare Homeopathy, Main Road, Near Bus Stand, Narasaraopet, Andhra Pradesh 522601",
-    phone: "+91 95533 87472",
-    email: "narasaraopet@unicarehomeo.com",
-    landmarks: [
-      { name: "RTC Bus Stand", dist: "1.2 km" },
-      { name: "Railway Station", dist: "2.5 km" },
-      { name: "Clock Tower", dist: "800 m" }
-    ]
-  },
-  ongole: {
-    name: "Ongole",
-    address: "UniCare Homeopathy, Trunk Road, Near RTC Bus Stand, Ongole, Andhra Pradesh 523001",
-    phone: "+91 95533 87472",
-    email: "ongole@unicarehomeo.com",
-    landmarks: [
-      { name: "RTC Bus Stand", dist: "1.0 km" },
-      { name: "Railway Station", dist: "2.8 km" },
-      { name: "Gandhi Park", dist: "1.5 km" }
-    ]
-  },
-  nalgonda: {
-    name: "Nalgonda",
-    address: "UniCare Homeopathy, Hyderabad Road, Near Clock Tower, Nalgonda, Telangana 508001",
-    phone: "+91 95533 87472",
-    email: "nalgonda@unicarehomeo.com",
-    landmarks: [
-      { name: "RTC Bus Stand", dist: "1.8 km" },
-      { name: "Clock Tower", dist: "500 m" },
-      { name: "NG College", dist: "2.1 km" }
-    ]
-  }
-};
+import WhatsAppFloat from "@/components/WhatsAppFloat";
+import AppointmentForm from "@/components/AppointmentForm";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { settingsApi } from "@/lib/settingsApi";
 
 const ClinicDetails = () => {
-  const { id } = useParams<{ id: string }>();
-  const { t } = useLanguage();
-  const [mounted, setMounted] = useState(false);
+  const { id } = useParams();
+  const [branch, setBranch] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const fetchBranchData = async () => {
+      try {
+        setLoading(true);
+        // id is the slug from the URL
+        const data = await settingsApi.getPublicBranchBySlug(id as string);
+        console.log("Branch Data Received:", data);
+        setBranch(data);
+        setError(false);
+      } catch (err) {
+        console.error("Error fetching branch:", err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchBranchData();
+    }
     window.scrollTo(0, 0);
   }, [id]);
-  
-  const clinic = id && clinicsInfo[id] ? clinicsInfo[id] : {
-    name: id ? id.charAt(0).toUpperCase() + id.slice(1) : "Clinic",
-    address: "UniCare Homeopathy Clinic Address",
-    phone: "+91 95533 87472",
-    email: "info@unicarehomeopathy.com",
-    landmarks: [
-      { name: "Central Bus Stand", dist: "1.5 km" },
-      { name: "Railway Station", dist: "3.0 km" },
-    ]
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="flex flex-col items-center justify-center py-40">
+          <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+          <p className="text-slate-500 font-medium animate-pulse">Loading clinic details...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !branch) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+        <div className="flex flex-col items-center justify-center py-40 px-4">
+          <div className="bg-white p-12 rounded-3xl shadow-xl shadow-slate-200 text-center max-w-md border border-slate-100">
+            <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <MapPin size={40} />
+            </div>
+            <h1 className="text-3xl font-bold font-serif text-[#1a2e5a] mb-4">Clinic Not Found</h1>
+            <p className="text-slate-600 mb-8">The clinic branch you're looking for might have been moved or doesn't exist.</p>
+            <Link href="/">
+              <Button className="bg-primary hover:bg-primary/90 rounded-xl px-8 h-12 font-bold transform transition-transform active:scale-95">
+                Return to Home
+              </Button>
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const getFullImageUrl = (url: string) => {
+    if (!url) return "";
+    if (url.startsWith('http')) return url;
+    return `${process.env.NEXT_PUBLIC_SETTINGS_API_URL}${url}`;
   };
 
-  const expertiseStats = [
-    { icon: <Award className="w-12 h-12 text-[#67c1d3]" />, label: "25+ Years", desc: "Of Experience" },
-    { icon: <Building className="w-12 h-12 text-[#67c1d3]" />, label: "53+ Clinics", desc: "Across India" },
-    { icon: <User className="w-12 h-12 text-[#67c1d3]" />, label: "300+ Doctors", desc: "Team Strength" },
-    { icon: <Microscope className="w-12 h-12 text-[#67c1d3]" />, label: "200+ Diseases", desc: "Treated Successfully" }
-  ];
-
-  const featureCards = [
-    {
-      icon: <Activity className="w-10 h-10 text-[#67c1d3]" />,
-      title: "BETTER RECOVERY",
-      desc: `Homeopathic medicines prescribed by UniCare Homeopathy in ${clinic.name} show an exceptionally high recovery rate when taken under expert guidance.`
-    },
-    {
-      icon: <HeartPulse className="w-10 h-10 text-[#67c1d3]" />,
-      title: "COMPLETE HEALING",
-      desc: "Our doctors do a thorough case study to understand the root cause of every disorder, ensuring holistic healing that lasts."
-    },
-    {
-      icon: <ShieldCheck className="w-10 h-10 text-[#67c1d3]" />,
-      title: "NO SIDE EFFECTS",
-      desc: "Homeopathic medicines provide complete healing without any side effects. They are safe, gentle, and enhance your immune system."
-    },
-    {
-      icon: <CheckCircle2 className="w-10 h-10 text-[#67c1d3]" />,
-      title: "LONG-TERM RELIEF",
-      desc: "By treating the root cause rather than just managing symptoms, we ensure you achieve lasting, long-term relief from your health issues."
-    }
-  ];
-
-  const specialtyCategories = [
-    { icon: <LayoutGrid />, title: "Chronic Diseases", items: ["Piles", "Arthritis", "Spondylitis"] },
-    { icon: <Wind />, title: "Respiratory Health", items: ["Asthma", "Sinusitis", "Bronchitis"] },
-    { icon: <Zap />, title: "Skin & Hair", items: ["Psoriasis", "Acne", "Hair Loss"] },
-    { icon: <Heart />, title: "Women's Health", items: ["PCOS", "Thyroid", "Infertility"] }
-  ];
-
-  const treatmentLinks = [
-    "Schizophrenia", "Anemia", "Acne", "Allergies", "Tonsillitis", "PCOD", "Sinusitis", 
-    "Diabetes", "Psoriasis", "Hair Loss", "Spondylitis", "Thyroid Disorders", 
-    "Knee Pain", "Migraine", "Piles", "Infertility", "Asthma", "Kidney Stones"
+  // Placeholder specialists
+  const branchDoctors = [
+    { name: "Dr. A. Sudhakar", role: "Chief Homeopathic Physician", exp: "15+ Years", degree: "BHMS, MD (Homeo)", image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=400" },
+    { name: "Dr. P. Rajani", role: "Senior Consultant", exp: "10+ Years", degree: "BHMS", image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=400" },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-white font-sans text-[#54595f]">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans overflow-x-hidden">
       <Header />
+      
+      {/* Cinematic Hero */}
+      <section className="relative h-[65vh] min-h-[500px] flex items-center overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={branch.image_url ? getFullImageUrl(branch.image_url) : "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=2000"} 
+            alt={branch.name}
+            className="w-full h-full object-cover scale-105 animate-slow-zoom"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#1a2e5a] via-[#1a2e5a]/80 to-transparent z-10" />
+        </div>
 
-      {/* TOP HERO BREADCRUMB WITH CUSTOM AP MAP BANNER */}
-      <div className="relative h-[250px] md:h-[400px] overflow-hidden flex items-center justify-center bg-slate-100">
-        <img 
-          src="/ap-map.png" 
-          alt="Andhra Pradesh Medical Map" 
-          className="absolute inset-0 w-full h-full object-cover"
-          onError={(e) => {
-             // Fallback to a medical themed background if map not run yet
-             e.currentTarget.src = 'https://images.unsplash.com/photo-1576086213369-97a306dca665?auto=format&fit=crop&q=80&w=2000';
-          }}
-        />
-        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px]" />
-        <div className="container relative z-10 mx-auto px-4 text-center">
-             <div className="inline-flex items-center gap-2 text-[14px] text-[#013b82] font-black uppercase tracking-widest mb-6">
-                  <Link to="/" className="hover:text-[#67c1d3] transition-colors">{t('Home')}</Link>
-                  <ChevronRight size={14} />
-                  <span>{t('Clinics')}</span>
-                  <ChevronRight size={14} />
-                  <span className="text-[#67c1d3]">{t(clinic.name)}</span>
-             </div>
-             <h1 className="text-4xl md:text-6xl font-black text-[#013b82] font-heading drop-shadow-sm">
-               Best Homeopathy Clinic <br/> in {t(clinic.name)}
-             </h1>
-             <div className="mt-8 flex items-center justify-center gap-3">
-                <div className="h-0.5 w-12 bg-[#67c1d3]" />
-                <p className="text-lg md:text-xl font-bold text-[#1a2e5a] tracking-wide uppercase">
-                   Trusted Worldwide Healthcare Solution
-                </p>
-                <div className="h-0.5 w-12 bg-[#67c1d3]" />
-             </div>
+        <div className="container mx-auto px-4 relative z-20 text-white">
+          <div className="max-w-4xl">
+            <div className="flex items-center gap-2 text-blue-200 mb-6 bg-white/10 backdrop-blur-md w-fit px-4 py-1.5 rounded-full border border-white/10">
+              <Link href="/" className="hover:text-white transition-colors">Home</Link>
+              <ChevronRight size={14} />
+              <span className="text-white font-medium">Clinics</span>
+              <ChevronRight size={14} />
+              <span className="text-white font-medium">{branch.name}</span>
+            </div>
+            
+            <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 leading-tight">
+              Uni care Homeopathy <br/>
+              <span className="text-emerald-400 italic">{branch.name}</span>
+            </h1>
+            
+            <div className="flex flex-wrap gap-6 items-center mb-8">
+              <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm p-3 rounded-2xl border border-white/10">
+                <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center">
+                  <Clock size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold">Service Hours</p>
+                  <p className="text-sm font-medium">{branch.timings || "Open Mon - Sat"}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm p-3 rounded-2xl border border-white/10 group cursor-default">
+                <div className="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Star size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-blue-400 font-bold">Google Rating</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-bold">4.9/5.0</span>
+                    <div className="flex text-yellow-400">
+                      {[1,2,3,4,5].map(i => <Star key={i} size={10} fill="currentColor" />)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-4">
+              <Button className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 h-14 rounded-2xl text-lg font-bold shadow-xl shadow-emerald-900/20 transform hover:-translate-y-1 transition-all active:scale-95">
+                Book Consultation
+              </Button>
+              <Button variant="outline" className="bg-white/10 border-white/20 hover:bg-white/20 text-white px-8 h-14 rounded-2xl text-lg font-bold backdrop-blur-sm transform transition-all active:scale-95">
+                Get Directions
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Contact Bar */}
+      <div className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-3 group">
+                <div className="w-10 h-10 bg-blue-50 text-[#1a2e5a] rounded-full flex items-center justify-center group-hover:bg-[#1a2e5a] group-hover:text-white transition-all transform group-hover:rotate-12">
+                  <Phone size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Call Branch</p>
+                  <p className="text-sm font-bold text-[#1a2e5a]">{branch.phone}</p>
+                </div>
+              </div>
+
+              <div className="hidden md:flex items-center gap-3 group">
+                <div className="w-10 h-10 bg-blue-50 text-[#1a2e5a] rounded-full flex items-center justify-center group-hover:bg-[#1a2e5a] group-hover:text-white transition-all transform group-hover:-rotate-12">
+                  <Mail size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Email Support</p>
+                  <p className="text-sm font-bold text-[#1a2e5a]">{branch.email}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-full">
+              <Shield size={16} className="text-emerald-500" />
+              <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">NABH Accredited Center</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+      <main className="container mx-auto px-4 py-16 flex-grow">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           
-          {/* MAIN CONTENT AREA */}
-          <div className="lg:col-span-8 space-y-24">
+          {/* Main Content Area */}
+          <div className="lg:col-span-8 space-y-20">
             
-            {/* 1. OUR EXPERTISE STAT SECTION */}
-            <section className="space-y-16">
-               <div className="text-center">
-                  <h2 className="text-3xl font-black text-[#013b82] uppercase mb-4 tracking-tight">Our Expertise</h2>
-                  <div className="w-16 h-1 bg-[#67c1d3] mx-auto rounded-full" />
-               </div>
-               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                  {expertiseStats.map((stat, idx) => (
-                    <div key={idx} className="flex flex-col items-center text-center group translate-y-0 hover:-translate-y-2 transition-transform duration-300">
-                        <div className="w-24 h-24 rounded-full border-2 border-slate-100 flex items-center justify-center p-4 bg-white shadow-lg group-hover:border-[#67c1d3] group-hover:shadow-[#67c1d3]/20 transition-all">
-                            {stat.icon}
-                        </div>
-                        <h4 className="mt-6 text-xl font-black text-[#013b82]">{stat.label}</h4>
-                        <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mt-1">{stat.desc}</p>
+            {/* About Section */}
+            <section id="about" className="scroll-mt-32">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-1 bg-emerald-500 rounded-full" />
+                <h2 className="text-3xl font-serif font-bold text-[#1a2e5a]">About Uni care Homeopathy</h2>
+              </div>
+              <div className="prose prose-slate prose-lg max-w-none text-slate-600 font-medium leading-relaxed">
+                {branch.description ? (
+                  <div dangerouslySetInnerHTML={{ __html: branch.description }} className="clinical-description" />
+                ) : (
+                  <div className="space-y-4">
+                    <p>Welcome to <strong>Uni care Homeopathy</strong> at our {branch.name} center. We are committed to providing world-class homeopathic care through a combination of traditional wisdom and modern diagnostic integration.</p>
+                    <p>At this facility, we specialize in treating chronic conditions such as respiratory issues, skin disorders, and lifestyle-related ailments using specialized constitutional homeopathy. Our goal is to provide lasting relief and improve the overall quality of life for our patients.</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-12">
+                <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm flex items-start gap-4 hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5 transition-all">
+                  <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
+                    <Shield size={28} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-[#1a2e5a] mb-1 text-lg">Advanced Diagnostics</h4>
+                    <p className="text-sm text-slate-500">Equipped with state-of-the-art testing & analysis facilities.</p>
+                  </div>
+                </div>
+                <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm flex items-start gap-4 hover:border-blue-500/20 hover:shadow-xl hover:shadow-blue-500/5 transition-all">
+                  <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
+                    <Award size={28} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-[#1a2e5a] mb-1 text-lg">Expert Specialists</h4>
+                    <p className="text-sm text-slate-500">Highly qualified & internationally trained consultants.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Gallery Section */}
+            {branch.gallery && branch.gallery.length > 0 && (
+              <section id="gallery" className="scroll-mt-32">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-1 bg-emerald-500 rounded-full" />
+                    <h2 className="text-3xl font-serif font-bold text-[#1a2e5a]">Clinic Tour</h2>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  {branch.gallery.map((img: string, i: number) => (
+                    <div 
+                      key={i} 
+                      className={`group relative overflow-hidden rounded-[32px] shadow-md transition-all duration-700 hover:shadow-2xl hover:-translate-y-2 border-4 border-white ${
+                        i === 0 ? 'md:col-span-2 md:row-span-2 aspect-video md:aspect-auto' : 'aspect-square'
+                      }`}
+                    >
+                      <img 
+                        src={getFullImageUrl(img)} 
+                        alt="Clinic Interior"
+                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000" 
+                      />
+                      <div className="absolute inset-0 bg-[#1a2e5a]/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                        <Camera className="text-white" size={40} strokeWidth={1.5} />
+                      </div>
                     </div>
                   ))}
-               </div>
-
-               {/* Trust us Grid (Integrated into Expertise flow) */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                 {featureCards.map((feat, idx) => (
-                   <div key={idx} className="p-10 bg-white border border-slate-100 rounded-[2.5rem] flex flex-col items-center text-center shadow-sm hover:shadow-2xl transition-all duration-500 hover:border-[#67c1d3] relative overflow-hidden group">
-                       <div className="mb-8 w-20 h-20 rounded-2xl bg-slate-50 flex items-center justify-center p-4 group-hover:bg-[#e0f1f4] transition-colors">{feat.icon}</div>
-                       <h4 className="text-lg font-black text-[#013b82] mb-4 tracking-wider uppercase">{t(feat.title)}</h4>
-                       <p className="text-[15px] leading-relaxed text-[#54595f] leading-[26px]">{t(feat.desc)}</p>
-                   </div>
-                 ))}
-               </div>
-            </section>
-
-            {/* Appointment Form: Prominent Blue Card */}
-            <div className={`bg-[#5ba6d2] p-10 md:p-14 rounded-3xl shadow-xl text-white text-center transition-all duration-1000 transform ${mounted ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
-                <h2 className="text-3xl md:text-4xl font-black mb-2 uppercase tracking-wide">Book an Appointment</h2>
-                <p className="text-white/90 text-[16px] mb-12 italic border-b border-white/20 pb-4 inline-block">Please fill out the form below to schedule your appointment.</p>
-                
-                <form className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-12 text-left">
-                  <div className="relative group">
-                    <label className="text-[13px] font-black uppercase tracking-widest text-white/70 block mb-1">Full Name *</label>
-                    <input type="text" placeholder="Your Name" className="w-full bg-transparent border-b-2 border-white/40 text-white placeholder-white/30 py-3 focus:border-white outline-none transition-all font-bold text-lg" />
-                  </div>
-                  <div className="relative group">
-                    <label className="text-[13px] font-black uppercase tracking-widest text-white/70 block mb-1">Phone Number *</label>
-                    <input type="tel" placeholder="Your mobile" className="w-full bg-transparent border-b-2 border-white/40 text-white placeholder-white/30 py-3 focus:border-white outline-none transition-all font-bold text-lg" />
-                  </div>
-                   <div className="relative group">
-                    <label className="text-[13px] font-black uppercase tracking-widest text-white/70 block mb-1">Email Address</label>
-                    <input type="email" placeholder="Your email" className="w-full bg-transparent border-b-2 border-white/40 text-white placeholder-white/30 py-3 focus:border-white outline-none transition-all font-bold text-lg" />
-                  </div>
-                   <div className="relative group">
-                    <label className="text-[13px] font-black uppercase tracking-widest text-white/70 block mb-1">Reason of visit</label>
-                    <input type="text" placeholder="Select Reason" className="w-full bg-transparent border-b-2 border-white/40 text-white placeholder-white/30 py-3 focus:border-white outline-none transition-all font-bold text-lg" />
-                  </div>
-                  <div className="relative group md:col-span-2">
-                    <label className="text-[13px] font-black uppercase tracking-widest text-white/70 block mb-1">Brief about you</label>
-                    <input type="text" placeholder="How can we help you?" className="w-full bg-transparent border-b-2 border-white/40 text-white placeholder-white/30 py-3 focus:border-white outline-none transition-all font-bold text-lg" />
-                  </div>
-                  <div className="md:col-span-3 flex justify-center pt-8">
-                    <button type="submit" className="px-16 py-4 bg-[#013b82] text-white font-black rounded-full hover:bg-emerald-600 shadow-xl hover:-translate-y-1 transition-all tracking-[0.2em] text-[15px] border-2 border-white/20">
-                      SUBMIT REQUEST
-                    </button>
-                  </div>
-                </form>
-            </div>
-
-            {/* Welcome Text */}
-            <div className="space-y-10">
-                <h2 className="text-3xl font-black text-[#013b82] font-heading leading-tight underline decoration-[#67c1d3] decoration-8 underline-offset-8">
-                  Homeopathy clinic in {clinic.name}, AP
-                </h2>
-                <div className="bg-[#f8fafc] border-l-4 border-[#67c1d3] p-8 md:p-10 rounded-r-3xl">
-                   <p className="text-[18px] leading-[32px] font-medium text-slate-700">
-                      Welcome to UniCare Homeopathy Clinic – the trusted homeopathy clinic in <span className="text-[#013b82] font-black">{clinic.name}</span>. Our team of expert homeopathy doctors is dedicated to helping you find relief from over 200+ health issues. For 25+ years, we’ve been dedicated to providing the finest homeopathy remedies.
-                   </p>
                 </div>
-                
-                <div className="space-y-6 pt-10">
-                   <h3 className="text-2xl font-black text-[#013b82] font-heading border-b border-slate-100 pb-4">
-                     Why Choose UniCare Homeopathy Clinic?
-                   </h3>
-                   <p className="text-[17px] leading-[30px] italic text-slate-500 pl-4 border-l-2 border-slate-100">
-                     UniCare Homeopathy Clinic in {clinic.name} is one of India’s most trusted homeopathic clinics. Homeopathy has touched and healed the lives of many, and at our clinics, we continue to treat people with the same passion. Our team comes with over 25+ years of clinical expertise.
-                   </p>
-                </div>
-            </div>
+              </section>
+            )}
 
-            {/* 2. OUR SPECIALTIES SECTION */}
-            <section className="space-y-16 pt-10">
-                <div className="text-center">
-                  <h2 className="text-3xl font-black text-[#013b82] uppercase mb-4 tracking-tight">Our Specialties</h2>
-                  <div className="w-16 h-1 bg-[#67c1d3] mx-auto rounded-full" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                   {specialtyCategories.map((spec, idx) => (
-                     <div key={idx} className="bg-[#f0f9fa] p-10 rounded-[3rem] shadow-sm hover:shadow-xl transition-all border border-[#cfe8ec]/30">
-                        <div className="flex items-center gap-6 mb-8 border-b border-[#cfe8ec] pb-6">
-                           <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-[#67c1d3] shadow-md">
-                              {spec.icon}
-                           </div>
-                           <h4 className="text-xl font-black text-[#013b82] uppercase tracking-wide">{spec.title}</h4>
-                        </div>
-                        <ul className="space-y-4">
-                           {spec.items.map((item, idy) => (
-                             <li key={idy} className="flex items-center gap-4 text-[#54595f] font-bold text-md">
-                                <div className="w-2.5 h-2.5 bg-[#67c1d3] rounded-full" />
-                                <span>{item} Specialist Care</span>
-                             </li>
-                           ))}
-                        </ul>
-                     </div>
-                   ))}
-                </div>
-            </section>
-
-            {/* Mass Treatment Grid: Small Blue Buttons */}
-            <div className="space-y-12">
-                <h3 className="text-2xl font-black text-[#013b82] font-heading text-center underline decoration-[#67c1d3] decoration-4 underline-offset-4 mb-10">
-                   Treatments at {clinic.name} Branch
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  {treatmentLinks.map((link, idx) => (
-                    <Link key={idx} to="#" className="px-6 py-5 bg-[#67c1d3] text-white rounded-2xl flex items-center justify-between group hover:bg-[#013b82] hover:-translate-y-1 transition-all shadow-md active:scale-95">
-                        <span className="font-black text-[13px] uppercase tracking-tight leading-tight">Homeopathy for {t(link)}</span>
-                        <ChevronRightCircle size={18} className="text-white group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                  ))}
-                </div>
-            </div>
-
-          </div>
-
-          {/* SIDEBAR AREA */}
-          <div className="lg:col-span-4">
-             <div className="sticky top-28 space-y-16">
-                  
-                  {/* Clinic Contact Detail Box */}
-                  <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-2xl relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 w-24 h-24 bg-[#013b82] opacity-[0.03] rounded-bl-full group-hover:scale-110 transition-transform" />
-                       <h4 className="text-xl font-black text-[#013b82] uppercase mb-10 pb-4 border-b-2 border-[#f0f4f8]">Clinic Contact</h4>
-                       <div className="space-y-10">
-                           <div className="flex gap-6 items-start group/item">
-                               <div className="w-12 h-12 bg-[#f0f9fa] rounded-2xl flex items-center justify-center text-[#67c1d3] group-hover/item:bg-[#67c1d3] group-hover/item:text-white transition-colors">
-                                  <Phone size={22} />
-                               </div>
-                               <div>
-                                   <p className="text-[11px] font-black uppercase text-gray-400 tracking-widest mb-1.5">Call us</p>
-                                   <p className="text-[#1a2e5a] font-black text-xl leading-none">{clinic.phone}</p>
-                               </div>
-                           </div>
-                           <div className="flex gap-6 items-start group/item">
-                               <div className="w-12 h-12 bg-[#f0f9fa] rounded-2xl flex items-center justify-center text-[#67c1d3] group-hover/item:bg-[#67c1d3] group-hover/item:text-white transition-colors">
-                                  <MapPin size={22} />
-                               </div>
-                               <div>
-                                   <p className="text-[11px] font-black uppercase text-gray-400 tracking-widest mb-1.5">Address</p>
-                                   <p className="text-[#1a2e5a] font-bold text-[16px] leading-relaxed">{clinic.address}</p>
-                               </div>
-                           </div>
-                            <div className="flex gap-6 items-start group/item">
-                               <div className="w-12 h-12 bg-[#f0f9fa] rounded-2xl flex items-center justify-center text-[#67c1d3] group-hover/item:bg-[#67c1d3] group-hover/item:text-white transition-colors">
-                                  <Mail size={22} />
-                               </div>
-                               <div>
-                                   <p className="text-[11px] font-black uppercase text-gray-400 tracking-widest mb-1.5">Email</p>
-                                   <p className="text-[#1a2e5a] font-bold text-[16px] leading-none">{clinic.email}</p>
-                               </div>
-                           </div>
-                       </div>
-                  </div>
-
-                  {/* Nearby Landmarks with RED km highlights */}
-                  <div className="space-y-8 pl-4">
-                      <h3 className="text-xl font-black text-[#1a2e5a] uppercase flex flex-col">
-                        <span className="text-[12px] text-gray-300 mb-1 tracking-widest">FIND YOUR NEARBY</span>
-                        UNICARE HOMEOPATHY CLINIC
-                      </h3>
-                      <div className="space-y-6">
-                          {clinic.landmarks.map((lm, idx) => (
-                             <div key={idx} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-lg hover:-translate-x-2 transition-all group overflow-hidden">
-                                 <div className="flex items-center gap-4 mb-3">
-                                    <div className="h-6 w-1 bg-red-600 rounded-full" />
-                                    <p className="text-red-600 font-extrabold text-xl">{lm.dist}</p>
-                                 </div>
-                                 <p className="text-[#013b82] font-black text-[18px] leading-snug group-hover:text-emerald-500 transition-colors uppercase tracking-tight">
-                                   {lm.name} UniCare
-                                 </p>
-                             </div>
-                          ))}
+            {/* Specialists Grid */}
+            <section id="specialists" className="scroll-mt-32">
+              <div className="flex items-center gap-3 mb-10">
+                <div className="w-12 h-1 bg-emerald-500 rounded-full" />
+                <h2 className="text-3xl font-serif font-bold text-[#1a2e5a]">Branch Specialists</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                {branchDoctors.map((doc, i) => (
+                  <div key={i} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm flex items-center gap-8 group hover:border-primary/20 hover:shadow-2xl transition-all h-full">
+                    <div className="w-28 h-28 rounded-3xl overflow-hidden ring-4 ring-slate-50 group-hover:ring-primary/10 transition-all shrink-0">
+                      <img src={doc.image} alt={doc.name} className="w-full h-full object-cover transform transition-transform group-hover:scale-105" />
+                    </div>
+                    <div>
+                      <h4 className="text-2xl font-bold font-serif text-[#1a2e5a] mb-1">{doc.name}</h4>
+                      <p className="text-primary font-bold text-sm mb-4 uppercase tracking-wider">{doc.role}</p>
+                      <div className="flex items-center gap-2 font-bold text-emerald-600 text-[10px] uppercase tracking-widest bg-emerald-50 w-fit px-3 py-1 rounded-full">
+                        <Award size={14} />
+                        <span>{doc.exp} EXP</span>
                       </div>
+                    </div>
                   </div>
-             </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Map Integration */}
+            {branch.map_url && (
+              <section id="location" className="scroll-mt-32">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-12 h-1 bg-emerald-500 rounded-full" />
+                  <h2 className="text-3xl font-serif font-bold text-[#1a2e5a]">Location & Directions</h2>
+                </div>
+                <div className="rounded-[48px] overflow-hidden shadow-2xl shadow-slate-200 border-[10px] border-white h-[480px] relative group hover:shadow-indigo-200/50 transition-all duration-700">
+                  <iframe 
+                    src={branch.map_url}
+                    className="w-full h-full grayscale-[0.2] hover:grayscale-0 transition-all duration-1000"
+                    loading="lazy"
+                    title={`Location map for ${branch.name}`}
+                  ></iframe>
+                  <div className="absolute bottom-8 left-8 right-8">
+                    <div className="bg-white/95 backdrop-blur-md p-8 rounded-[36px] shadow-2xl border border-white/20 flex flex-col sm:flex-row items-center justify-between gap-6">
+                      <div className="flex items-start gap-5">
+                        <div className="w-14 h-14 bg-[#1a2e5a] text-white rounded-[20px] flex items-center justify-center shrink-0 shadow-lg shadow-[#1a2e5a]/20">
+                          <MapPin size={28} />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-[#1a2e5a] text-lg mb-1">Visit Our Branch</h4>
+                          <p className="text-sm text-slate-600 line-clamp-2 max-w-sm">{branch.address}</p>
+                        </div>
+                      </div>
+                      <Link href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.address)}`} target="_blank" className="w-full sm:w-auto">
+                        <Button className="bg-[#1a2e5a] hover:bg-black rounded-xl px-10 h-12 w-full font-bold shadow-lg transition-all active:scale-95">
+                          Open in Maps
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
           </div>
 
+          {/* Sticky Sidebar */}
+          <div className="lg:col-span-4">
+            <div className="sticky top-28 space-y-8">
+              <Card className="rounded-[40px] overflow-hidden border border-white/10 shadow-2xl shadow-indigo-900/20 bg-gradient-to-br from-[#1a2e5a] to-[#0a1e3a] text-white">
+                <CardContent className="p-8 md:p-10">
+                  <div className="mb-10 text-center">
+                    <div className="w-16 h-16 bg-white/10 rounded-[20px] flex items-center justify-center mx-auto mb-6 backdrop-blur-xl border border-white/20 shadow-inner group">
+                      <Calendar size={32} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <h3 className="text-3xl font-serif font-bold mb-3 italic tracking-tight">Book Priority Visit</h3>
+                    <p className="text-blue-200/70 text-sm leading-relaxed max-w-[240px] mx-auto font-medium">Schedule your expert consultation at our {branch.name} center today.</p>
+                  </div>
+                  <AppointmentForm theme="dark" source={`Clinic: ${branch.name}`} />
+                </CardContent>
+              </Card>
+
+              <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/50">
+                <h4 className="text-xl font-bold text-[#1a2e5a] mb-8 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                    <Info size={20} className="text-primary" />
+                  </div>
+                  Branch Amenities
+                </h4>
+                <ul className="space-y-5">
+                  {[
+                    "Free On-site Parking",
+                    "Premium Patient Lounge",
+                    "Fully Digitized Reports",
+                    "In-house Medical Lab",
+                    "Waiting Area < 10 Mins"
+                  ].map((feat, idx) => (
+                    <li key={idx} className="flex items-center gap-4 text-slate-700 font-medium">
+                      <div className="w-6 h-6 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center shrink-0 border border-emerald-100">
+                        <CheckCircle2 size={14} strokeWidth={3} />
+                      </div>
+                      <span className="text-sm">{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {branch.landmarks && branch.landmarks.length > 0 && (
+                  <div className="mt-10 pt-10 border-t border-dashed border-slate-100">
+                    <h4 className="text-[10px] font-black text-slate-400 mb-6 uppercase tracking-[0.2em] flex items-center gap-2">
+                       <MapIcon size={14} /> Nearby Landmarks
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {branch.landmarks.map((mark: string, i: number) => (
+                        <span key={i} className="px-4 py-2 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black border border-slate-200 hover:border-primary/30 transition-colors uppercase tracking-widest">
+                          {mark}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      
+      </main>
+
       <Footer />
+      <WhatsAppFloat />
     </div>
   );
 };

@@ -28,7 +28,7 @@ export default function PrivateRoute({ children, modulePath, action }: PrivateRo
   }, [router]);
 
   if (!mounted) {
-    return <div suppressHydrationWarning>{children}</div>;
+    return <>{children}</>;
   }
 
   // Show content immediately, check permissions in background
