@@ -5,7 +5,7 @@ import WhatsAppFloat from "@/components/WhatsAppFloat";
 import { settingsApi } from "@/lib/settingsApi";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { ChevronRight, Heart, Award, Users, CheckCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 
 const AboutHyderabad = () => {
   const { t } = useLanguage();
@@ -56,7 +56,7 @@ const AboutHyderabad = () => {
         <div className="bg-slate-50 border-b border-slate-100 py-4 mb-8">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-400">
-              <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+              <Link href="/" className="hover:text-primary transition-colors">Home</Link>
               <ChevronRight size={12} />
               <span className="text-primary">About Hyderabad</span>
             </div>
@@ -144,7 +144,7 @@ const AboutHyderabad = () => {
                <h2 className="text-3xl font-black mb-6 relative z-10">Experience the Power of Nature</h2>
                <p className="text-white/80 mb-10 max-w-xl mx-auto relative z-10">Start your journey to holistic healing today with Hyderabad Homeopathy clinics.</p>
                <Link 
-                  to="/#appointment" 
+                  href="/#appointment" 
                   className="bg-white text-primary px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition-transform inline-block relative z-10"
                 >
                   Book Free Consultation
