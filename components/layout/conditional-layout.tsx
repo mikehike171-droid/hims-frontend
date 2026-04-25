@@ -6,9 +6,8 @@ import { UserDepartmentProvider } from "@/contexts/user-department-context"
 
 import BranchSelector from "@/components/layout/branch-selector"
 import Sidebar, { MobileSidebarContent } from "@/components/layout/sidebar"
-import { Bell, Search, Menu } from "lucide-react"
+import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { ProfileDropdown } from "@/components/ui/profile-dropdown"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Suspense, useState, useEffect } from "react"
@@ -28,6 +27,12 @@ export default function ConditionalLayout({
 
   const [isFullScreenQueue, setIsFullScreenQueue] = useState(false)
 
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   useEffect(() => {
     // Default to half screen 
     setIsFullScreenQueue(false)
@@ -41,6 +46,10 @@ export default function ConditionalLayout({
     window.addEventListener('toggle-fullscreen-queue', handleToggle)
     return () => window.removeEventListener('toggle-fullscreen-queue', handleToggle)
   }, [])
+
+  if (!mounted) {
+    return <div className="h-screen w-full bg-gray-50 flex items-center justify-center">Loading Dashboard...</div>
+  }
 
   if (isAuthPage) {
     return <>{children}</>
@@ -83,14 +92,8 @@ export default function ConditionalLayout({
                   </div>
                 </div>
 
-                {/* Right side - Notifications and Profile */}
+                {/* Right side - Profile */}
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <Button variant="ghost" size="sm" className="relative p-1">
-                    <Bell className="h-4 w-4" />
-                    <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 text-white text-xs rounded-full flex items-center justify-center text-[10px]">
-                      3
-                    </span>
-                  </Button>
                   <div className="lg:hidden">
                     <ProfileDropdown />
                   </div>
@@ -103,29 +106,8 @@ export default function ConditionalLayout({
                   <BranchSelector />
                 </div>
 
-                <div className="flex items-center gap-4">
-                  {/* Search */}
-                  <div className="hidden md:flex items-center gap-2">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        placeholder="Search patients, appointments..."
-                        className="pl-10 w-64 bg-gray-50 border-gray-200"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Notifications */}
-                  <Button variant="ghost" size="sm" className="relative">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                      3
-                    </span>
-                  </Button>
-
                   {/* User Menu */}
                   <ProfileDropdown />
-                </div>
               </div>
             </header>
 

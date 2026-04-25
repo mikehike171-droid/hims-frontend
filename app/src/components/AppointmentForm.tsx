@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useScrollAnimation } from "@/hooks/use-scroll-animation";
 import { Loader2, CheckCircle2 } from "lucide-react";
+import authService from "@/lib/authService";
 
 interface AppointmentFormProps {
   theme?: "light" | "dark";
@@ -19,8 +20,8 @@ const AppointmentForm = ({ theme = "light", source = "General" }: AppointmentFor
     e.preventDefault();
     setLoading(true);
     try {
-      const API_URL = process.env.NEXT_PUBLIC_SETTINGS_API_URL || 'http://127.0.0.1:3002/api';
-      const response = await fetch(`${API_URL}/enquiry/book`, {
+      const SETTINGS_API_URL = authService.getSettingsApiUrl();
+      const response = await fetch(`${SETTINGS_API_URL}/enquiry/book`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -172,7 +173,7 @@ const AppointmentForm = ({ theme = "light", source = "General" }: AppointmentFor
                 disabled={loading}
                 className="bg-[#1B7A43] text-white px-12 py-5 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-105 hover:bg-[#155e34] hover:shadow-2xl active:scale-95 transition-all duration-300 disabled:opacity-70"
               >
-                {loading ? "Processing..." : "Submit Request"}
+                {loading ? "Processing..." : "Confirm Booking"}
               </button>
             </div>
           </form>

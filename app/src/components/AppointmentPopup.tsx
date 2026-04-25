@@ -1,21 +1,16 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import authService from "@/lib/authService";
 
 const AppointmentPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", reason: "" });
 
   useEffect(() => {
-    // Show popup immediately or after a slight delay
-    const timer = setTimeout(() => {
-      setIsOpen(true);
-    }, 1000);
-
     const handleOpenPopup = () => setIsOpen(true);
     window.addEventListener("open-appointment-popup", handleOpenPopup);
 
     return () => {
-      clearTimeout(timer);
       window.removeEventListener("open-appointment-popup", handleOpenPopup);
     };
   }, []);
@@ -27,8 +22,8 @@ const AppointmentPopup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const API_URL = process.env.NEXT_PUBLIC_SETTINGS_API_URL || 'http://127.0.0.1:3002/api';
-      const response = await fetch(`${API_URL}/enquiry/book`, {
+      const SETTINGS_API_URL = authService.getSettingsApiUrl();
+      const response = await fetch(`${SETTINGS_API_URL}/enquiry/book`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)

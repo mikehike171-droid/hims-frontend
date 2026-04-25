@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
+import { translations } from './translations';
+
 // Supported languages for the dynamic tool
 export type Language = 'en' | 'hi' | 'te';
 
@@ -12,39 +14,54 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>(() => {
+  const [language, setLanguageState] = useState<Language>('en');
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       // 1. Check for saved preference in localStorage
       const saved = localStorage.getItem('language') as Language | null;
       if (saved && ['en', 'hi', 'te'].includes(saved)) {
-        return saved;
+        setLanguageState(saved);
+        return;
       }
 
       // 2. Detect language from browser
       const browserLangs = navigator.languages || [navigator.language];
       for (const lang of browserLangs) {
         const baseLang = lang.split('-')[0];
-        if (baseLang === 'hi') return 'hi';
-        if (baseLang === 'te') return 'te';
-        if (baseLang === 'en') return 'en';
+        if (baseLang === 'hi') { setLanguageState('hi'); return; }
+        if (baseLang === 'te') { setLanguageState('te'); return; }
+        if (baseLang === 'en') { setLanguageState('en'); return; }
       }
     }
-
-    return 'en';
-  });
+  }, []);
 
   useEffect(() => {
-    // Save language to localStorage whenever it changes
-    localStorage.setItem('language', language);
-    
-    // Set the Google Translate cookie
-    const cookieValue = language === 'en' ? '' : `/en/${language}`;
-    document.cookie = `googtrans=${cookieValue}; path=/`;
-    document.cookie = `googtrans=${cookieValue}; path=/; domain=${window.location.hostname}`;
-    
-    // Update HTML lang attribute
-    if (document.documentElement.lang !== language) {
-      document.documentElement.lang = language;
+    const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+
+    if (isAdmin) {
+      // Force English for admin pages by clearing the Google Translate cookie
+      document.cookie = "googtrans=; path=/";
+      document.cookie = `googtrans=; path=/; domain=${window.location.hostname}`;
+      if (document.documentElement.lang !== 'en') {
+        document.documentElement.lang = 'en';
+      }
+      return;
+    }
+
+    if (language) {
+      // Save language to localStorage whenever it changes
+      localStorage.setItem('language', language);
+
+      // Set the Google Translate cookie
+      const cookieValue = language === 'en' ? '' : `/en/${language}`;
+      document.cookie = `googtrans=${cookieValue}; path=/`;
+      document.cookie = `googtrans=${cookieValue}; path=/; domain=${window.location.hostname}`;
+
+      // Update HTML lang attribute
+      if (document.documentElement.lang !== language) {
+        document.documentElement.lang = language;
+      }
     }
   }, [language]);
 
@@ -54,9 +71,12 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     window.location.reload();
   };
 
-  // The 't' function now just returns the text directly,
-  // as the Google Translate tool will handle the DOM translation.
+  // The 't' function checks our manual translation map first.
+  // If not found, it returns the text directly, and Google Translate tool handles it.
   const t = (keyOrText: string): string => {
+    if (translations[language] && translations[language][keyOrText]) {
+      return translations[language][keyOrText];
+    }
     return keyOrText;
   };
 

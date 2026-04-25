@@ -21,7 +21,7 @@ const BookAppointmentBanner = () => {
         </h2>
         
         <p className="text-white/80 text-base md:text-lg max-w-4xl mx-auto leading-relaxed font-medium mb-10">
-          Experience trusted and personalized care with UniCare Homeopathy — proudly recognized as the{" "}
+          Experience trusted and personalized care with UNICARE HOMEOPATHY PRIVATE LIMITED — proudly recognized as the{" "}
           <span className="text-white font-black underline decoration-emerald-400 decoration-4 underline-offset-8 uppercase">Best Homeopathy Clinic in UniCare</span> and South India's largest
           homeopathy chain. Book your appointment today and begin your journey toward safe, effective, and holistic
           healing with expert guidance you can trust.

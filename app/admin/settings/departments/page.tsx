@@ -44,7 +44,11 @@ export default function DepartmentsPage() {
   const [loading, setLoading] = useState(false)
   const [departmentErrors, setDepartmentErrors] = useState<any>({})
   const [initialized, setInitialized] = useState(false)
-  const [selectedBranchId, setSelectedBranchId] = useState(authService.getSelectedBranchId())
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null)
+
+  useEffect(() => {
+    setSelectedBranchId(authService.getSelectedBranchId())
+  }, [])
 
   const fetchDepartments = useCallback(async () => {
     try {

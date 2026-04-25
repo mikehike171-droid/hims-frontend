@@ -81,15 +81,17 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
           
           return await response.json()
         })
-        const formattedBranches: Branch[] = locations.map((loc: any) => ({
-          id: loc.id.toString(),
-          name: loc.name,
-          locationCode: loc.locationCode,
-          address: loc.address,
-          phone: loc.phone || '',
-          email: loc.email || '',
-          isActive: loc.isActive,
-        }))
+        const formattedBranches: Branch[] = Array.isArray(locations) 
+          ? locations.map((loc: any) => ({
+              id: loc.id.toString(),
+              name: loc.name,
+              locationCode: loc.locationCode,
+              address: loc.address,
+              phone: loc.phone || '',
+              email: loc.email || '',
+              isActive: loc.isActive,
+            }))
+          : []
 
         // Cache branches for next time
         localStorage.setItem('cachedBranches', JSON.stringify(formattedBranches))

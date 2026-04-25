@@ -78,7 +78,7 @@ const AllSpecialties = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="absolute bottom-4 left-4 right-4 translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500">
                        <Link 
-                          href={`/treatment/${item.id}`}
+                          href={`/treatment/${item.slug || item.id}`}
                           className="w-full bg-[#1B7A43] text-white py-2.1 rounded-full text-[10px] font-bold text-center block uppercase tracking-widest"
                        >
                           View Details

@@ -24,7 +24,7 @@ const HeroSection = () => {
         <div className="flex-1 flex justify-center md:justify-end animate-fade-in-right">
           <img
             src={heroMedicine.src}
-            alt="UniCare Homeopathy Medicine"
+            alt="UNICARE HOMEOPATHY PRIVATE LIMITED Medicine"
             width={800}
             height={900}
             className="max-h-[500px] w-auto rounded-[2rem] object-cover drop-shadow-2xl animate-float"

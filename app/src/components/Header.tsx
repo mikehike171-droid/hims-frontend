@@ -84,16 +84,16 @@ const Navbar = () => {
           const tCat = (t.category || "").toLowerCase();
           const tName = (t.name || "").toLowerCase();
           
-          if (cat.key === "Skin Treatment") return tCat.includes("skin") || tName.includes("psoriasis") || tName.includes("hyperpigmentation") || tName.includes("ichthyosis") || tName.includes("lichen planus") || tName.includes("lipoma") || tName.includes("pityriasis") || tName.includes("urticaria") || tName.includes("vitiligo");
+          if (cat.key === "Skin Treatment") return tCat.includes("skin") || tName.includes("psoriasis") || tName.includes("hyperpigmentation") || tName.includes("ichthyosis") || tName.includes("lichen planus") || tName.includes("lipoma") || tName.includes("pityriasis") || tName.includes("urticaria") || tName.includes("vitiligo") || tName.includes("acne") || tName.includes("eczema") || tName.includes("warts") || tName.includes("melasma") || tName.includes("dermatitis") || tName.includes("fungal");
           if (cat.key === "Seasonal Treatment") return tCat.includes("season") || tCat.includes("respiratory") || tName.includes("allergic") || tName.includes("allergy") || tName.includes("asthma") || tName.includes("breathlessness") || tName.includes("bronchitis") || tName.includes("nose block") || tName.includes("sinusitis") || tName.includes("tonsillitis");
-          if (cat.key === "Women's Treatment") return tCat.includes("women") || tName.includes("fibroids") || tName.includes("infertility") || tName.includes("menses") || tName.includes("leucorrhoea") || tName.includes("pcos") || tName.includes("uterine") || tName.includes("hypothyroidism") || tName.includes("hyperthyroidism");
+          if (cat.key === "Women's Treatment") return tCat.includes("women") || tName.includes("fibroids") || tName.includes("infertility") || tName.includes("menses") || tName.includes("leucorrhoea") || tName.includes("pcos") || tName.includes("uterine") || tName.includes("hypothyroidism") || tName.includes("hyperthyroidism") || tName.includes("adenomyosis") || tName.includes("menopause") || tName.includes("pms") || tName.includes("pregnancy") || tName.includes("dysmenorrhea");
           if (cat.key === "Hair Treatment") return tCat.includes("hair") || tName.includes("alopecia") || tName.includes("hair loss");
           if (cat.key === "Treatments") {
              // Default column for everything else that doesn't fit in specific categories
              const isOther = !(
-               tCat.includes("skin") || tName.includes("psoriasis") || tName.includes("hyperpigmentation") || tName.includes("ichthyosis") || tName.includes("lichen planus") || tName.includes("lipoma") || tName.includes("pityriasis") || tName.includes("urticaria") || tName.includes("vitiligo") ||
+               tCat.includes("skin") || tName.includes("psoriasis") || tName.includes("hyperpigmentation") || tName.includes("ichthyosis") || tName.includes("lichen planus") || tName.includes("lipoma") || tName.includes("pityriasis") || tName.includes("urticaria") || tName.includes("vitiligo") || tName.includes("acne") || tName.includes("eczema") || tName.includes("warts") || tName.includes("melasma") || tName.includes("dermatitis") || tName.includes("fungal") ||
                tCat.includes("season") || tCat.includes("respiratory") || tName.includes("allergic") || tName.includes("allergy") || tName.includes("asthma") || tName.includes("breathlessness") || tName.includes("bronchitis") || tName.includes("nose block") || tName.includes("sinusitis") || tName.includes("tonsillitis") ||
-               tCat.includes("women") || tName.includes("fibroids") || tName.includes("infertility") || tName.includes("menses") || tName.includes("leucorrhoea") || tName.includes("pcos") || tName.includes("uterine") || tName.includes("hypothyroidism") || tName.includes("hyperthyroidism") ||
+               tCat.includes("women") || tName.includes("fibroids") || tName.includes("infertility") || tName.includes("menses") || tName.includes("leucorrhoea") || tName.includes("pcos") || tName.includes("uterine") || tName.includes("hypothyroidism") || tName.includes("hyperthyroidism") || tName.includes("adenomyosis") || tName.includes("menopause") || tName.includes("pms") || tName.includes("pregnancy") || tName.includes("dysmenorrhea") ||
                tCat.includes("hair") || tName.includes("alopecia") || tName.includes("hair loss")
              );
              return isOther || tName.includes("acidity") || tName.includes("thyroid") || tName.includes("anxiety") || tName.includes("migraine") || tName.includes("arthritis") || tName.includes("diabetes") || tName.includes("piles") || tName.includes("fissure") || tName.includes("kidney stones") || tName.includes("fatty liver");
@@ -167,7 +167,7 @@ const Navbar = () => {
     <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md' : 'bg-background shadow-md'}`}>
       <div className="container mx-auto relative flex items-center justify-between py-3 px-4">
         <Link href="/">
-          <img src={logo.src} alt="UniCare Homeopathy" className="h-14 w-auto" />
+          <img src={logo.src} alt="UNICARE HOMEOPATHY PRIVATE LIMITED" className="h-14 w-auto" />
         </Link>
 
         {/* Desktop Navigation */}
@@ -284,11 +284,11 @@ const Navbar = () => {
         )}
 
         <a
-          href="tel:+919553387472"
+          href="tel:+919059051906"
           className="hidden lg:flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity"
         >
           <Phone className="w-4 h-4" />
-          +91 95533 87472
+          +91 90590 51906
         </a>
 
         <button className="lg:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
@@ -353,11 +353,11 @@ const Navbar = () => {
             </div>
           ))}
           <a
-            href="tel:+919553387472"
+            href="tel:+919059051906"
             className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold justify-center"
           >
             <Phone className="w-4 h-4" />
-            +91 95533 87472
+            +91 90590 51906
           </a>
           <div className="pt-2">
             <LanguageSelector />

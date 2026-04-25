@@ -1,17 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { settingsApi } from "@/lib/settingsApi";
 import { useLanguage } from "@/i18n/LanguageContext";
 import authService from "@/lib/authService";
-import { 
-  ChevronRight, 
-  ArrowRight, 
-  Activity, 
-  CheckCircle2, 
-  HelpCircle, 
-  Phone, 
+import {
+  ChevronRight,
+  ArrowRight,
+  Activity,
+  CheckCircle2,
+  HelpCircle,
+  Phone,
   Calendar,
   Layers,
   MessageSquare,
@@ -25,6 +25,7 @@ import Link from "next/link";
 
 const TreatmentDetailPage = () => {
   const { slug } = useParams();
+  const router = useRouter();
   const { t } = useLanguage();
   const [treatment, setTreatment] = useState<any>(null);
   const [relatedTreatments, setRelatedTreatments] = useState<any[]>([]);
@@ -53,13 +54,13 @@ const TreatmentDetailPage = () => {
   const handleSidebarSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const API_URL = process.env.NEXT_PUBLIC_SETTINGS_API_URL || 'http://127.0.0.1:3002/api';
-      const response = await fetch(`${API_URL}/enquiry/book`, {
+      const SETTINGS_API_URL = authService.getSettingsApiUrl();
+      const response = await fetch(`${SETTINGS_API_URL}/enquiry/book`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...sidebarForm,
-          medical_problems: `Inquiry from treatment page: ${treatment?.name}`
+          medical_problems: sidebarForm.reason || `Inquiry from treatment page: ${treatment?.name}`
         })
       });
 
@@ -80,11 +81,17 @@ const TreatmentDetailPage = () => {
         const currentData = await settingsApi.getPublicTreatmentBySlug(slug as string);
         setTreatment(currentData);
 
+        // Redirect if visited via ID but treatment has a slug
+        if (currentData && currentData.slug && currentData.slug !== slug && /^\d+$/.test(slug as string)) {
+          console.log(`Redirecting from ID ${slug} to slug ${currentData.slug}`);
+          router.replace(`/treatment/${currentData.slug}`);
+        }
+
         const allTreatments = await settingsApi.getPublicTreatments();
         if (Array.isArray(allTreatments)) {
           const filtered = allTreatments
             .filter((t: any) => t.slug !== slug && t.status === 'active')
-            .sort(() => 0.5 - Math.random()) 
+            .sort(() => 0.5 - Math.random())
             .slice(0, 3);
           setRelatedTreatments(filtered);
         }
@@ -103,10 +110,10 @@ const TreatmentDetailPage = () => {
   useEffect(() => {
     const handleScroll = () => {
       if (!navItems.length) return;
-      
+
       const ids = navItems.map(item => item.id);
       let currentSection = "overview";
-      
+
       for (const id of ids) {
         const element = document.getElementById(id);
         if (element) {
@@ -163,8 +170,8 @@ const TreatmentDetailPage = () => {
       {/* Hero Section - Ultra Dense */}
       <section className="relative h-[280px] md:h-[350px] overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img 
-            src={getImageUrl(treatment.image_url)} 
+          <img
+            src={getImageUrl(treatment.image_url)}
             alt={treatment.name}
             className="w-full h-full object-cover"
           />
@@ -172,28 +179,28 @@ const TreatmentDetailPage = () => {
         </div>
 
         <div className="container mx-auto px-4 relative z-10 h-full flex flex-col justify-center">
-             {/* Absolute Top Breadcrumbs */}
-             <nav className="absolute top-8 flex items-center gap-2 text-white/70 text-[10px] font-bold uppercase tracking-[0.2em]">
-                <Link href="/" className="hover:text-white transition-colors">Home</Link>
-                <ChevronRight size={10} />
-                <span className="text-white">{treatment.name}</span>
-             </nav>
-             
-          <div className="max-w-2xl mt-4">
-             <h1 className="text-3xl md:text-[2.8rem] font-extrabold text-white leading-[1.1] uppercase mb-4 drop-shadow-md tracking-tight font-heading">
-               {treatment.name}
-             </h1>
+          {/* Absolute Top Breadcrumbs */}
+          <nav className="absolute top-8 flex items-center gap-2 text-white/70 text-[10px] font-bold uppercase tracking-[0.2em]">
+            <Link href="/" className="hover:text-white transition-colors">Home</Link>
+            <ChevronRight size={10} />
+            <span className="text-white">{treatment.name}</span>
+          </nav>
 
-             <div className="flex flex-wrap gap-3">
-                <div className="flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-md rounded-lg border border-white/30 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg">
-                   <div className="bg-[#4ade80]/20 rounded-full p-1"><CheckCircle2 size={12} className="text-[#4ade80]" /></div>
-                   Expert Care
-                </div>
-                <div className="flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-xl rounded-lg border border-white/30 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg">
-                   <div className="bg-[#4ade80]/20 rounded-full p-1"><Activity size={12} className="text-[#4ade80]" /></div>
-                   Verified
-                </div>
-             </div>
+          <div className="max-w-2xl mt-4">
+            <h1 className="text-3xl md:text-[2.8rem] font-extrabold text-white leading-[1.1] uppercase mb-4 drop-shadow-md tracking-tight font-heading">
+              {treatment.name}
+            </h1>
+
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-md rounded-lg border border-white/30 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg">
+                <div className="bg-[#4ade80]/20 rounded-full p-1"><CheckCircle2 size={12} className="text-[#4ade80]" /></div>
+                Expert Care
+              </div>
+              <div className="flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-xl rounded-lg border border-white/30 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg">
+                <div className="bg-[#4ade80]/20 rounded-full p-1"><Activity size={12} className="text-[#4ade80]" /></div>
+                Verified
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -201,19 +208,19 @@ const TreatmentDetailPage = () => {
       {/* Main Content Area - Ultra Tight (py-4, space-y-6) */}
       <main className="container mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          
+
           {/* Left Column: Content (70%) */}
           <div className="lg:w-[70%]">
-            
+
             {/* Overview Section */}
             <section id="overview" className="mb-8 scroll-mt-24">
               <div className="flex flex-col gap-2 mb-3">
-                 <div className="h-1 w-8 bg-primary rounded-full" />
-                 <h2 className="text-xl md:text-[2rem] font-extrabold text-primary uppercase tracking-tight leading-[1] font-heading">
-                    {treatment.name} Overview
-                 </h2>
+                <div className="h-1 w-8 bg-primary rounded-full" />
+                <h2 className="text-xl md:text-[2rem] font-extrabold text-primary uppercase tracking-tight leading-[1] font-heading">
+                  {treatment.name} Overview
+                </h2>
               </div>
-              <div 
+              <div
                 className="text-gray-600 text-[1.05rem] leading-relaxed font-medium border-l-4 border-primary/20 pl-6 py-4 bg-slate-50/50 rounded-r-xl prose prose-slate max-w-none"
                 dangerouslySetInnerHTML={{ __html: treatment.long_description }}
               />
@@ -221,80 +228,80 @@ const TreatmentDetailPage = () => {
 
             {/* Dynamic Content Sections */}
             <div className="space-y-6">
-               {treatment.sections?.map((section: any, idx: number) => (
-                 <section 
-                   key={idx} 
-                   id={slugify(section.title)} 
-                   className="scroll-mt-24"
-                 >
-                    <div className="flex flex-col gap-2 mb-3">
-                       <div className="h-1 w-8 bg-primary rounded-full" />
-                       <h3 className="text-lg md:text-[1.6rem] font-extrabold text-primary uppercase tracking-tight leading-[1] font-heading">
-                         {section.title}
-                       </h3>
+              {treatment.sections?.map((section: any, idx: number) => (
+                <section
+                  key={idx}
+                  id={slugify(section.title)}
+                  className="scroll-mt-24"
+                >
+                  <div className="flex flex-col gap-2 mb-3">
+                    <div className="h-1 w-8 bg-primary rounded-full" />
+                    <h3 className="text-lg md:text-[1.6rem] font-extrabold text-primary uppercase tracking-tight leading-[1] font-heading">
+                      {section.title}
+                    </h3>
+                  </div>
+
+                  {section.type === 'list' ? (
+                    <div className="grid md:grid-cols-2 gap-3">
+                      {section.content.split(',').map((item: string, i: number) => (
+                        <div key={i} className="flex gap-4 p-4 bg-white border border-gray-100 rounded-xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:border-primary/20 transition-all duration-300">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <Activity size={20} />
+                          </div>
+                          <p className="text-gray-700 font-bold text-[0.9rem] leading-tight pt-2.5 uppercase tracking-tight">{item.trim()}</p>
+                        </div>
+                      ))}
                     </div>
+                  ) : (
+                    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+                      <div
+                        className="relative z-10 text-gray-600 text-[1.05rem] leading-relaxed font-medium prose prose-slate max-w-none"
+                        dangerouslySetInnerHTML={{ __html: section.content }}
+                      />
+                    </div>
+                  )}
+                </section>
+              ))}
 
-                    {section.type === 'list' ? (
-                       <div className="grid md:grid-cols-2 gap-3">
-                         {section.content.split(',').map((item: string, i: number) => (
-                           <div key={i} className="flex gap-4 p-4 bg-white border border-gray-100 rounded-xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:border-primary/20 transition-all duration-300">
-                             <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                               <Activity size={20} />
-                             </div>
-                             <p className="text-gray-700 font-bold text-[0.9rem] leading-tight pt-2.5 uppercase tracking-tight">{item.trim()}</p>
-                           </div>
-                         ))}
-                       </div>
-                    ) : (
-                       <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
-                          <div 
-                            className="relative z-10 text-gray-600 text-[1.05rem] leading-relaxed font-medium prose prose-slate max-w-none"
-                            dangerouslySetInnerHTML={{ __html: section.content }}
-                          />
-                       </div>
-                    )}
-                 </section>
-               ))}
-
-               {/* FAQs Section */}
-               {treatment.faqs && treatment.faqs.length > 0 && (
-                 <section id="faqs" className="scroll-mt-24">
-                   <div className="flex flex-col gap-2 mb-3">
-                      <div className="h-1 w-8 bg-primary rounded-full" />
-                      <h4 className="text-lg md:text-[1.6rem] font-extrabold text-primary uppercase tracking-tight font-heading leading-[1]">
-                         Quick Support
-                      </h4>
-                   </div>
-                   <div className="space-y-2">
-                     {treatment.faqs.map((faq: any, idx: number) => (
-                       <details 
-                         key={idx} 
-                         className="group bg-white border border-gray-100 rounded-lg overflow-hidden hover:border-primary/20 transition-all duration-300"
-                       >
-                         <summary className="flex items-center justify-between p-4 cursor-pointer list-none font-bold text-gray-800 uppercase tracking-tight text-[0.85rem] select-none hover:bg-slate-50 transition-colors">
-                           <div className="flex gap-4 items-center">
-                             <HelpCircle size={16} className="text-primary shrink-0" />
-                             {faq.question}
-                           </div>
-                           <div className="w-5 h-5 rounded-full bg-slate-50 flex items-center justify-center group-open:rotate-180 transition-transform">
-                             <ChevronRight size={12} className="text-gray-300" />
-                           </div>
-                         </summary>
-                         <div className="px-10 pb-4 text-gray-600 leading-relaxed text-[0.95rem] border-t border-gray-50 pt-4 font-medium">
-                           {faq.answer}
-                         </div>
-                       </details>
-                     ))}
-                   </div>
-                 </section>
-               )}
+              {/* FAQs Section */}
+              {treatment.faqs && treatment.faqs.length > 0 && (
+                <section id="faqs" className="scroll-mt-24">
+                  <div className="flex flex-col gap-2 mb-3">
+                    <div className="h-1 w-8 bg-primary rounded-full" />
+                    <h4 className="text-lg md:text-[1.6rem] font-extrabold text-primary uppercase tracking-tight font-heading leading-[1]">
+                      Quick Support
+                    </h4>
+                  </div>
+                  <div className="space-y-2">
+                    {treatment.faqs.map((faq: any, idx: number) => (
+                      <details
+                        key={idx}
+                        className="group bg-white border border-gray-100 rounded-lg overflow-hidden hover:border-primary/20 transition-all duration-300"
+                      >
+                        <summary className="flex items-center justify-between p-4 cursor-pointer list-none font-bold text-gray-800 uppercase tracking-tight text-[0.85rem] select-none hover:bg-slate-50 transition-colors">
+                          <div className="flex gap-4 items-center">
+                            <HelpCircle size={16} className="text-primary shrink-0" />
+                            {faq.question}
+                          </div>
+                          <div className="w-5 h-5 rounded-full bg-slate-50 flex items-center justify-center group-open:rotate-180 transition-transform">
+                            <ChevronRight size={12} className="text-gray-300" />
+                          </div>
+                        </summary>
+                        <div className="px-10 pb-4 text-gray-600 leading-relaxed text-[0.95rem] border-t border-gray-50 pt-4 font-medium">
+                          {faq.answer}
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
           </div>
 
           {/* Right Column: Sidebar */}
           <div className="lg:w-[35%]">
             <div className="sticky top-24 space-y-8">
-              
+
               {/* Related Treatments - Matching Blog Model */}
               {relatedTreatments.length > 0 && (
                 <div className="bg-slate-50 rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
@@ -302,19 +309,19 @@ const TreatmentDetailPage = () => {
                     <div className="h-4 w-1 bg-primary rounded-full" />
                     {t('Our Specialties')}
                   </h4>
-                  
+
                   <div className="space-y-6">
                     {relatedTreatments.map((rT) => (
-                      <Link 
-                        key={rT.id} 
+                      <Link
+                        key={rT.id}
                         href={`/treatment/${rT.slug || rT.id}`}
                         className="group flex gap-4 items-center"
                       >
                         <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 border-2 border-white shadow-md bg-white">
-                          <img 
-                            src={getImageUrl(rT.image_url)} 
-                            alt={rT.name} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                          <img
+                            src={getImageUrl(rT.image_url)}
+                            alt={rT.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           />
                         </div>
                         <div>
@@ -322,7 +329,7 @@ const TreatmentDetailPage = () => {
                             {t(rT.name)}
                           </h5>
                           <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1.5 block">
-                             {t('Learn More')} →
+                            {t('Learn More')} →
                           </span>
                         </div>
                       </Link>
@@ -335,49 +342,55 @@ const TreatmentDetailPage = () => {
               <div className="bg-primary p-6 rounded-2xl shadow-xl text-center">
                 <h4 className="text-white font-extrabold text-lg mb-1 uppercase tracking-tight font-heading">Consultation</h4>
                 <p className="text-white/50 text-[8px] font-bold uppercase tracking-widest mb-4">Expert Doctors Advice</p>
-                
+
                 <form onSubmit={handleSidebarSubmit} className="space-y-2">
-                   <input 
-                     type="text" 
-                     placeholder="Name *" 
-                     required
-                     className="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white placeholder:text-white/40 focus:bg-white focus:text-primary transition-all outline-none text-[12px] font-bold uppercase"
-                     value={sidebarForm.name}
-                     onChange={(e) => setSidebarForm({...sidebarForm, name: e.target.value})}
-                   />
-                   <input 
-                     type="tel" 
-                     placeholder="Phone *" 
-                     required
-                     className="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white placeholder:text-white/40 focus:bg-white focus:text-primary transition-all outline-none text-[12px] font-bold uppercase"
-                     value={sidebarForm.phone}
-                     onChange={(e) => setSidebarForm({...sidebarForm, phone: e.target.value})}
-                   />
-                   <button className="w-full bg-white text-primary py-3.5 rounded-lg font-extrabold text-[10px] uppercase tracking-widest hover:bg-[#22d3ee] hover:text-white transition-all shadow-md mt-1 active:scale-95">
-                     Submit
-                   </button>
+                  <input
+                    type="text"
+                    placeholder="Name *"
+                    required
+                    className="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white placeholder:text-white/40 focus:bg-white focus:text-primary transition-all outline-none text-[12px] font-bold uppercase"
+                    value={sidebarForm.name}
+                    onChange={(e) => setSidebarForm({ ...sidebarForm, name: e.target.value })}
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Phone *"
+                    required
+                    className="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white placeholder:text-white/40 focus:bg-white focus:text-primary transition-all outline-none text-[12px] font-bold uppercase"
+                    value={sidebarForm.phone}
+                    onChange={(e) => setSidebarForm({ ...sidebarForm, phone: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Medical Concern"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white placeholder:text-white/40 focus:bg-white focus:text-primary transition-all outline-none text-[12px] font-bold uppercase"
+                    value={sidebarForm.reason}
+                    onChange={(e) => setSidebarForm({ ...sidebarForm, reason: e.target.value })}
+                  />
+                  <button className="w-full bg-white text-primary py-3.5 rounded-lg font-extrabold text-[10px] uppercase tracking-widest hover:bg-[#22d3ee] hover:text-white transition-all shadow-md mt-1 active:scale-95">
+                    Confirm Booking
+                  </button>
                 </form>
               </div>
 
               {/* Navigation */}
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-                 <h4 className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-3 text-center">Navigation</h4>
-                 <nav className="flex flex-col gap-1.5">
-                    {navItems.map((item) => (
-                      <a 
-                        key={item.id}
-                        href={`#${item.id}`}
-                        className={`flex items-center justify-between p-3 rounded-lg font-bold text-[9px] uppercase tracking-widest transition-all ${
-                          activeSection === item.id 
-                            ? "bg-primary text-white shadow-md" 
-                            : "text-gray-500 hover:bg-gray-50"
+                <h4 className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-3 text-center">Navigation</h4>
+                <nav className="flex flex-col gap-1.5">
+                  {navItems.map((item) => (
+                    <a
+                      key={item.id}
+                      href={`#${item.id}`}
+                      className={`flex items-center justify-between p-3 rounded-lg font-bold text-[9px] uppercase tracking-widest transition-all ${activeSection === item.id
+                          ? "bg-primary text-white shadow-md"
+                          : "text-gray-500 hover:bg-gray-50"
                         }`}
-                      >
-                        {item.label}
-                        <ChevronRight size={10} />
-                      </a>
-                    ))}
-                 </nav>
+                    >
+                      {item.label}
+                      <ChevronRight size={10} />
+                    </a>
+                  ))}
+                </nav>
               </div>
             </div>
           </div>
@@ -387,21 +400,21 @@ const TreatmentDetailPage = () => {
       {/* Footer CTA */}
       <section className="bg-primary py-10 relative overflow-hidden">
         <div className="container mx-auto px-4 text-center">
-           <h2 className="text-xl md:text-2xl font-extrabold text-white uppercase tracking-tighter mb-4 leading-none font-heading">
-             Expert Care for Permanent Healing
-           </h2>
-           <button 
-             onClick={() => window.dispatchEvent(new CustomEvent("open-appointment-popup"))}
-             className="bg-[#C53030] text-white px-6 py-3 rounded-full font-bold text-[10px] tracking-widest inline-flex items-center gap-3 hover:scale-105 transition-all shadow-xl uppercase font-heading cursor-pointer"
-           >
-             Book Visit <ArrowRight size={14} />
-           </button>
+          <h2 className="text-xl md:text-2xl font-extrabold text-white uppercase tracking-tighter mb-4 leading-none font-heading">
+            Expert Care for Permanent Healing
+          </h2>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("open-appointment-popup"))}
+            className="bg-[#C53030] text-white px-6 py-3 rounded-full font-bold text-[10px] tracking-widest inline-flex items-center gap-3 hover:scale-105 transition-all shadow-xl uppercase font-heading cursor-pointer"
+          >
+            Book Visit <ArrowRight size={14} />
+          </button>
         </div>
       </section>
 
       <Footer />
       <WhatsAppFloat />
-      
+
     </div>
   );
 };

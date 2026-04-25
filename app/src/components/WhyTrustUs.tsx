@@ -34,7 +34,7 @@ const Counter = ({ end, suffix = "", trigger }: CounterProps) => {
   }, [trigger, end]);
 
   return (
-    <span className="text-4xl md:text-6xl font-extrabold text-primary mt-1 font-heading tracking-tight drop-shadow-sm">
+    <span className="notranslate text-4xl md:text-6xl font-extrabold text-primary mt-1 font-heading tracking-tight drop-shadow-sm">
       {count}{suffix}
     </span>
   );
@@ -45,11 +45,10 @@ const WhyTrustUs = () => {
   const { t } = useLanguage();
 
   const stats = [
+    { icon: Users, label: "Happy Patients", value: 5000, suffix: "+", desc: "Building trust, one patient at a time" },
+    { icon: Stethoscope, label: "Doctors", value: 15, suffix: "+", desc: "Experienced doctors with successful track record" },
     { icon: Building2, label: "Branches", value: 4, suffix: "+", desc: "Accessible quality care, anytime" },
-    { icon: Stethoscope, label: "Doctors", value: 30, suffix: "+", desc: "Experienced doctors with successful track record" },
-    { icon: Users, label: "Patients Treated", value: 44, suffix: " L+", desc: "Building trust, one patient at a time" },
-    { icon: HeartPulse, label: "Treatments", value: 110, suffix: "+", desc: "Holistic treatments that fit your budget" },
-    { icon: CalendarDays, label: "Years", value: 25, suffix: "+", desc: "Compassionate homeopathic care" },
+    { icon: CalendarDays, label: "Years", value: 15, suffix: "+", desc: "Compassionate homeopathic care" },
   ];
 
   return (
@@ -99,7 +98,7 @@ const WhyTrustUs = () => {
             <div className={`lg:col-span-7 space-y-8 transition-all duration-1000 ${isVisible ? "animate-fade-in-up opacity-100" : "opacity-0"}`}>
               <div className="space-y-4">
                 <h2 className="text-3xl md:text-[2.8rem] font-black text-primary tracking-tight uppercase font-heading leading-[1.1]">
-                  {t('Why Trust UniCare Homeopathy?')}
+                  {t('Why Trust UNICARE HOMEOPATHY PRIVATE LIMITED?')}
                 </h2>
                 <div className="w-20 h-1.5 bg-primary rounded-full opacity-60" />
               </div>
@@ -118,7 +117,7 @@ const WhyTrustUs = () => {
           </div>
 
           {/* Stats Grid - High Visual Impact */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 md:gap-16">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-16">
             {stats.map((stat, i) => (
               <div
                 key={stat.label}
@@ -128,8 +127,10 @@ const WhyTrustUs = () => {
                 <div className="mb-2">
                   <Counter end={stat.value} suffix={stat.suffix} trigger={isVisible} />
                 </div>
-                <span className="text-sm font-extrabold text-primary/80 uppercase mt-2 tracking-widest">{t(stat.label)}</span>
-                <span className="text-[0.9rem] text-gray-400 mt-5 leading-normal font-semibold max-w-[160px] min-h-[4rem] flex items-center">
+                <span className="text-sm font-extrabold text-primary/80 uppercase mt-2 tracking-widest notranslate">
+                  {t(stat.label)}
+                </span>
+                <span className="text-[0.9rem] text-gray-400 mt-5 leading-normal font-semibold max-w-[160px] min-h-[4rem] flex items-center notranslate">
                   {t(stat.desc)}
                 </span>
               </div>

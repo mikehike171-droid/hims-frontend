@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, MessageCircle, Send, User } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { io, Socket } from "socket.io-client";
-import srujanaAvatar from "@/assets/hero-doctor-female.png";
+import doctorAvatar from "@/assets/hero-doctor-male.png";
 
 interface Message {
   id: number;
@@ -17,6 +17,7 @@ const ChatWidget = () => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isCardVisible, setIsCardVisible] = useState(false);
+  const [showTelugu, setShowTelugu] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [guestId, setGuestId] = useState<string>("");
@@ -37,6 +38,10 @@ const ChatWidget = () => {
       setIsOpen(true);
       setIsCardVisible(true);
     }, 2000);
+
+    const teluguTimer = setTimeout(() => {
+      setShowTelugu(true);
+    }, 5000);
 
     // Connect to WebSocket
     const socket = io("http://localhost:3002", {
@@ -64,6 +69,7 @@ const ChatWidget = () => {
     return () => {
       socket.disconnect();
       clearTimeout(timer);
+      clearTimeout(teluguTimer);
     };
   }, []);
 
@@ -111,16 +117,15 @@ const ChatWidget = () => {
               <div className="relative">
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20">
                   <img 
-                    src={srujanaAvatar.src} 
-                    alt="Srujana Reddy" 
+                    src={doctorAvatar.src} 
+                    alt="Dr Ashraf" 
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-primary rounded-full" />
               </div>
               <div>
-                <h4 className="font-bold text-sm leading-tight">Srujana Reddy</h4>
-                <p className="text-[10px] text-white/70 uppercase tracking-wider font-medium">Senior Consultant</p>
+                <h4 className="font-bold text-sm leading-tight">Dr Ashraf</h4>
               </div>
             </div>
             <button 
@@ -138,15 +143,32 @@ const ChatWidget = () => {
           >
             {/* Automatic Initial Greet if empty */}
             {messages.length === 0 && (
-              <div className="flex gap-2 max-w-[85%]">
-                <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center">
-                  <User className="w-4 h-4 text-slate-500" />
+              <div className="space-y-4">
+                {/* English Greeting */}
+                <div className="flex gap-2 max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center">
+                    <User className="w-4 h-4 text-slate-500" />
+                  </div>
+                  <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm">
+                    <p className="text-sm text-slate-700 leading-relaxed">
+                      Welcome to Uni Care Homeopathy. How can I help you today?
+                    </p>
+                  </div>
                 </div>
-                <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm">
-                  <p className="text-sm text-slate-700 leading-relaxed">
-                    Welcome to Uni Care Homeopathy. How can I help you today?
-                  </p>
-                </div>
+
+                {/* Telugu Greeting */}
+                {showTelugu && (
+                  <div className="flex gap-2 max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-700">
+                    <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center">
+                      <User className="w-4 h-4 text-slate-500" />
+                    </div>
+                    <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm">
+                      <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                        మా డాక్టర్ గారితో ఇప్పుడే మాట్లాడండి. తక్షణమే మీ ఆరోగ్య సమస్యకి పరిష్కారం పొందండి.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -211,7 +233,7 @@ const ChatWidget = () => {
         <div className="relative w-16 h-16 bg-primary rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer overflow-hidden border-2 border-white/20">
           {isCardVisible ? (
             <img 
-              src={srujanaAvatar.src} 
+              src={doctorAvatar.src} 
               alt="Toggle Chat" 
               className="w-full h-full object-cover group-hover:scale-110 transition-transform"
             />

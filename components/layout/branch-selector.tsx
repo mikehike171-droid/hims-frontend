@@ -1,14 +1,19 @@
 "use client"
 
-import { useState, memo } from "react"
+import { useState, useEffect, memo } from "react"
 import { ChevronDown, Building } from "lucide-react"
 import { useBranch } from "@/contexts/branch-context"
 
 function BranchSelector() {
   const { currentBranch, branches, switchBranch, loading } = useBranch()
   const [isOpen, setIsOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
-  if (loading || !currentBranch) {
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted || loading || !currentBranch) {
     return (
       <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-md">
         <Building className="h-4 w-4 text-gray-400" />

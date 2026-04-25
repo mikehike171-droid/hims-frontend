@@ -156,7 +156,7 @@ const TreatmentDetail = () => {
                 {Object.values(treatmentsData).filter(t_item => t_item.id !== id).map((t_item) => (
                   <Link 
                     key={t_item.id}
-                    href={`/treatment/${t_item.id}`}
+                    href={`/treatment/${t_item.slug || t_item.id}`}
                     className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 text-[#1a2e5a] font-medium transition-all group"
                   >
                     <span>{t(t_item.title)}</span>

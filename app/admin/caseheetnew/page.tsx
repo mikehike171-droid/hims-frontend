@@ -23,7 +23,7 @@ import {
   X
 } from "lucide-react"
 import { useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 
 interface PatientData {
   id: string
@@ -4277,7 +4277,7 @@ export default function CaseSheetPage() {
               {savedPrescriptions.length > 0 && (
                 <Card className="mt-6">
                   <CardHeader>
-                    <CardTitle>Saved Prescriptions</CardTitle>
+                    <CardTitle>All Saved Prescriptions</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="overflow-x-auto">
@@ -4297,110 +4297,116 @@ export default function CaseSheetPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {savedPrescriptions.map((prescription, index, arr) => {
-                            let dateGroup = 0;
-                            for (let i = 1; i <= index; i++) {
-                              const prevDate = new Date(arr[i - 1].created_at).toLocaleDateString();
-                              const currDate = new Date(arr[i].created_at).toLocaleDateString();
-                              if (prevDate !== currDate) {
-                                dateGroup++;
-                              }
-                            }
+                          {(() => {
+                            const groups: Record<string, any[]> = {};
+                            [...savedPrescriptions]
+                              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                              .forEach(p => {
+                                const date = new Date(p.created_at).toLocaleDateString('en-GB');
+                                if (!groups[date]) groups[date] = [];
+                                groups[date].push(p);
+                              });
                             
-                            return (
-                              <tr key={`saved-${prescription.medicine_id || index}-${index}`} className={dateGroup % 2 === 0 ? 'bg-white' : 'bg-blue-50/40'}>
-                                <td className="border border-gray-300 px-4 py-2 font-bold text-primary">
-                                  {new Date(prescription.created_at).toLocaleDateString()}
-                                </td>
-                                <td className="border border-gray-300 px-4 py-2">{prescription.medicine_type || '-'}</td>
-                                <td className="border border-gray-300 px-4 py-2">{prescription.medicine || '-'}</td>
-                                <td className="border border-gray-300 px-4 py-2">{prescription.potency || '-'}</td>
-                                <td className="border border-gray-300 px-4 py-2">{prescription.dosage || '-'}</td>
-                                <td className="border border-gray-300 px-4 py-2">
-                                  {[
-                                    prescription.morning && 'Morning',
-                                    prescription.afternoon && 'Afternoon',
-                                    prescription.night && 'Night'
-                                  ].filter(Boolean).join(', ') || '-'}
-                                </td>
-                                <td className="border border-gray-300 px-4 py-2">{prescription.medicine_days || '-'}</td>
-                                <td className="border border-gray-300 px-4 py-2">
-                                  {prescription.next_appointment_date ?
-                                    new Date(prescription.next_appointment_date).toLocaleDateString()
-                                    : '-'
-                                  }
-                                </td>
-                                <td className="border border-gray-300 px-4 py-2 max-w-xs">
-                                  <div className="truncate" title={prescription.medicine_notes || prescription.notes_to_pro}>
-                                    {prescription.medicine_notes || prescription.notes_to_pro || '-'}
-                                  </div>
-                                </td>
-                                <td className="border border-gray-300 px-4 py-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => {
-                                      console.log('DEBUG: Edit Pencil clicked. prescription object:', prescription);
-                                      const medId = prescription.medicine_id || prescription.id;
-                                      const presId = prescription.prescription_id || prescription.id;
-  
-                                      setEditingMedicineId(medId)
-                                      setEditingPrescriptionId(presId)
-  
-                                      // Populate form data
-                                      setPrescriptionData({
-                                        medicineType: prescription.medicine_type || '',
-                                        medicine: prescription.medicine || '',
-                                        potency: prescription.potency || '',
-                                        dosage: prescription.dosage || '',
-                                        morning: !!prescription.morning,
-                                        afternoon: !!prescription.afternoon,
-                                        night: !!prescription.night,
-                                        notes: prescription.medicine_notes || ''
-                                      })
-  
-                                      setPrescriptions([{
-                                        id: medId,
-                                        medicineType: prescription.medicine_type || '',
-                                        medicine: prescription.medicine || '',
-                                        potency: prescription.potency || '',
-                                        dosage: prescription.dosage || '',
-                                        morning: !!prescription.morning,
-                                        afternoon: !!prescription.afternoon,
-                                        night: !!prescription.night,
-                                        notes: prescription.medicine_notes || ''
-                                      }])
-  
-                                      setCommonMedicine(prev => ({
-                                        ...prev,
-                                        medicineDays: prescription.medicine_days?.toString() || '15',
-                                        nextAppointmentDate: prescription.next_appointment_date || prev.nextAppointmentDate
-                                      }))
-  
-                                      setNotesToPro(prescription.notes_to_pro || '')
-                                      setNotesToPharmacy(prescription.notes_to_pharmacy || '')
-  
-                                      window.scrollTo({ top: 0, behavior: 'smooth' })
-                                    }}
-                                  >
-                                    <Pencil className="h-4 w-4 text-blue-600" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0 ml-1"
-                                    onClick={() => {
-                                      const presId = prescription.prescription_id || prescription.id;
-                                      handleDeletePrescription(presId)
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-red-600" />
-                                  </Button>
-                                </td>
-                              </tr>
-                            )
-                          })}
+                            return Object.entries(groups).map(([date, items], groupIdx) => (
+                              <React.Fragment key={date}>
+                                {items.map((prescription, pIdx) => (
+                                  <tr key={prescription.id || `p-${groupIdx}-${pIdx}`} className={groupIdx % 2 === 0 ? 'bg-white' : 'bg-blue-50/20'}>
+                                    {pIdx === 0 && (
+                                      <td rowSpan={items.length} className="border border-gray-300 px-4 py-2 font-bold text-blue-700 bg-blue-50/40 align-top">
+                                        {date}
+                                      </td>
+                                    )}
+                                    <td className="border border-gray-300 px-4 py-2">{prescription.medicine_type || '-'}</td>
+                                    <td className="border border-gray-300 px-4 py-2">{prescription.medicine || '-'}</td>
+                                    <td className="border border-gray-300 px-4 py-2">{prescription.potency || '-'}</td>
+                                    <td className="border border-gray-300 px-4 py-2">{prescription.dosage || '-'}</td>
+                                    <td className="border border-gray-300 px-4 py-2">
+                                      {[
+                                        prescription.morning && 'Morning',
+                                        prescription.afternoon && 'Afternoon',
+                                        prescription.night && 'Night'
+                                      ].filter(Boolean).join(', ') || '-'}
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-2">{prescription.medicine_days || '-'}</td>
+                                    <td className="border border-gray-300 px-4 py-2">
+                                      {prescription.next_appointment_date ?
+                                        new Date(prescription.next_appointment_date).toLocaleDateString()
+                                        : '-'
+                                      }
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-2 max-w-xs">
+                                      <div className="truncate" title={prescription.medicine_notes || prescription.notes_to_pro}>
+                                        {prescription.medicine_notes || prescription.notes_to_pro || '-'}
+                                      </div>
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 w-8 p-0"
+                                        onClick={() => {
+                                          console.log('DEBUG: Edit Pencil clicked. prescription object:', prescription);
+                                          const medId = prescription.medicine_id || prescription.id;
+                                          const presId = prescription.prescription_id || prescription.id;
+      
+                                          setEditingMedicineId(medId)
+                                          setEditingPrescriptionId(presId)
+      
+                                          // Populate form data
+                                          setPrescriptionData({
+                                            medicineType: prescription.medicine_type || '',
+                                            medicine: prescription.medicine || '',
+                                            potency: prescription.potency || '',
+                                            dosage: prescription.dosage || '',
+                                            morning: !!prescription.morning,
+                                            afternoon: !!prescription.afternoon,
+                                            night: !!prescription.night,
+                                            notes: prescription.medicine_notes || ''
+                                          })
+      
+                                          setPrescriptions([{
+                                            id: medId,
+                                            medicineType: prescription.medicine_type || '',
+                                            medicine: prescription.medicine || '',
+                                            potency: prescription.potency || '',
+                                            dosage: prescription.dosage || '',
+                                            morning: !!prescription.morning,
+                                            afternoon: !!prescription.afternoon,
+                                            night: !!prescription.night,
+                                            notes: prescription.medicine_notes || ''
+                                          }])
+      
+                                          setCommonMedicine(prev => ({
+                                            ...prev,
+                                            medicineDays: prescription.medicine_days?.toString() || '15',
+                                            nextAppointmentDate: prescription.next_appointment_date || prev.nextAppointmentDate
+                                          }))
+      
+                                          setNotesToPro(prescription.notes_to_pro || '')
+                                          setNotesToPharmacy(prescription.notes_to_pharmacy || '')
+      
+                                          window.scrollTo({ top: 0, behavior: 'smooth' })
+                                        }}
+                                      >
+                                        <Pencil className="h-4 w-4 text-blue-600" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 w-8 p-0 ml-1"
+                                        onClick={() => {
+                                          const presId = prescription.prescription_id || prescription.id;
+                                          handleDeletePrescription(presId)
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4 text-red-600" />
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </React.Fragment>
+                            ));
+                          })()}
                         </tbody>
                       </table>
                     </div>
