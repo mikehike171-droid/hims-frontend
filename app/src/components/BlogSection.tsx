@@ -4,6 +4,7 @@ import { useScrollAnimation } from "@/hooks/use-scroll-animation";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { settingsApi } from "@/lib/settingsApi";
 import { slugify } from "../../../lib/utils";
+import authService from "@/lib/authService";
 
 const BlogSection = () => {
   const { t } = useLanguage();
@@ -32,9 +33,7 @@ const BlogSection = () => {
   }, []);
 
   const getImageUrl = (url: string) => {
-    if (!url) return "";
-    if (url.startsWith("http")) return url;
-    return `${process.env.NEXT_PUBLIC_SETTINGS_API_URL}${url}`;
+    return authService.getFileUrl(url);
   };
 
   // Always show only the first 3 on the home page

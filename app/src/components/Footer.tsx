@@ -48,12 +48,18 @@ const Footer = () => {
           <div className="space-y-6">
             <h3 className="text-xl font-bold font-heading text-teal-light">UNICARE HOMEOPATHY PRIVATE LIMITED</h3>
             <p className="text-white/70 text-sm leading-relaxed font-medium">
-              {t('UNICARE HOMEOPATHY PRIVATE LIMITED with 4+ branches and 15+ experienced doctors providing holistic healthcare solutions.')}
+              {t('UNICARE HOMEOPATHY PRIVATE LIMITED with 4+ branches and 8+ experienced doctors providing holistic healthcare solutions.')}
             </p>
             <div className="flex gap-4">
-              <Facebook className="w-5 h-5 hover:text-teal-light cursor-pointer transition-colors" />
-              <Instagram className="w-5 h-5 hover:text-teal-light cursor-pointer transition-colors" />
-              <Youtube className="w-5 h-5 hover:text-teal-light cursor-pointer transition-colors" />
+              <a href="https://www.facebook.com/share/1ChxmRK7P5/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer">
+                <Facebook className="w-5 h-5 hover:text-teal-light cursor-pointer transition-colors" />
+              </a>
+              <a href="https://www.instagram.com/unicarehomeopathy?igsh=MXZyajZzZndvcjdzeg%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer">
+                <Instagram className="w-5 h-5 hover:text-teal-light cursor-pointer transition-colors" />
+              </a>
+              <a href="https://youtube.com/@unicarehomeopathy?si=9ePS9apr7_DE455H" target="_blank" rel="noopener noreferrer">
+                <Youtube className="w-5 h-5 hover:text-teal-light cursor-pointer transition-colors" />
+              </a>
               <Linkedin className="w-5 h-5 hover:text-teal-light cursor-pointer transition-colors" />
               <a href="https://wa.me/919059051906" target="_blank" rel="noopener noreferrer" className="hover:text-teal-light cursor-pointer transition-colors">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">

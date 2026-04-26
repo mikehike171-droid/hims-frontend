@@ -29,9 +29,15 @@ const TopBar = () => {
             <Search className="w-3 h-3" />
           </div>
           <div className="flex items-center gap-3">
-            <Facebook className="w-4 h-4 hover:text-teal-light cursor-pointer transition-colors" />
-            <Instagram className="w-4 h-4 hover:text-teal-light cursor-pointer transition-colors" />
-            <Youtube className="w-4 h-4 hover:text-teal-light cursor-pointer transition-colors" />
+            <a href="https://www.facebook.com/share/1ChxmRK7P5/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer">
+              <Facebook className="w-4 h-4 hover:text-teal-light cursor-pointer transition-colors" />
+            </a>
+            <a href="https://www.instagram.com/unicarehomeopathy?igsh=MXZyajZzZndvcjdzeg%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer">
+              <Instagram className="w-4 h-4 hover:text-teal-light cursor-pointer transition-colors" />
+            </a>
+            <a href="https://youtube.com/@unicarehomeopathy?si=9ePS9apr7_DE455H" target="_blank" rel="noopener noreferrer">
+              <Youtube className="w-4 h-4 hover:text-teal-light cursor-pointer transition-colors" />
+            </a>
             <Linkedin className="w-4 h-4 hover:text-teal-light cursor-pointer transition-colors" />
           </div>
           <button className="bg-primary text-primary-foreground px-4 py-1 rounded text-xs font-semibold hover:opacity-90 transition-opacity">

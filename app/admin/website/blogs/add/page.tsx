@@ -162,7 +162,7 @@ export default function AddBlogPage() {
                 {formData.image_url ? (
                   <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg border-4 border-white group-hover:shadow-xl transition-all">
                     <img 
-                      src={formData.image_url.startsWith('http') ? formData.image_url : `${process.env.NEXT_PUBLIC_SETTINGS_API_URL}${formData.image_url}`} 
+                      src={authService.getFileUrl(formData.image_url)} 
                       alt="Preview" 
                       className="w-full h-full object-cover"
                     />

@@ -48,7 +48,7 @@ const WhyTrustUs = () => {
     { icon: Users, label: "Happy Patients", value: 5000, suffix: "+", desc: "Building trust, one patient at a time" },
     { icon: Stethoscope, label: "Doctors", value: 15, suffix: "+", desc: "Experienced doctors with successful track record" },
     { icon: Building2, label: "Branches", value: 4, suffix: "+", desc: "Accessible quality care, anytime" },
-    { icon: CalendarDays, label: "Years", value: 15, suffix: "+", desc: "Compassionate homeopathic care" },
+    { icon: CalendarDays, label: "Years", value: 8, suffix: "+", desc: "Compassionate homeopathic care" },
   ];
 
   return (

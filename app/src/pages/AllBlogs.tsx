@@ -9,6 +9,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useScrollAnimation } from "@/hooks/use-scroll-animation";
 import Link from "next/link";
 import { slugify } from "../../../lib/utils";
+import authService from "@/lib/authService";
 
 const AllBlogs = () => {
   const { t } = useLanguage();
@@ -63,9 +64,7 @@ const AllBlogs = () => {
   };
 
   const getImageUrl = (url: string) => {
-    if (!url) return "";
-    if (url.startsWith("http")) return url;
-    return `${process.env.NEXT_PUBLIC_SETTINGS_API_URL}${url}`;
+    return authService.getFileUrl(url);
   };
 
   return (

@@ -9,6 +9,7 @@ import { Plus, Edit, Trash2, Globe, FileText } from "lucide-react"
 import { settingsApi } from "@/lib/settingsApi"
 import { toast } from "@/components/ui/use-toast"
 import { Badge } from "@/components/ui/badge"
+import authService from "@/lib/authService"
 import PrivateRoute from "@/components/auth/PrivateRoute"
 
 export default function BlogsListPage() {
@@ -104,7 +105,7 @@ export default function BlogsListPage() {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
                             {blog.image_url ? (
-                              <img src={blog.image_url.startsWith('http') ? blog.image_url : `${process.env.NEXT_PUBLIC_SETTINGS_API_URL}${blog.image_url}`} alt="" className="w-full h-full object-cover" />
+                              <img src={authService.getFileUrl(blog.image_url)} alt="" className="w-full h-full object-cover" />
                             ) : (
                               <FileText size={20} className="text-gray-400" />
                             )}

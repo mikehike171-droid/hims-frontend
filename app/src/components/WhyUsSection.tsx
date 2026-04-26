@@ -54,7 +54,7 @@ const WhyUsSection = () => {
               "{t('A patient-first approach applying the best homeopathy remedies for over 110+ treatments')}"
             </h3>
             <p className="text-emerald-600 text-lg md:text-xl font-bold bg-emerald-50/50 inline-block px-6 py-2 rounded-2xl border border-emerald-100 shadow-sm">
-              {t('We have the trust of over 44 lakh+ happy patients who have benefited from our treatments.')}
+              {t('We have the trust of over 5000+ happy patients who have benefited from our treatments.')}
             </p>
           </div>
         </div>
