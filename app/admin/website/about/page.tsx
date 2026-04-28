@@ -332,7 +332,7 @@ export default function AboutContentPage() {
                                     <RichTextEditor
                                       value={formData.description}
                                       onChange={(val) => setFormData({ ...formData, description: val })}
-                                      placeholder="Craft the in-depth story of Uni Care Clinic here..."
+                                      placeholder="Craft the in-depth story of UniCare Clinic here..."
                                     />
                                  </div>
                                  <div className="p-6 bg-primary/5 rounded-3xl border border-primary/10 flex items-start gap-4">

@@ -167,7 +167,7 @@ const WhatIsHomeopathy = () => {
 
             <div className="pt-4">
               <Link href="/about" className="group bg-primary hover:opacity-90 text-white px-12 py-5 rounded-[2rem] font-black uppercase tracking-wider shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center gap-4 w-fit">
-                <span>{t('About Uni Care')}</span>
+                <span>{t('About UniCare')}</span>
                 <div className="bg-white/20 p-1.5 rounded-full group-hover:bg-white/30 transition-colors">
                   <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
                 </div>

@@ -134,7 +134,7 @@ const ClinicDetails = () => {
             </div>
             
             <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 leading-tight">
-              Uni care Homeopathy <br/>
+              UniCare Homeopathy <br/>
               <span className="text-emerald-400 italic">{branch.name}</span>
             </h1>
             
@@ -221,14 +221,14 @@ const ClinicDetails = () => {
             <section id="about" className="scroll-mt-32">
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-12 h-1 bg-emerald-500 rounded-full" />
-                <h2 className="text-3xl font-serif font-bold text-[#1a2e5a]">About Uni care Homeopathy</h2>
+                <h2 className="text-3xl font-serif font-bold text-[#1a2e5a]">About UniCare Homeopathy</h2>
               </div>
               <div className="prose prose-slate prose-lg max-w-none text-slate-600 font-medium leading-relaxed">
                 {branch.description ? (
                   <div dangerouslySetInnerHTML={{ __html: branch.description }} className="clinical-description" />
                 ) : (
                   <div className="space-y-4">
-                    <p>Welcome to <strong>Uni care Homeopathy</strong> at our {branch.name} center. We are committed to providing world-class homeopathic care through a combination of traditional wisdom and modern diagnostic integration.</p>
+                    <p>Welcome to <strong>UniCare Homeopathy</strong> at our {branch.name} center. We are committed to providing world-class homeopathic care through a combination of traditional wisdom and modern diagnostic integration.</p>
                     <p>At this facility, we specialize in treating chronic conditions such as respiratory issues, skin disorders, and lifestyle-related ailments using specialized constitutional homeopathy. Our goal is to provide lasting relief and improve the overall quality of life for our patients.</p>
                   </div>
                 )}

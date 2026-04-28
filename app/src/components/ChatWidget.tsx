@@ -151,7 +151,7 @@ const ChatWidget = () => {
                   </div>
                   <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm">
                     <p className="text-sm text-slate-700 leading-relaxed">
-                      Welcome to Uni Care Homeopathy. How can I help you today?
+                      Welcome to UniCare Homeopathy. How can I help you today?
                     </p>
                   </div>
                 </div>

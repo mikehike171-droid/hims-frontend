@@ -58,7 +58,7 @@ const AboutUniCare = () => {
             <div className="flex items-center gap-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-400">
               <Link href="/" className="hover:text-primary transition-colors">Home</Link>
               <ChevronRight size={12} />
-              <span className="text-primary">About Uni Care</span>
+              <span className="text-primary">About UniCare</span>
             </div>
           </div>
         </div>
@@ -75,7 +75,7 @@ const AboutUniCare = () => {
               <h1 className="text-3xl md:text-5xl font-black text-slate-900 leading-tight font-heading mt-4">
                 {aboutData?.title?.includes('\n') 
                   ? t(aboutData.title.split('\n')[1].trim()) 
-                  : t(aboutData?.title || 'About Uni Care')}
+                  : t(aboutData?.title || 'About UniCare')}
               </h1>
             </div>
 
@@ -84,7 +84,7 @@ const AboutUniCare = () => {
               <div className="mb-16 relative rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white group">
                 <img 
                   src={images[currentImageIndex]} 
-                  alt="Uni Care Homeopathy" 
+                  alt="UniCare Homeopathy" 
                   className="w-full aspect-[16/9] object-cover transition-all duration-1000"
                 />
                 
@@ -142,7 +142,7 @@ const AboutUniCare = () => {
             <div className="mt-20 p-12 bg-primary rounded-[3rem] text-white text-center shadow-2xl relative overflow-hidden">
                <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
                <h2 className="text-3xl font-black mb-6 relative z-10">Experience the Power of Nature</h2>
-               <p className="text-white/80 mb-10 max-w-xl mx-auto relative z-10">Start your journey to holistic healing today with Uni Care Homeopathy clinics.</p>
+               <p className="text-white/80 mb-10 max-w-xl mx-auto relative z-10">Start your journey to holistic healing today with UniCare Homeopathy clinics.</p>
                <Link 
                   href="/#appointment" 
                   className="bg-white text-primary px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition-transform inline-block relative z-10"
