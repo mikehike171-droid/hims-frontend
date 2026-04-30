@@ -190,7 +190,7 @@ const TreatmentDetail = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-2xl text-[#1a2e5a]">
-                  <Clock className="text-orange-500" size={24} />
+                  <Clock className="text-white" size={24} />
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider text-orange-400">Available Time</p>
                     <p className="font-bold text-sm">Mon - Sat: 9am - 8pm</p>

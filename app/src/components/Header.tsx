@@ -89,20 +89,20 @@ const Navbar = () => {
         items: treatments.filter((t: any) => {
           const tCat = (t.category || "").toLowerCase();
           const tName = (t.name || "").toLowerCase();
-          
+
           if (cat.key === "Skin Treatment") return tCat.includes("skin") || tName.includes("psoriasis") || tName.includes("hyperpigmentation") || tName.includes("ichthyosis") || tName.includes("lichen planus") || tName.includes("lipoma") || tName.includes("pityriasis") || tName.includes("urticaria") || tName.includes("vitiligo") || tName.includes("acne") || tName.includes("eczema") || tName.includes("warts") || tName.includes("melasma") || tName.includes("dermatitis") || tName.includes("fungal");
           if (cat.key === "Seasonal Treatment") return tCat.includes("season") || tCat.includes("respiratory") || tName.includes("allergic") || tName.includes("allergy") || tName.includes("asthma") || tName.includes("breathlessness") || tName.includes("bronchitis") || tName.includes("nose block") || tName.includes("sinusitis") || tName.includes("tonsillitis");
           if (cat.key === "Women's Treatment") return tCat.includes("women") || tName.includes("fibroids") || tName.includes("infertility") || tName.includes("menses") || tName.includes("leucorrhoea") || tName.includes("pcos") || tName.includes("uterine") || tName.includes("hypothyroidism") || tName.includes("hyperthyroidism") || tName.includes("adenomyosis") || tName.includes("menopause") || tName.includes("pms") || tName.includes("pregnancy") || tName.includes("dysmenorrhea");
           if (cat.key === "Hair Treatment") return tCat.includes("hair") || tName.includes("alopecia") || tName.includes("hair loss");
           if (cat.key === "Treatments") {
-             // Default column for everything else that doesn't fit in specific categories
-             const isOther = !(
-               tCat.includes("skin") || tName.includes("psoriasis") || tName.includes("hyperpigmentation") || tName.includes("ichthyosis") || tName.includes("lichen planus") || tName.includes("lipoma") || tName.includes("pityriasis") || tName.includes("urticaria") || tName.includes("vitiligo") || tName.includes("acne") || tName.includes("eczema") || tName.includes("warts") || tName.includes("melasma") || tName.includes("dermatitis") || tName.includes("fungal") ||
-               tCat.includes("season") || tCat.includes("respiratory") || tName.includes("allergic") || tName.includes("allergy") || tName.includes("asthma") || tName.includes("breathlessness") || tName.includes("bronchitis") || tName.includes("nose block") || tName.includes("sinusitis") || tName.includes("tonsillitis") ||
-               tCat.includes("women") || tName.includes("fibroids") || tName.includes("infertility") || tName.includes("menses") || tName.includes("leucorrhoea") || tName.includes("pcos") || tName.includes("uterine") || tName.includes("hypothyroidism") || tName.includes("hyperthyroidism") || tName.includes("adenomyosis") || tName.includes("menopause") || tName.includes("pms") || tName.includes("pregnancy") || tName.includes("dysmenorrhea") ||
-               tCat.includes("hair") || tName.includes("alopecia") || tName.includes("hair loss")
-             );
-             return isOther || tName.includes("acidity") || tName.includes("thyroid") || tName.includes("anxiety") || tName.includes("migraine") || tName.includes("arthritis") || tName.includes("diabetes") || tName.includes("piles") || tName.includes("fissure") || tName.includes("kidney stones") || tName.includes("fatty liver");
+            // Default column for everything else that doesn't fit in specific categories
+            const isOther = !(
+              tCat.includes("skin") || tName.includes("psoriasis") || tName.includes("hyperpigmentation") || tName.includes("ichthyosis") || tName.includes("lichen planus") || tName.includes("lipoma") || tName.includes("pityriasis") || tName.includes("urticaria") || tName.includes("vitiligo") || tName.includes("acne") || tName.includes("eczema") || tName.includes("warts") || tName.includes("melasma") || tName.includes("dermatitis") || tName.includes("fungal") ||
+              tCat.includes("season") || tCat.includes("respiratory") || tName.includes("allergic") || tName.includes("allergy") || tName.includes("asthma") || tName.includes("breathlessness") || tName.includes("bronchitis") || tName.includes("nose block") || tName.includes("sinusitis") || tName.includes("tonsillitis") ||
+              tCat.includes("women") || tName.includes("fibroids") || tName.includes("infertility") || tName.includes("menses") || tName.includes("leucorrhoea") || tName.includes("pcos") || tName.includes("uterine") || tName.includes("hypothyroidism") || tName.includes("hyperthyroidism") || tName.includes("adenomyosis") || tName.includes("menopause") || tName.includes("pms") || tName.includes("pregnancy") || tName.includes("dysmenorrhea") ||
+              tCat.includes("hair") || tName.includes("alopecia") || tName.includes("hair loss")
+            );
+            return isOther || tName.includes("acidity") || tName.includes("thyroid") || tName.includes("anxiety") || tName.includes("migraine") || tName.includes("arthritis") || tName.includes("diabetes") || tName.includes("piles") || tName.includes("fissure") || tName.includes("kidney stones") || tName.includes("fatty liver");
           }
           return false;
         }).map((t: any) => ({ name: t.name, path: t.slug || t.id }))
@@ -119,7 +119,7 @@ const Navbar = () => {
     try {
       const branches = await settingsApi.getPublicBranches();
       console.log("Header: Fetched branches:", branches);
-      
+
       if (!Array.isArray(branches)) {
         console.warn("Header: Invalid response for branches", branches);
         setFetchError("Clinics: Invalid API response");
@@ -135,7 +135,7 @@ const Navbar = () => {
 
       // Group branches by state dynamically
       const groupedMap: { [key: string]: any[] } = {};
-      
+
       branches.forEach((b: any) => {
         const stateName = b.state || "Andhra Pradesh";
         const stateUpper = stateName.toUpperCase();
@@ -166,7 +166,7 @@ const Navbar = () => {
     { label: t('Clinics'), href: "#", hasDropdown: true },
     { label: t('Blogs'), href: "/blogs", hasDropdown: false },
     { label: t('About Us'), href: "/#about", hasDropdown: false },
-    { label: t('Contact Us'), href: "/#appointment", hasDropdown: false },
+    { label: t('Contact Us'), href: "#", onClick: () => window.dispatchEvent(new CustomEvent("open-appointment-popup")), hasDropdown: false },
   ];
 
   return (
@@ -193,6 +193,12 @@ const Navbar = () => {
               {link.href.startsWith('/') ? (
                 <Link
                   href={link.href}
+                  onClick={(e) => {
+                    if (link.onClick) {
+                      e.preventDefault();
+                      link.onClick();
+                    }
+                  }}
                   className={`text-foreground font-medium text-sm hover:text-primary transition-colors flex items-center gap-1 font-heading py-4 ${activeMenu === link.label ? 'text-primary' : ''}`}
                 >
                   {link.label}
@@ -201,6 +207,12 @@ const Navbar = () => {
               ) : (
                 <a
                   href={link.href}
+                  onClick={(e) => {
+                    if (link.onClick) {
+                      e.preventDefault();
+                      link.onClick();
+                    }
+                  }}
                   className={`text-foreground font-medium text-sm hover:text-primary transition-colors flex items-center gap-1 font-heading py-4 ${activeMenu === link.label ? 'text-primary' : ''}`}
                 >
                   {link.label}
@@ -213,7 +225,7 @@ const Navbar = () => {
 
         {/* Megamenu for Clinics */}
         {activeMenu === t('Clinics') && clinicsData.length > 0 && (
-          <div 
+          <div
             className="absolute top-full left-1/2 -translate-x-1/2 w-[500px] bg-white shadow-2xl rounded-2xl border border-slate-100 p-8 grid grid-cols-2 gap-8 z-50 animate-in fade-in zoom-in-95 duration-200"
             onMouseEnter={() => setActiveMenu(t('Clinics'))}
             onMouseLeave={() => setActiveMenu(null)}
@@ -242,7 +254,7 @@ const Navbar = () => {
 
         {/* Megamenu for Treatments */}
         {activeMenu === t('Treatments') && (
-          <div 
+          <div
             className="absolute top-full left-1/2 -translate-x-1/2 w-[1100px] bg-[#f8fbfe] shadow-2xl rounded-2xl border border-slate-100 p-10 z-50 animate-in fade-in zoom-in-95 duration-200"
             onMouseEnter={() => setActiveMenu(t('Treatments'))}
             onMouseLeave={() => setActiveMenu(null)}
@@ -267,15 +279,15 @@ const Navbar = () => {
                         </li>
                       ))}
                     </ul>
-                    
+
                     {catGrp.items.length > 5 && (
-                      <Link 
-                          href="/specialties" 
-                          className="mt-6 text-[13px] font-black text-[#1a2e5a] flex items-center gap-1 hover:gap-2 transition-all group/all"
-                          onClick={() => setActiveMenu(null)}
+                      <Link
+                        href="/specialties"
+                        className="mt-6 text-[13px] font-black text-[#1a2e5a] flex items-center gap-1 hover:gap-2 transition-all group/all"
+                        onClick={() => setActiveMenu(null)}
                       >
-                          {t('View More')}
-                          <ArrowRight className="w-3 h-3 group-hover/all:translate-x-1 transition-transform" />
+                        {t('View More')}
+                        <ArrowRight className="w-3 h-3 group-hover/all:translate-x-1 transition-transform" />
                       </Link>
                     )}
                   </div>
@@ -289,13 +301,16 @@ const Navbar = () => {
           </div>
         )}
 
-        <a
-          href="tel:+919059051906"
-          className="hidden lg:flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity"
-        >
-          <Phone className="w-4 h-4" />
-          +91 90590 51906
-        </a>
+        <div className="hidden lg:flex flex-col items-end">
+
+          <a
+            href="tel:+919553387472"
+            className="flex items-center gap-2 bg-primary text-white font-bold text-sm px-4 py-2 rounded-full hover:bg-primary/90 hover:shadow-md transition-all duration-200"
+          >
+            <Phone className="w-3 h-3" />
+            +91 95533 87472
+          </a>
+        </div>
 
         <button className="lg:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -358,13 +373,16 @@ const Navbar = () => {
               )}
             </div>
           ))}
-          <a
-            href="tel:+919059051906"
-            className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold justify-center"
-          >
-            <Phone className="w-4 h-4" />
-            +91 90590 51906
-          </a>
+          <div className="flex flex-col gap-2">
+
+            <a
+              href="tel:+919553387472"
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold justify-center"
+            >
+              <Phone className="w-4 h-4" />
+              +91 95533 87472
+            </a>
+          </div>
           <div className="pt-2">
             <LanguageSelector />
           </div>

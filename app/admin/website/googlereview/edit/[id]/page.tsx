@@ -19,6 +19,7 @@ export default function EditGoogleReviewPage() {
   const { id } = useParams()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [branches, setBranches] = useState<any[]>([])
   const [formData, setFormData] = useState({
     reviewer_name: "",
     reviewer_stats: "",
@@ -32,8 +33,18 @@ export default function EditGoogleReviewPage() {
   useEffect(() => {
     if (id) {
       fetchReview()
+      fetchBranches()
     }
   }, [id])
+
+  const fetchBranches = async () => {
+    try {
+      const data = await settingsApi.getBranches()
+      setBranches(data)
+    } catch (error) {
+      console.error('Error fetching branches:', error)
+    }
+  }
 
   const fetchReview = async () => {
     try {
@@ -133,17 +144,17 @@ export default function EditGoogleReviewPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="branch" className="text-xs font-black uppercase tracking-widest text-slate-400">Branch</Label>
-                <Select 
-                  value={formData.branch_name} 
+                <Select
+                  value={formData.branch_name}
                   onValueChange={(val) => setFormData({ ...formData, branch_name: val })}
                 >
                   <SelectTrigger className="h-11 bg-slate-50/50 border-slate-100 rounded-xl">
                     <SelectValue placeholder="Select Branch" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                    <SelectItem value="Miryalaguda">Miryalaguda</SelectItem>
-                    <SelectItem value="Narasaraopet">Narasaraopet</SelectItem>
-                    <SelectItem value="Ongole">Ongole</SelectItem>
+                    {branches.map((branch: any) => (
+                      <SelectItem key={branch.id} value={branch.name}>{branch.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -178,8 +189,8 @@ export default function EditGoogleReviewPage() {
               <div className="flex items-center gap-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map((s) => (
-                    <Star 
-                      key={s} 
+                    <Star
+                      key={s}
                       className={`h-6 w-6 cursor-pointer transition-all ${s <= formData.rating ? 'text-yellow-500 fill-yellow-500 scale-110' : 'text-slate-200'}`}
                       onClick={() => setFormData({ ...formData, rating: s })}
                     />

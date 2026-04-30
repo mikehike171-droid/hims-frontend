@@ -70,10 +70,10 @@ const OurValues = () => {
           {highlights.map((h, i) => (
             <div key={i} className="flex-1 relative z-10 mb-12 lg:mb-0 last:mb-0 group">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-emerald-500 transition-colors duration-500">
-                  <h.icon className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-orange-500 transition-colors duration-500">
+                  <h.icon className="w-6 h-6 text-orange-500 group-hover:text-white transition-colors" />
                 </div>
-                <h4 className="text-2xl font-bold text-white font-heading">
+                <h4 className="text-2xl font-bold text-orange-500 font-heading">
                   {t(h.title)}
                 </h4>
               </div>

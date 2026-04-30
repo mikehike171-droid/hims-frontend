@@ -16,7 +16,7 @@ const BookAppointmentBanner = () => {
           <div className="h-[1px] w-12 bg-white/30" />
         </div>
         
-        <h2 className="text-4xl md:text-6xl font-black text-white uppercase font-heading leading-[1.1] mb-8 tracking-tight">
+        <h2 className="text-4xl md:text-6xl font-black text-orange-500 uppercase font-heading leading-[1.1] mb-8 tracking-tight">
           Book Your Appointment <span className="text-emerald-300 italic">Today</span>
         </h2>
         

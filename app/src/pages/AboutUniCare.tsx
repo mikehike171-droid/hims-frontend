@@ -67,7 +67,7 @@ const AboutUniCare = () => {
           <div className="max-w-4xl mx-auto">
             {/* Header Section */}
             <div className="mb-12 text-center">
-              <span className="px-4 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block">
+              <span className="px-4 py-1 bg-primary/10 text-orange-500 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block">
                 {aboutData?.title?.includes('\n') 
                     ? t(aboutData.title.split('\n')[0].trim()) 
                     : t('The Natural science')}

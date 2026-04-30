@@ -12,6 +12,7 @@ import { ProfileDropdown } from "@/components/ui/profile-dropdown"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Suspense, useState, useEffect } from "react"
 import authService from "@/lib/authService"
+import { ChatNotificationBell } from "@/components/layout/ChatNotificationBell"
 
 
 
@@ -92,8 +93,9 @@ export default function ConditionalLayout({
                   </div>
                 </div>
 
-                {/* Right side - Profile */}
-                <div className="flex items-center gap-1 flex-shrink-0">
+                {/* Right side - Notifications + Profile */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <ChatNotificationBell />
                   <div className="lg:hidden">
                     <ProfileDropdown />
                   </div>
@@ -106,8 +108,11 @@ export default function ConditionalLayout({
                   <BranchSelector />
                 </div>
 
-                  {/* User Menu */}
-                  <ProfileDropdown />
+                  {/* Notifications + User Menu */}
+                  <div className="flex items-center gap-3">
+                    <ChatNotificationBell />
+                    <ProfileDropdown />
+                  </div>
               </div>
             </header>
 

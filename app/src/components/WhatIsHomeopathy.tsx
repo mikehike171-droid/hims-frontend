@@ -132,7 +132,7 @@ const WhatIsHomeopathy = () => {
              <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="h-1 w-12 bg-primary rounded-full" />
-                <span className="text-sm font-black uppercase tracking-widest text-primary">
+                <span className="text-sm font-black uppercase tracking-widest text-orange-500">
                   {aboutData?.title?.includes('\n') 
                     ? t(aboutData.title.split('\n')[0].trim()) 
                     : t('The Natural science')}

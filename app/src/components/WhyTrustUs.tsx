@@ -87,7 +87,7 @@ const WhyTrustUs = () => {
                     </div>
                     <div>
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Trusted Success</p>
-                      <p className="text-lg font-black text-primary tracking-tight">Proven Results</p>
+                      <p className="text-lg font-black text-orange-500 tracking-tight">Proven Results</p>
                     </div>
                   </div>
                 </div>

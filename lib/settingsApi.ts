@@ -139,6 +139,19 @@ export const settingsApi = {
       return [];
     }
   },
+  
+  // Branches
+  getBranches: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/settings/branches`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getBranches error:', error);
+      return [];
+    }
+  },
 
   // Locations IP Management
   getLocationsIp: async () => {
@@ -1796,7 +1809,7 @@ export const settingsApi = {
       return await response.json();
     } catch (error) {
       console.error('getPublicGoogleReviews error:', error);
-      return { Miryalaguda: [], Narasaraopet: [], Ongole: [] };
+      return { Miryalaguda: [], Narasaraopet: [], Ongole: [], Nalgonda: [] };
     }
   },
 

@@ -14,12 +14,12 @@ const HeroSection = () => {
           <p className="text-primary-foreground/80 text-lg mt-4 max-w-lg">
             {'Natural Healing for Modern Health'}
           </p>
-          <a
-            href="#appointment"
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("open-appointment-popup"))}
             className="inline-block mt-8 bg-accent text-accent-foreground px-8 py-3 rounded-lg font-semibold text-base hover:scale-105 hover:shadow-xl transition-all duration-300 shadow-lg"
           >
             {'Book Appointment'}
-          </a>
+          </button>
         </div>
         <div className="flex-1 flex justify-center md:justify-end animate-fade-in-right">
           <img

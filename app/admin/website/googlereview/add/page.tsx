@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,15 +17,32 @@ import PrivateRoute from "@/components/auth/PrivateRoute"
 export default function AddGoogleReviewPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [branches, setBranches] = useState<any[]>([])
   const [formData, setFormData] = useState({
     reviewer_name: "",
     reviewer_stats: "Local Guide",
     review_date: "Recently",
     review_text: "",
     rating: 5,
-    branch_name: "Miryalaguda",
+    branch_name: "",
     status: "active"
   })
+
+  useEffect(() => {
+    fetchBranches()
+  }, [])
+
+  const fetchBranches = async () => {
+    try {
+      const data = await settingsApi.getBranches()
+      setBranches(data)
+      if (data.length > 0 && !formData.branch_name) {
+        setFormData(prev => ({ ...prev, branch_name: data[0].name }))
+      }
+    } catch (error) {
+      console.error('Error fetching branches:', error)
+    }
+  }
 
   const handleSave = async () => {
     if (!formData.reviewer_name || !formData.review_text) {
@@ -92,17 +109,17 @@ export default function AddGoogleReviewPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="branch" className="text-xs font-black uppercase tracking-widest text-slate-400">Branch</Label>
-                <Select 
-                  value={formData.branch_name} 
+                <Select
+                  value={formData.branch_name}
                   onValueChange={(val) => setFormData({ ...formData, branch_name: val })}
                 >
                   <SelectTrigger className="h-11 bg-slate-50/50 border-slate-100 rounded-xl focus:ring-primary/20">
                     <SelectValue placeholder="Select Branch" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                    <SelectItem value="Miryalaguda">Miryalaguda</SelectItem>
-                    <SelectItem value="Narasaraopet">Narasaraopet</SelectItem>
-                    <SelectItem value="Ongole">Ongole</SelectItem>
+                    {branches.map((branch: any) => (
+                      <SelectItem key={branch.id} value={branch.name}>{branch.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -139,8 +156,8 @@ export default function AddGoogleReviewPage() {
               <div className="flex items-center gap-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map((s) => (
-                    <Star 
-                      key={s} 
+                    <Star
+                      key={s}
                       className={`h-6 w-6 cursor-pointer transition-all ${s <= formData.rating ? 'text-yellow-500 fill-yellow-500 scale-110' : 'text-slate-200'}`}
                       onClick={() => setFormData({ ...formData, rating: s })}
                     />

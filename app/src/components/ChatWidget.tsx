@@ -118,14 +118,14 @@ const ChatWidget = () => {
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20">
                   <img 
                     src={doctorAvatar.src} 
-                    alt="Dr Ashraf" 
+                    alt="Unicare Health Assistant" 
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-primary rounded-full" />
               </div>
               <div>
-                <h4 className="font-bold text-sm leading-tight">Dr Ashraf</h4>
+                <h4 className="font-bold text-sm leading-tight">Unicare Health Assistant</h4>
               </div>
             </div>
             <button 

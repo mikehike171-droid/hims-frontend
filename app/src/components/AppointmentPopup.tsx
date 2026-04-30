@@ -10,8 +10,14 @@ const AppointmentPopup = () => {
     const handleOpenPopup = () => setIsOpen(true);
     window.addEventListener("open-appointment-popup", handleOpenPopup);
 
+    // Show popup after 3 seconds on initial load
+    const timer = setTimeout(() => {
+      setIsOpen(true);
+    }, 3000);
+
     return () => {
       window.removeEventListener("open-appointment-popup", handleOpenPopup);
+      clearTimeout(timer);
     };
   }, []);
 
@@ -61,17 +67,17 @@ const AppointmentPopup = () => {
         </button>
 
         {/* Content */}
-        <div className="p-8 md:p-12">
+        <div className="p-8 md:p-10">
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-[#1B7A43]/10 text-[#1B7A43] mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+          <div className="text-center mb-6">
+            <div className="relative inline-block mb-4">
+               <img src="/appointment-illustration.png" className="w-24 h-24 object-contain mx-auto animate-float" alt="Appointment" />
             </div>
-            <h2 className="text-3xl font-black text-[#1B7A43] leading-tight mb-3">
-              Book Appointment
+            <h2 className="text-2xl font-black text-[#1B7A43] leading-tight mb-2">
+              Book Your Priority Consultation
             </h2>
-            <p className="text-slate-500 font-medium px-4">
-              Book your priority consultation today and start your journey to natural recovery.
+            <p className="text-slate-500 text-sm font-medium px-4">
+              Join thousands of patients who found natural recovery with UniCare Homeopathy.
             </p>
           </div>
 
