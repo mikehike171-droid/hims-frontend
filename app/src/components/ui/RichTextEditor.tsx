@@ -83,7 +83,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
 
   return (
     <div className="rich-text-editor-container border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white">
-      <div ref={editorRef} style={{ minHeight: '300px' }} />
+      <div ref={editorRef} style={{ minHeight: '500px' }} />
       {!isLoaded && (
         <div className="absolute inset-0 bg-slate-50/50 flex items-center justify-center animate-pulse">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Editor Resources...</span>
@@ -101,7 +101,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
           font-family: inherit !important;
         }
         .ql-editor {
-          min-height: 300px;
+          min-height: 500px;
           font-family: 'Georgia', 'Times New Roman', serif !important;
           font-size: 1.25rem !important;
           line-height: 1.8 !important;

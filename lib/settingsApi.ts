@@ -139,7 +139,7 @@ export const settingsApi = {
       return [];
     }
   },
-  
+
   // Branches
   getBranches: async () => {
     try {
@@ -1581,15 +1581,20 @@ export const settingsApi = {
   },
 
   // Treatments
-  getTreatments: async () => {
+  getTreatments: async (page = 1, limit = 10, startDate?: string, endDate?: string, search?: string) => {
     try {
-      const response = await fetch(`${authService.getSettingsApiUrl()}/settings/treatments`, {
+      let url = `${authService.getSettingsApiUrl()}/settings/treatments?page=${page}&limit=${limit}`;
+      if (startDate) url += `&startDate=${startDate}`;
+      if (endDate) url += `&endDate=${endDate}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      
+      const response = await fetch(url, {
         headers: getAuthHeaders(),
       });
       return await handleApiResponse(response);
     } catch (error) {
       console.error('getTreatments error:', error);
-      return [];
+      return { items: [], total: 0 };
     }
   },
 
@@ -1820,7 +1825,7 @@ export const settingsApi = {
       const params = new URLSearchParams();
       if (limit !== undefined) params.append('limit', limit.toString());
       if (offset !== undefined) params.append('offset', offset.toString());
-      
+
       const queryString = params.toString();
       if (queryString) url += `?${queryString}`;
 
@@ -1988,7 +1993,7 @@ export const settingsApi = {
   uploadBranchImage: async (file: File) => {
     const formData = new FormData();
     formData.append('image', file);
-    
+
     const response = await fetch(`${authService.getSettingsApiUrl()}/settings/branches/upload-image`, {
       method: 'POST',
       headers: {
@@ -2059,7 +2064,7 @@ export const settingsApi = {
   uploadHeroImage: async (file: File) => {
     const formData = new FormData();
     formData.append('image', file);
-    
+
     const response = await fetch(`${authService.getSettingsApiUrl()}/settings/hero-sections/upload-image`, {
       method: 'POST',
       headers: {
@@ -2090,6 +2095,104 @@ export const settingsApi = {
       console.error('getExternalReviews error:', error);
       return [];
     }
+  },
+
+  // Jobs
+  getJobs: async (page = 1, limit = 10, search?: string) => {
+    try {
+      let url = `${authService.getSettingsApiUrl()}/jobs/admin?page=${page}&limit=${limit}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      
+      const response = await fetch(url, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getJobs error:', error);
+      return { items: [], total: 0 };
+    }
+  },
+
+  getJob: async (id: number) => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/jobs/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getJob error:', error);
+      throw error;
+    }
+  },
+
+  createJob: async (data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/jobs`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  updateJob: async (id: number, data: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/jobs/${id}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await handleApiResponse(response);
+  },
+
+  deleteJob: async (id: number) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/jobs/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return response.ok;
+  },
+
+  getPublicJobs: async () => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/public-jobs`);
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getPublicJobs error:', error);
+      return [];
+    }
+  },
+
+  // Job Applications
+  getJobApplications: async (page = 1, limit = 10, startDate?: string, endDate?: string, search?: string) => {
+    try {
+      let url = `${authService.getSettingsApiUrl()}/job-applications/admin?page=${page}&limit=${limit}`;
+      if (startDate) url += `&startDate=${startDate}`;
+      if (endDate) url += `&endDate=${endDate}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+
+      const response = await fetch(url, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getJobApplications error:', error);
+      return { items: [], total: 0 };
+    }
+  },
+
+  deleteJobApplication: async (id: number) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/job-applications/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return response.ok;
+  },
+
+  applyForJob: async (formData: FormData) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/public-job-applications/apply`, {
+      method: 'POST',
+      body: formData, // Sending as FormData for file upload
+    });
+    return await handleApiResponse(response);
   },
 };
 

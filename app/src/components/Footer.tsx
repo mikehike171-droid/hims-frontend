@@ -7,10 +7,34 @@ import Link from "next/link";
 const Footer = () => {
   const { t } = useLanguage();
   const [clinicsData, setClinicsData] = useState<any[]>([]);
+  const [popularTreatments, setPopularTreatments] = useState<any[]>([]);
 
   useEffect(() => {
     fetchClinics();
+    fetchTreatments();
   }, []);
+
+  const fetchTreatments = async () => {
+    try {
+      const data = await settingsApi.getPublicTreatments();
+      if (Array.isArray(data)) {
+        // Group by category and take one from each
+        const categoriesMap: { [key: string]: any } = {};
+        data.forEach((t: any) => {
+          const cat = t.category || "General";
+          if (!categoriesMap[cat]) {
+            categoriesMap[cat] = t;
+          }
+        });
+        
+        // Convert map to array and take first 6-8 unique category treatments
+        const uniqueCatTreatments = Object.values(categoriesMap).slice(0, 8);
+        setPopularTreatments(uniqueCatTreatments);
+      }
+    } catch (error) {
+      console.error("Error fetching treatments for footer:", error);
+    }
+  };
 
   const fetchClinics = async () => {
     try {
@@ -74,8 +98,8 @@ const Footer = () => {
             <ul className="space-y-3 text-sm font-medium">
               <li><Link href="/" className="hover:text-teal-light transition-colors">{t('Home')}</Link></li>
               <li><Link href="/#about" className="hover:text-teal-light transition-colors">{t('About Us')}</Link></li>
-              <li><Link href="#treatments" className="hover:text-teal-light transition-colors">{t('Treatments')}</Link></li>
-              <li><Link href="#" className="hover:text-teal-light transition-colors">{t('Clinics')}</Link></li>
+              <li><Link href="/#treatments" className="hover:text-teal-light transition-colors">{t('Treatments')}</Link></li>
+              <li><Link href="/#clinics" className="hover:text-teal-light transition-colors">{t('Clinics')}</Link></li>
               <li><Link href="/blogs" className="hover:text-teal-light transition-colors">{t('Blogs')}</Link></li>
               <li><Link href="/#appointment" className="hover:text-teal-light transition-colors">{t('Contact Us')}</Link></li>
               <li><Link href="/privacy-policy" className="hover:text-teal-light transition-colors">{t('Privacy Policy')}</Link></li>
@@ -85,12 +109,32 @@ const Footer = () => {
           <div>
             <h4 className="font-bold font-heading mb-6 border-b border-white/10 pb-2 inline-block text-teal-light uppercase tracking-wider text-sm">{t('Popular Treatments')}</h4>
             <ul className="space-y-3 text-sm font-medium">
-              <li><a href="#" className="hover:text-teal-light transition-colors">{t('Low Back Pain')}</a></li>
-              <li><a href="#" className="hover:text-teal-light transition-colors">{t('Kidney Stones')}</a></li>
-              <li><a href="#" className="hover:text-teal-light transition-colors">{t('Thyroid Disorders')}</a></li>
-              <li><a href="#" className="hover:text-teal-light transition-colors">{t('PCOS')}</a></li>
-              <li><a href="#" className="hover:text-teal-light transition-colors">{t('Sinusitis')}</a></li>
-              <li><a href="#" className="hover:text-teal-light transition-colors">{t('Spondylitis')}</a></li>
+              {popularTreatments.length > 0 ? (
+                <>
+                  {popularTreatments.map((treatment) => (
+                    <li key={treatment.id}>
+                      <Link href={`/treatment/${treatment.slug || treatment.id}`} className="hover:text-teal-light transition-colors">
+                        {t(treatment.name)}
+                      </Link>
+                    </li>
+                  ))}
+                  <li className="pt-2 border-t border-white/5 mt-2">
+                    <Link href="/specialties" className="text-teal-light hover:underline font-bold text-xs uppercase tracking-widest flex items-center gap-1">
+                      {t('View All')}
+                      <span className="text-lg">→</span>
+                    </Link>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li><Link href="/treatment/low-back-pain" className="hover:text-teal-light transition-colors">{t('Low Back Pain')}</Link></li>
+                  <li><Link href="/treatment/kidney-stones" className="hover:text-teal-light transition-colors">{t('Kidney Stones')}</Link></li>
+                  <li><Link href="/treatment/thyroid" className="hover:text-teal-light transition-colors">{t('Thyroid Disorders')}</Link></li>
+                  <li><Link href="/treatment/pcos" className="hover:text-teal-light transition-colors">{t('PCOS')}</Link></li>
+                  <li><Link href="/treatment/sinusitis" className="hover:text-teal-light transition-colors">{t('Sinusitis')}</Link></li>
+                  <li><Link href="/treatment/spondylitis" className="hover:text-teal-light transition-colors">{t('Spondylitis')}</Link></li>
+                </>
+              )}
             </ul>
           </div>
 
@@ -116,7 +160,7 @@ const Footer = () => {
         </div>
 
         {/* Our Clinics Section - Integrated into one section */}
-        <div className="pt-16 border-t border-white/5">
+        <div id="clinics" className="pt-16 border-t border-white/5">
           <h2 className="text-xl font-bold font-heading mb-10 tracking-tight uppercase border-b border-white/10 pb-4 text-teal-light">
             {t('Our Clinics')}
           </h2>

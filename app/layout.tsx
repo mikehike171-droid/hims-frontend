@@ -12,6 +12,7 @@ const BookingSuccessModal = dynamic(() => import("@/components/BookingSuccessMod
 const ChatWidget = dynamic(() => import("@/components/ChatWidget"), { ssr: false });
 const AppointmentPopup = dynamic(() => import("@/components/AppointmentPopup"), { ssr: false });
 const WhatsAppFloat = dynamic(() => import("@/components/WhatsAppFloat"), { ssr: false });
+const SpecialOffer = dynamic(() => import("@/components/SpecialOffer"), { ssr: false });
 
 export default function RootLayout({
   children,
@@ -113,6 +114,7 @@ export default function RootLayout({
               <ChatWidget />
               <AppointmentPopup />
               <WhatsAppFloat />
+              <SpecialOffer />
             </>
           )}
         </LanguageProvider>

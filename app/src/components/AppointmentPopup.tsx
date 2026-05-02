@@ -74,7 +74,7 @@ const AppointmentPopup = () => {
                <img src="/appointment-illustration.png" className="w-24 h-24 object-contain mx-auto animate-float" alt="Appointment" />
             </div>
             <h2 className="text-2xl font-black text-[#1B7A43] leading-tight mb-2">
-              Book Your Priority Consultation
+              Book Appointment
             </h2>
             <p className="text-slate-500 text-sm font-medium px-4">
               Join thousands of patients who found natural recovery with UniCare Homeopathy.

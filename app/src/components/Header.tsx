@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useEffect } from "react";
-import { Phone, Search, Facebook, Instagram, Youtube, Linkedin, Menu, X, ChevronDown, MapPin, ArrowRight } from "lucide-react";
+import { Phone, Search, Facebook, Instagram, Youtube, Linkedin, Menu, X, ChevronDown, MapPin, ArrowRight, Briefcase } from "lucide-react";
 import Link from "next/link";
 import logo from "@/assets/logo.png";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -8,6 +10,10 @@ import { settingsApi } from "@/lib/settingsApi";
 
 const TopBar = () => {
   const { t } = useLanguage();
+
+  const openAppointment = () => {
+    window.dispatchEvent(new CustomEvent("open-appointment-popup"));
+  };
 
   return (
     <div className="bg-foreground text-primary-foreground text-sm hidden md:block">
@@ -18,6 +24,26 @@ const TopBar = () => {
           <span className="hover:text-teal-light cursor-pointer transition-colors">{t('Media')}</span>
           <span className="text-muted-foreground">|</span>
           <span className="hover:text-teal-light cursor-pointer transition-colors">{t('Testimonials')}</span>
+          <span className="text-muted-foreground">|</span>
+          <Link href="/jobs" className="flex items-center gap-1 hover:text-teal-light cursor-pointer transition-colors">
+            <Briefcase className="w-3 h-3" />
+            {t('Jobs')}
+          </Link>
+          
+          <div className="flex items-center gap-2 ml-4">
+            <button 
+              onClick={openAppointment}
+              className="bg-[#00A8A8] text-white px-3 py-1 rounded text-[11px] font-bold hover:bg-[#008e8e] transition-colors whitespace-nowrap shadow-sm"
+            >
+              {t('For USA Patients')}
+            </button>
+            <Link 
+              href="/specialties"
+              className="bg-[#00A8A8] text-white px-3 py-1 rounded text-[11px] font-bold hover:bg-[#008e8e] transition-colors whitespace-nowrap shadow-sm"
+            >
+              {t('Online Treatment')}
+            </Link>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center bg-primary-foreground/10 rounded-full px-3 py-1">
@@ -72,9 +98,7 @@ const Navbar = () => {
   const fetchTreatments = async () => {
     try {
       const treatments = await settingsApi.getPublicTreatments();
-      console.log("Treatments Data Header:", treatments);
-
-      // Group treatments by specific categories as requested
+      
       const categories = [
         { key: "Treatments", display: t("Treatments") },
         { key: "Skin Treatment", display: t("Skin Treatment") },
@@ -95,7 +119,6 @@ const Navbar = () => {
           if (cat.key === "Women's Treatment") return tCat.includes("women") || tName.includes("fibroids") || tName.includes("infertility") || tName.includes("menses") || tName.includes("leucorrhoea") || tName.includes("pcos") || tName.includes("uterine") || tName.includes("hypothyroidism") || tName.includes("hyperthyroidism") || tName.includes("adenomyosis") || tName.includes("menopause") || tName.includes("pms") || tName.includes("pregnancy") || tName.includes("dysmenorrhea");
           if (cat.key === "Hair Treatment") return tCat.includes("hair") || tName.includes("alopecia") || tName.includes("hair loss");
           if (cat.key === "Treatments") {
-            // Default column for everything else that doesn't fit in specific categories
             const isOther = !(
               tCat.includes("skin") || tName.includes("psoriasis") || tName.includes("hyperpigmentation") || tName.includes("ichthyosis") || tName.includes("lichen planus") || tName.includes("lipoma") || tName.includes("pityriasis") || tName.includes("urticaria") || tName.includes("vitiligo") || tName.includes("acne") || tName.includes("eczema") || tName.includes("warts") || tName.includes("melasma") || tName.includes("dermatitis") || tName.includes("fungal") ||
               tCat.includes("season") || tCat.includes("respiratory") || tName.includes("allergic") || tName.includes("allergy") || tName.includes("asthma") || tName.includes("breathlessness") || tName.includes("bronchitis") || tName.includes("nose block") || tName.includes("sinusitis") || tName.includes("tonsillitis") ||
@@ -118,22 +141,12 @@ const Navbar = () => {
   const fetchClinics = async () => {
     try {
       const branches = await settingsApi.getPublicBranches();
-      console.log("Header: Fetched branches:", branches);
-
       if (!Array.isArray(branches)) {
-        console.warn("Header: Invalid response for branches", branches);
         setFetchError("Clinics: Invalid API response");
         setClinicsData([]);
         return;
       }
 
-      if (branches.length === 0) {
-        console.warn("Header: No branches found");
-        setClinicsData([]);
-        return;
-      }
-
-      // Group branches by state dynamically
       const groupedMap: { [key: string]: any[] } = {};
 
       branches.forEach((b: any) => {
@@ -150,7 +163,6 @@ const Navbar = () => {
         cities: groupedMap[state]
       })).sort((a, b) => a.state.localeCompare(b.state));
 
-      console.log("Header: Grouped clinics data:", grouped);
       setClinicsData(grouped);
       setFetchError(null);
     } catch (error: any) {
@@ -302,7 +314,6 @@ const Navbar = () => {
         )}
 
         <div className="hidden lg:flex flex-col items-end">
-
           <a
             href="tel:+919553387472"
             className="flex items-center gap-2 bg-primary text-white font-bold text-sm px-4 py-2 rounded-full hover:bg-primary/90 hover:shadow-md transition-all duration-200"
@@ -319,6 +330,24 @@ const Navbar = () => {
 
       {mobileOpen && (
         <div className="lg:hidden border-t border-border px-4 py-4 space-y-3 bg-background">
+          <div className="flex gap-2 pb-4">
+             <button 
+              onClick={() => {
+                setMobileOpen(false);
+                window.dispatchEvent(new CustomEvent("open-appointment-popup"));
+              }}
+              className="flex-1 bg-[#00A8A8] text-white px-3 py-2 rounded text-xs font-bold"
+            >
+              {t('USA Patients')}
+            </button>
+            <Link 
+              href="/specialties"
+              onClick={() => setMobileOpen(false)}
+              className="flex-1 bg-[#00A8A8] text-white px-3 py-2 rounded text-xs font-bold text-center flex items-center justify-center"
+            >
+              {t('Online')}
+            </Link>
+          </div>
           {navLinks.map((link) => (
             <div key={link.label}>
               {link.hasDropdown ? (
@@ -374,7 +403,6 @@ const Navbar = () => {
             </div>
           ))}
           <div className="flex flex-col gap-2">
-
             <a
               href="tel:+919553387472"
               className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold justify-center"

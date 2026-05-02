@@ -64,8 +64,9 @@ const AllSpecialties = () => {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {treatments.map((item, i) => (
-                <div
+                <Link
                   key={item.id}
+                  href={`/treatment/${item.slug || item.id}`}
                   className="bg-white rounded-[2.5rem] overflow-hidden border border-slate-100 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group"
                   style={{ animationDelay: `${(i % 4) * 100}ms` }}
                 >
@@ -77,12 +78,9 @@ const AllSpecialties = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="absolute bottom-4 left-4 right-4 translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500">
-                       <Link 
-                          href={`/treatment/${item.slug || item.id}`}
-                          className="w-full bg-[#1B7A43] text-white py-2.1 rounded-full text-[10px] font-bold text-center block uppercase tracking-widest"
-                       >
-                          View Details
-                       </Link>
+                        <div className="w-full bg-[#1B7A43] text-white py-2 rounded-full text-[10px] font-bold text-center block uppercase tracking-widest">
+                           View Details
+                        </div>
                     </div>
                   </div>
                   <div className="p-5 text-center">
@@ -90,7 +88,7 @@ const AllSpecialties = () => {
                       {t(item.name)}
                     </h4>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

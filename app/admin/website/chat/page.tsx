@@ -32,6 +32,7 @@ interface ChatSession {
   visitorName: string | null;
   visitorEmail?: string | null;
   status: string;
+  isRead: boolean;
   updatedAt: string;
   messages: Message[];
 }
@@ -87,7 +88,8 @@ export default function AdminChatPage() {
           updated[index] = {
             ...updated[index],
             messages: [...(updated[index].messages || []), data],
-            updatedAt: data.createdAt
+            updatedAt: data.createdAt,
+            isRead: false
           };
           return updated;
         } else {
@@ -96,6 +98,7 @@ export default function AdminChatPage() {
             guestId: data.guestId || null,
             visitorName: data.visitorName || null,
             status: 'active',
+            isRead: false,
             messages: [data],
             updatedAt: data.createdAt
           };
@@ -142,6 +145,24 @@ export default function AdminChatPage() {
       content: inputValue
     });
     setInputValue("");
+  };
+
+  const handleSelectSession = async (session: ChatSession) => {
+    setSelectedSession(session);
+    
+    // Mark as read in UI
+    setSessions(prev => prev.map(s => s.id === session.id ? { ...s, isRead: true } : s));
+
+    // Mark as read in Backend
+    try {
+      const token = authService.getCurrentToken();
+      await fetch(`${authService.getSettingsApiUrl()}/chat/sessions/${session.id}/read`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (error) {
+      console.error("Error marking session as read:", error);
+    }
   };
 
   const filteredSessions = sessions.filter(s =>
@@ -192,15 +213,28 @@ export default function AdminChatPage() {
                   filteredSessions.map((session) => (
                     <div
                       key={session.id}
-                      onClick={() => setSelectedSession(session)}
-                      className={`p-4 cursor-pointer transition-all hover:bg-slate-50 flex items-start gap-3 ${selectedSession?.id === session.id ? 'bg-slate-50 border-r-4 border-primary' : ''}`}
+                      onClick={() => handleSelectSession(session)}
+                      className={`p-4 cursor-pointer transition-all hover:bg-slate-50 flex items-start gap-3 ${
+                        selectedSession?.id === session.id 
+                          ? 'bg-slate-50 border-r-4 border-primary' 
+                          : !session.isRead 
+                            ? 'bg-orange-100 hover:bg-orange-200' 
+                            : ''
+                      }`}
                     >
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs flex-shrink-0">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-primary font-bold text-xs flex-shrink-0 ${
+                        !session.isRead ? 'bg-orange-300 text-orange-900' : 'bg-primary/10'
+                      }`}>
                         {getInitials(session)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1">
-                          <h4 className="font-bold text-slate-900 truncate">{getDisplayName(session)}</h4>
+                          <h4 className={`font-bold truncate ${!session.isRead ? 'text-orange-900' : 'text-slate-900'}`}>
+                            {getDisplayName(session)}
+                            {!session.isRead && (
+                              <span className="ml-2 inline-block w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+                            )}
+                          </h4>
                           <span className="text-[10px] text-slate-400 flex items-center gap-1 whitespace-nowrap">
                             <Clock className="h-3 w-3" />
                             {new Date(session.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
