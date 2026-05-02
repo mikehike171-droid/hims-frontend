@@ -325,7 +325,9 @@ export default function PatientRegistrationPage() {
             dob: dobDate ? format(dobDate, 'dd/MM/yyyy') : 'N/A',
             age: years
           })
-          setShowPrintDialog(true)
+          alert('Patient registered successfully!')
+          router.push('/admin/front-office/patients')
+          // setShowPrintDialog(true)
         }
       }
     } catch (error) {

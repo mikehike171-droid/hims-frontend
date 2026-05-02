@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, UserPlus, Mic, MicOff, Save, Printer, Send, X, Eye, Plus } from "lucide-react"
 import { BillSummaryWidget } from "@/components/billing/bill-summary-widget"
 import PrivateRoute from "@/components/auth/PrivateRoute"
+import { useRouter } from 'next/navigation'
 import { settingsApi } from '@/lib/settingsApi'
 
 // Mock data for existing patients
@@ -54,6 +55,7 @@ const companies = [
 ]
 
 export default function PatientRegistrationPage() {
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [selectedPatient, setSelectedPatient] = useState<any>(null)
@@ -308,8 +310,7 @@ export default function PatientRegistrationPage() {
       
       if (result.success) {
         alert(`Patient registered successfully! Patient ID: ${result.patient_id}`);
-        // Reset form
-        handleNewPatient();
+        router.push('/admin/front-office/patients');
       } else {
         alert('Registration failed: ' + (result.message || 'Unknown error'));
       }
