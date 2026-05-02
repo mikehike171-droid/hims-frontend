@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, MessageCircle, Send, User } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { io, Socket } from "socket.io-client";
+import authService from "@/lib/authService";
 import doctorAvatar from "@/assets/hero-doctor-male.png";
 
 interface Message {
@@ -44,7 +45,7 @@ const ChatWidget = () => {
     }, 5000);
 
     // Connect to WebSocket
-    const socket = io("http://localhost:3002", {
+    const socket = io(authService.getSocketUrl(), {
       transports: ["websocket"],
     });
     socketRef.current = socket;

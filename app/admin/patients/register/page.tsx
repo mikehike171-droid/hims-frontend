@@ -304,17 +304,7 @@ export default function PatientRegistrationPage() {
         }
       };
 
-      const response = await fetch('http://localhost:3002/patients/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-location-id': '1',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify(registerPayload)
-      });
-
-      const result = await response.json();
+      const result = await settingsApi.registerPatient(registerPayload);
       
       if (result.success) {
         alert(`Patient registered successfully! Patient ID: ${result.patient_id}`);

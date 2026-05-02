@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import authService from '@/lib/authService';
 
 export default function PatientRegistration() {
   const [patientData, setPatientData] = useState({
@@ -74,17 +75,7 @@ export default function PatientRegistration() {
         }
       };
 
-      const response = await fetch('http://localhost:3002/patients/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-location-id': '1',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify(registerPayload)
-      });
-
-      const result = await response.json();
+      const result = await settingsApi.registerPatient(registerPayload);
       
       if (result.success) {
         alert(`Patient registered successfully! Patient ID: ${result.patient_id}`);

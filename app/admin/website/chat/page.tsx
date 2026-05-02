@@ -76,7 +76,7 @@ export default function AdminChatPage() {
 
     fetchSessions();
 
-    const socket = io("http://localhost:3002", { transports: ["websocket"] });
+    const socket = io(authService.getSocketUrl(), { transports: ["websocket"] });
     socketRef.current = socket;
     socket.emit("admin_join");
 

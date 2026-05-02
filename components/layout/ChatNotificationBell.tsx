@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { Bell } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { io, Socket } from "socket.io-client"
+import authService from "@/lib/authService"
 
 export function ChatNotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
@@ -13,7 +14,7 @@ export function ChatNotificationBell() {
 
   useEffect(() => {
     // Connect to the same WebSocket as the chat system
-    const socket = io("http://localhost:3002", {
+    const socket = io(authService.getSocketUrl(), {
       transports: ["websocket"],
     })
     socketRef.current = socket

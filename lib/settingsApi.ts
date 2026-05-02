@@ -2194,6 +2194,19 @@ export const settingsApi = {
     });
     return await handleApiResponse(response);
   },
+
+  // Patient Registration
+  registerPatient: async (payload: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/patients/register`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'x-location-id': authService.getLocationId() || '1',
+      },
+      body: JSON.stringify(payload),
+    });
+    return await handleApiResponse(response);
+  },
 };
 
 

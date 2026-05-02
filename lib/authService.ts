@@ -189,6 +189,12 @@ const getFileUrl = (path: string) => {
   return `${getSettingsApiUrl().replace('/api', '')}${path}`;
 };
 
+const getSocketUrl = () => {
+  const apiUrl = getSettingsApiUrl();
+  // Extract base URL from SETTINGS_API_URL (remove /api)
+  return apiUrl.replace('/api', '');
+};
+
 const authService = {
   login,
   logout,
@@ -201,6 +207,7 @@ const authService = {
   getApiDomainUrl,
   getSettingsApiUrl,
   getFrontOfficeApiUrl,
+  getSocketUrl,
   getFileUrl,
   getSelectedBranchId,
   setSelectedBranchId,
