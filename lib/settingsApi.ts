@@ -2195,6 +2195,31 @@ export const settingsApi = {
     return await handleApiResponse(response);
   },
 
+  // Patient Medicines
+  searchPatientsForMedicines: async (q: string) => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/patient-medicines/search?q=${encodeURIComponent(q)}`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('searchPatientsForMedicines error:', error);
+      return [];
+    }
+  },
+
+  getPatientMedicines: async (patientId: number) => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/patient-medicines/${patientId}`, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
+    } catch (error) {
+      console.error('getPatientMedicines error:', error);
+      return [];
+    }
+  },
+
   // Patient Registration
   registerPatient: async (payload: any) => {
     const response = await fetch(`${authService.getSettingsApiUrl()}/patients/register`, {
