@@ -1683,6 +1683,17 @@ export const settingsApi = {
     }
   },
 
+  searchPublicTreatments: async (q: string) => {
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/public-treatments/search?q=${encodeURIComponent(q)}`);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('searchPublicTreatments error:', error);
+      return [];
+    }
+  },
+
   // Blogs
   getBlogs: async () => {
     try {

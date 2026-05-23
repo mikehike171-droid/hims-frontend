@@ -1,12 +1,89 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Phone, Search, Facebook, Instagram, Youtube, Linkedin, Menu, X, ChevronDown, MapPin, ArrowRight, Briefcase } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import logo from "@/assets/logo.png";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSelector } from "./LanguageSelector";
 import { settingsApi } from "@/lib/settingsApi";
+
+const TreatmentSearch = () => {
+  const router = useRouter();
+  const { t } = useLanguage();
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const debounceRef = useRef<any>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleChange = (value: string) => {
+    setQuery(value);
+    if (!value.trim()) { setResults([]); setOpen(false); return; }
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      const data = await settingsApi.searchPublicTreatments(value);
+      setResults(data || []);
+      setOpen(true);
+      setLoading(false);
+    }, 300);
+  };
+
+  const handleSelect = (slug: string) => {
+    setOpen(false);
+    setQuery("");
+    setResults([]);
+    router.push(`/treatment/${slug}`);
+  };
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <div className="flex items-center bg-primary-foreground/10 rounded-full px-3 py-1">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => handleChange(e.target.value)}
+          placeholder={t('Type to start searching...')}
+          className="bg-transparent text-primary-foreground placeholder:text-primary-foreground/50 text-xs outline-none w-40"
+        />
+        <Search className="w-3 h-3" />
+      </div>
+      {open && (
+        <div className="absolute top-full right-0 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-100 z-[200] overflow-hidden">
+          {loading ? (
+            <div className="px-4 py-3 text-xs text-slate-400">Searching...</div>
+          ) : results.length === 0 ? (
+            <div className="px-4 py-3 text-xs text-slate-400">No treatments found</div>
+          ) : (
+            results.map((item) => (
+              <button
+                key={item.id}
+                onMouseDown={() => handleSelect(item.slug || item.id)}
+                className="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-primary/5 hover:text-primary transition-colors flex items-center gap-2"
+              >
+                <Search className="w-3 h-3 text-slate-300 shrink-0" />
+                {item.name}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const TopBar = () => {
   const { t } = useLanguage();
@@ -46,14 +123,7 @@ const TopBar = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center bg-primary-foreground/10 rounded-full px-3 py-1">
-            <input
-              type="text"
-              placeholder={t('Type to start searching...')}
-              className="bg-transparent text-primary-foreground placeholder:text-primary-foreground/50 text-xs outline-none w-40"
-            />
-            <Search className="w-3 h-3" />
-          </div>
+          <TreatmentSearch />
           <div className="flex items-center gap-3">
             <a href="https://www.facebook.com/share/1ChxmRK7P5/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer">
               <Facebook className="w-4 h-4 hover:text-teal-light cursor-pointer transition-colors" />
