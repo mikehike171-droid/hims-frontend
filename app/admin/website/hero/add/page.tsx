@@ -92,7 +92,9 @@ export default function AddHeroSlidePage() {
   const getFullImageUrl = (url: string) => {
     if (!url) return ""
     if (url.startsWith('http')) return url
-    return `${authService.getSettingsApiUrl().replace('/api', '')}${url}`
+    const baseUrl = authService.getSettingsApiUrl().replace('/api', '')
+    const prefix = url.startsWith('/') ? '' : '/'
+    return `${baseUrl}${prefix}${url}`
   }
 
   return (

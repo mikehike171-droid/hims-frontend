@@ -60,7 +60,9 @@ export default function HeroSectionsListPage() {
   const getFullImageUrl = (url: string) => {
     if (!url) return ""
     if (url.startsWith('http')) return url
-    return `${authService.getSettingsApiUrl()}${url}`
+    const baseUrl = authService.getSettingsApiUrl().replace('/api', '')
+    const prefix = url.startsWith('/') ? '' : '/'
+    return `${baseUrl}${prefix}${url}`
   }
 
   const handleSeed = async () => {

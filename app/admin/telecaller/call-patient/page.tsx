@@ -27,6 +27,7 @@ interface CallHistoryRecord {
 export default function CallPatientPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const type = searchParams.get('type')
   const patientId = searchParams.get('patientId')
   
   const [patientData, setPatientData] = useState<any>(null)
@@ -62,11 +63,14 @@ export default function CallPatientPage() {
       const token = localStorage.getItem('authToken')
       const baseUrl = authService.getSettingsApiUrl()
       
-      console.log('Fetching patient data for ID:', patientId)
+      console.log('Fetching patient data for ID:', patientId, 'Type:', type)
       console.log('Base URL:', baseUrl)
       
       // Fetch patient details
-      const patientUrl = `${baseUrl}/patients/${patientId}`
+      const patientUrl = type === 'campaign' 
+        ? `${baseUrl}/campaigns/${patientId}`
+        : `${baseUrl}/patients/${patientId}`
+        
       console.log('Patient URL:', patientUrl)
       
       const patientResponse = await fetch(patientUrl, {
@@ -139,6 +143,56 @@ export default function CallPatientPage() {
     setShowDoctorDropdown(false)
   }
 
+  const convertCampaignToPatient = async () => {
+    if (type !== 'campaign' || !patientData) return patientId;
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      const locationId = authService.getLocationId();
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = userData.id || 1;
+      
+      const nameParts = (patientData.name || "").split(' ');
+      const firstName = nameParts[0] || "Campaign";
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : "Patient";
+      
+      const response = await fetch(`${authService.getApiUrl()}/patients`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'x-location-id': locationId || '1'
+        },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          gender: "Other",
+          mobile: patientData.mobile || "0000000000",
+          address1: "Campaign Lead",
+          pin_code: "000000",
+          medical_conditions: patientData.diseases,
+          location_id: parseInt(locationId || '1'),
+          created_by: parseInt(userId)
+        })
+      });
+      
+      if (response.ok) {
+        const createdPatient = await response.json();
+        const newId = createdPatient.id.toString();
+        // Switch to the actual patient ID to prevent re-creation on subsequent actions
+        router.replace(`/admin/telecaller/call-patient?patientId=${newId}`);
+        return newId;
+      } else {
+        const errText = await response.text();
+        console.error("Failed to convert campaign to patient:", errText);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error converting campaign to patient:", error);
+      return null;
+    }
+  };
+
   const handleBookAppointment = async () => {
     if (!selectedDoctor || !appointmentDate || !appointmentTime) {
       alert('Please fill all required fields')
@@ -147,9 +201,20 @@ export default function CallPatientPage() {
 
     setBookingLoading(true)
     try {
+      let targetPatientId = patientId;
+      if (type === 'campaign') {
+        const newId = await convertCampaignToPatient();
+        if (!newId) {
+          alert('Failed to register patient from campaign details. Cannot book appointment.');
+          setBookingLoading(false);
+          return;
+        }
+        targetPatientId = newId;
+      }
+
       const token = localStorage.getItem('authToken')
       const appointmentData = {
-        patientId: parseInt(patientId || '0'),
+        patientId: parseInt(targetPatientId || '0'),
         doctorId: parseInt(selectedDoctor),
         appointmentDate,
         appointmentTime,
@@ -233,6 +298,18 @@ export default function CallPatientPage() {
     
     try {
       setIsSubmitting(true)
+      
+      let targetPatientId = patientId;
+      if (type === 'campaign') {
+        const newId = await convertCampaignToPatient();
+        if (!newId) {
+          alert('Failed to register patient from campaign details. Cannot save call record.');
+          setIsSubmitting(false);
+          return;
+        }
+        targetPatientId = newId;
+      }
+
       const token = localStorage.getItem('authToken')
       const baseUrl = authService.getSettingsApiUrl()
       const locationId = authService.getLocationId()
@@ -244,7 +321,7 @@ export default function CallPatientPage() {
         notes
       }
       
-      const response = await fetch(`${baseUrl}/patients/${patientId}/call-history?locationId=${locationId}`, {
+      const response = await fetch(`${baseUrl}/patients/${targetPatientId}/call-history?locationId=${locationId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -263,7 +340,7 @@ export default function CallPatientPage() {
         
         // Refresh call history
         fetchingRef.current = false
-        await fetchCallHistory()
+        await fetchCallHistory(targetPatientId)
         
         alert('Call record saved successfully!')
       } else {
@@ -277,15 +354,16 @@ export default function CallPatientPage() {
     }
   }
   
-  const fetchCallHistory = async () => {
-    if (!patientId) return
+  const fetchCallHistory = async (targetId?: string) => {
+    const idToFetch = targetId || patientId;
+    if (!idToFetch) return;
     
     try {
       const token = localStorage.getItem('authToken')
       const baseUrl = authService.getSettingsApiUrl()
       const locationId = authService.getLocationId()
       
-      const historyResponse = await fetch(`${baseUrl}/patients/${patientId}/call-history?locationId=${locationId}`, {
+      const historyResponse = await fetch(`${baseUrl}/patients/${idToFetch}/call-history?locationId=${locationId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -294,7 +372,7 @@ export default function CallPatientPage() {
       
       if (historyResponse.ok) {
         const history = await historyResponse.json()
-        setCallHistory(Array.isArray(history) ? history : [])
+        setCallHistory(Array.isArray(history) ? history : history.data || [])
       }
     } catch (error) {
       console.error('Error fetching call history:', error)
