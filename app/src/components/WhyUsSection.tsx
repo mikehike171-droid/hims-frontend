@@ -29,7 +29,7 @@ const WhyUsSection = () => {
     { 
       icon: Stethoscope, 
       title: "Expert Doctors", 
-      desc: "Our team of over 30+ qualified doctors counsel, guide and administer treatments throughout the patient's health journey.",
+      desc: "Our team of over 15+ qualified doctors counsel, guide and administer treatments throughout the patient's health journey.",
       color: "from-indigo-400/20 to-indigo-600/20 text-indigo-600 border-indigo-100"
     },
   ];

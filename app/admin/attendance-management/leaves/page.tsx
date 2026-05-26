@@ -31,8 +31,15 @@ interface LeaveApplication {
 export default function LeavesPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [fromDate, setFromDate] = useState("")
-  const [toDate, setToDate] = useState("")
+  const [fromDate, setFromDate] = useState(() => {
+    const date = new Date();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
+  })
+  const [toDate, setToDate] = useState(() => {
+    const date = new Date();
+    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  })
   const [viewDialogOpen, setViewDialogOpen] = useState(false)
   const [selectedApplication, setSelectedApplication] = useState<LeaveApplication | null>(null)
   const [leaveApplications, setLeaveApplications] = useState<LeaveApplication[]>([])
@@ -96,7 +103,10 @@ export default function LeavesPage() {
   }, [pageSize])
 
   useEffect(() => {
-    fetchLeaveApplications(1)
+    const initialFrom = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`;
+    const lastDay = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+    const initialTo = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    fetchLeaveApplications(1, initialFrom, initialTo)
   }, [fetchLeaveApplications])
 
   const displayApplications = leaveApplications
@@ -265,43 +275,39 @@ export default function LeavesPage() {
         </div>
 
 
-        <Card className="flex gap-0">
-          <CardHeader>
-            <div className="flex items-center justify-between mb-3">
+        <Card className="w-full shadow-sm border border-gray-200">
+          <CardHeader className="border-b">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               {/* Left: Card Title */}
-              <CardTitle className="text-left">
+              <CardTitle className="text-left text-xl font-semibold">
                 Leave Applications ({displayApplications.length})
               </CardTitle>
 
               {/* Right: Filters in single row */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {/* Date Filters */}
                 <Input
                   type="date"
                   placeholder="mm/dd/yyyy"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="h-9 w-36 text-sm"
+                  className="h-9 w-40 text-sm bg-white"
                 />
-                <span className="text-gray-500 text-sm">to</span>
+                <span className="text-gray-500 text-sm font-medium">to</span>
                 <Input
                   type="date"
                   placeholder="mm/dd/yyyy"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="h-9 w-36 text-sm"
+                  className="h-9 w-40 text-sm bg-white"
                 />
                 <Button
                   onClick={() => fetchLeaveApplications(1, fromDate, toDate)}
-                  className="h-9 px-4 bg-black text-white hover:bg-gray-800"
+                  className="h-9 px-4 bg-black text-white hover:bg-gray-800 font-medium"
                   disabled={loading}
                 >
                   Search
                 </Button>
-
-
-
-
               </div>
             </div>
           </CardHeader>
@@ -347,10 +353,10 @@ export default function LeavesPage() {
                           {`${application.user?.firstName} ${application.user?.lastName}`}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {format(new Date(application.date), "dd MMM yyyy")}
+                          {format(new Date(application.date), "dd/MM/yyyy")}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {format(new Date(application.date), "dd MMM yyyy")}
+                          {format(new Date(application.date), "dd/MM/yyyy")}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[120px] truncate">
                           {application.leave_type}
@@ -470,7 +476,7 @@ export default function LeavesPage() {
                   <div>
                     <label className="text-sm font-medium text-gray-500">Leave Date</label>
                     <p className="text-sm text-gray-900">
-                      {format(new Date(selectedApplication.date), "dd MMM yyyy")}
+                      {format(new Date(selectedApplication.date), "dd/MM/yyyy")}
                     </p>
                   </div>
                 </div>

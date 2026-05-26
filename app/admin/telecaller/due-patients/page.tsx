@@ -47,7 +47,7 @@ export default function DuePatientsPage() {
     return `${firstSix}${lastFour}`
   }
 
-  const fetchDuePatients = async (page: number = 1) => {
+  const fetchDuePatients = async (page: number = 1, searchOverride?: string) => {
     if (fetchingRef.current) return
     
     try {
@@ -57,8 +57,10 @@ export default function DuePatientsPage() {
       const currentLocationId = authService.getLocationId()
       let url = `${authService.getSettingsApiUrl()}/patient-examination/due-patients/all?page=${page}&limit=10`
       
-      if (searchTerm) {
-        url += `&search=${encodeURIComponent(searchTerm)}`
+      const searchVal = searchOverride !== undefined ? searchOverride : searchTerm
+
+      if (searchVal) {
+        url += `&search=${encodeURIComponent(searchVal)}`
       }
 
       if (currentLocationId) {
@@ -194,6 +196,7 @@ export default function DuePatientsPage() {
                       <TableHead>Total Amount</TableHead>
                       <TableHead>Paid Amount</TableHead>
                       <TableHead>Due Amount</TableHead>
+                      <TableHead>Created At</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -229,6 +232,16 @@ export default function DuePatientsPage() {
                           <Badge variant="destructive">
                             ₹{item.dueAmount}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm font-medium">
+                          {(() => {
+                            if (!item.createdAt) return 'N/A'
+                            const date = new Date(item.createdAt)
+                            const dd = String(date.getDate()).padStart(2, '0')
+                            const mm = String(date.getMonth() + 1).padStart(2, '0')
+                            const yyyy = date.getFullYear()
+                            return `${dd}/${mm}/${yyyy}`
+                          })()}
                         </TableCell>
                         <TableCell>
                           <Button

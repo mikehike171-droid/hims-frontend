@@ -120,7 +120,7 @@ const AboutHyderabad = () => {
                   <Award size={32} />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-3">Certified Experts</h3>
-                <p className="text-slate-500 text-sm">Over 30+ highly qualified doctors following evidence-based practice.</p>
+                <p className="text-slate-500 text-sm">Over 15+ highly qualified doctors following evidence-based practice.</p>
               </div>
               <div className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 text-center group hover:bg-primary/5 transition-colors">
                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm text-primary group-hover:scale-110 transition-transform">
