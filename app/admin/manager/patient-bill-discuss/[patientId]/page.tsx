@@ -335,7 +335,7 @@ export default function PatientBillDiscuss() {
       if (response.ok) {
         alert('Payment details saved successfully!')
         const result = await response.json()
-        
+
         fetchPatientExamination()
         fetchInstallments()
       } else {
@@ -403,8 +403,8 @@ export default function PatientBillDiscuss() {
     try {
       setLoading(true)
       const token = localStorage.getItem('authToken')
-      
-      const payments = showAdditionalMultiPayment 
+
+      const payments = showAdditionalMultiPayment
         ? selectedAdditionalPaymentMethods.map(p => ({ paymentMethod: p.id, amount: p.amount }))
         : [{ paymentMethod: additionalPaymentMethod, amount: parseFloat(additionalPaymentAmount) }];
 
@@ -423,7 +423,7 @@ export default function PatientBillDiscuss() {
       if (response.ok) {
         const result = await response.json()
         alert('Payment added successfully!')
-        
+
         // Show the first installment receipt if any
         if (result.installments && result.installments.length > 0) {
           handleShowInstallmentReceipt(result.installments[0].id)
@@ -1030,7 +1030,7 @@ export default function PatientBillDiscuss() {
                     <h3 className="text-sm font-semibold text-green-800 uppercase tracking-wider">New Payment Entry</h3>
                     <div className="flex items-center gap-2">
                       <Label htmlFor="multi-payment-toggle" className="text-xs font-medium text-green-700 cursor-pointer">Multiple Payment Methods</Label>
-                      <input 
+                      <input
                         id="multi-payment-toggle"
                         type="checkbox"
                         checked={showAdditionalMultiPayment}
@@ -1053,7 +1053,7 @@ export default function PatientBillDiscuss() {
                     <div className="p-3 bg-white rounded border border-green-200">
                       <Label className="text-green-600 text-xs uppercase tracking-wider">Additional Payment</Label>
                       <div className="text-lg font-bold text-green-600">
-                        ₹{(showAdditionalMultiPayment 
+                        ₹{(showAdditionalMultiPayment
                           ? selectedAdditionalPaymentMethods.reduce((sum, p) => sum + p.amount, 0)
                           : parseFloat(additionalPaymentAmount || '0')
                         ).toFixed(2)}
@@ -1062,8 +1062,8 @@ export default function PatientBillDiscuss() {
                     <div className="p-3 bg-white rounded border border-green-100">
                       <Label className="text-gray-500 text-xs uppercase tracking-wider">New Total Paid</Label>
                       <div className="text-xl font-black text-blue-600">
-                        ₹{(parseFloat(currentExamination.paidAmount || '0') + 
-                          (showAdditionalMultiPayment 
+                        ₹{(parseFloat(currentExamination.paidAmount || '0') +
+                          (showAdditionalMultiPayment
                             ? selectedAdditionalPaymentMethods.reduce((sum, p) => sum + p.amount, 0)
                             : parseFloat(additionalPaymentAmount || '0')
                           )
@@ -1124,8 +1124,8 @@ export default function PatientBillDiscuss() {
                         const IconComponent = getPaymentIcon(payment.id)
                         return (
                           <div key={index} className="flex items-center gap-2 p-2 bg-white rounded border border-green-100">
-                            <Select 
-                              value={payment.id} 
+                            <Select
+                              value={payment.id}
                               onValueChange={(value) => {
                                 const newMethods = [...selectedAdditionalPaymentMethods]
                                 newMethods[index].id = value
@@ -1199,20 +1199,20 @@ export default function PatientBillDiscuss() {
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <Button 
-                      onClick={handleAddPayment} 
-                      disabled={loading} 
+                    <Button
+                      onClick={handleAddPayment}
+                      disabled={loading}
                       className="bg-green-600 hover:bg-green-700 flex-1"
                     >
                       {loading ? 'Adding...' : 'Confirm Payments'}
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => {
                         setShowAddPayment(false)
                         setShowAdditionalMultiPayment(false)
                         setSelectedAdditionalPaymentMethods([])
-                      }} 
+                      }}
                       className="bg-white"
                     >
                       Cancel
@@ -1348,10 +1348,10 @@ export default function PatientBillDiscuss() {
                     <p><strong>Name:</strong> {(receiptData.patient.first_name || '') + ' ' + (receiptData.patient.last_name || '').toUpperCase()}</p>
                     <p><strong>Age/DOB:</strong> {receiptData.patient.date_of_birth ? `${calculateAge(receiptData.patient.date_of_birth)} Y / ${format(new Date(receiptData.patient.date_of_birth), "dd/MM/yyyy")}` : 'N/A'}</p>
                     <p><strong>Renewal Date:</strong> {
-                      (receiptData.examination?.next_renewal_date_pro || receiptData.examination?.nextRenewalDatePro || receiptData.nextRenewalDatePro) 
-                        ? format(new Date(receiptData.examination?.next_renewal_date_pro || receiptData.examination?.nextRenewalDatePro || receiptData.nextRenewalDatePro), "dd/MM/yyyy") 
-                        : (currentExamination?.nextRenewalDatePro 
-                          ? format(new Date(currentExamination.nextRenewalDatePro), "dd/MM/yyyy") 
+                      (receiptData.examination?.next_renewal_date_pro || receiptData.examination?.nextRenewalDatePro || receiptData.nextRenewalDatePro)
+                        ? format(new Date(receiptData.examination?.next_renewal_date_pro || receiptData.examination?.nextRenewalDatePro || receiptData.nextRenewalDatePro), "dd/MM/yyyy")
+                        : (currentExamination?.nextRenewalDatePro
+                          ? format(new Date(currentExamination.nextRenewalDatePro), "dd/MM/yyyy")
                           : 'N/A'
                         )
                     }</p>
@@ -1477,7 +1477,7 @@ export default function PatientBillDiscuss() {
                     [data-radix-overlay] { display: none !important; }
                   }
                 `}</style>
-                
+
                 {/* Logo and Header */}
                 <div className="text-center space-y-2">
                   <div className="flex justify-center mb-2">
@@ -1572,7 +1572,7 @@ export default function PatientBillDiscuss() {
                   <Button
                     variant="outline"
                     onClick={() => {
-                        window.print()
+                      window.print()
                     }}
                     className="flex-1"
                   >

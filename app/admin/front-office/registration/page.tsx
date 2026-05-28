@@ -312,7 +312,7 @@ export default function PatientRegistrationPage() {
         } else {
           const selectedFee = feeMasters.find(f => f.code.toLowerCase() === fee.toLowerCase())
           const selectedType = paymentTypes.find(t => (t.code || t.name.toLowerCase()) === feeType.toLowerCase())
-          
+
           setRegisteredPatient({
             patientId: result.patient.patientId,
             name: `${firstName} ${lastName}`,
@@ -784,7 +784,7 @@ export default function PatientRegistrationPage() {
                 [data-radix-overlay] { display: none !important; }
               }
             `}</style>
-            
+
             {/* Logo and Header */}
             <div className="text-center space-y-2">
               <div className="flex justify-center mb-2">

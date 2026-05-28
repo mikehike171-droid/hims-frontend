@@ -4,7 +4,7 @@ const getApiUrl = () => authService.getSettingsApiUrl();
 
 const apiRequest = async (url: string, options: RequestInit = {}) => {
   const token = authService.getCurrentToken();
-  
+
   const response = await fetch(`${getApiUrl()}${url}`, {
     ...options,
     headers: {
@@ -45,7 +45,7 @@ export const attendanceApi = {
     if (date) params.append('date', date);
     if (page) params.append('page', page.toString());
     if (limit) params.append('limit', limit.toString());
-    
+
     return await apiRequest(`/attendance?${params}`);
   },
 
@@ -90,14 +90,14 @@ export const attendanceApi = {
     if (userId) body.userId = userId;
     if (page) body.page = page;
     if (limit) body.limit = limit;
-   
+
     return await apiRequest('/attendance/summary', {
       method: 'POST',
       body: JSON.stringify(body)
     });
   },
 
-   getDetailedAttendanceReport: async (locationId: number, fromDate?: string, toDate?: string, userId?: number, departmentId?: number, page?: number, limit?: number) => {
+  getDetailedAttendanceReport: async (locationId: number, fromDate?: string, toDate?: string, userId?: number, departmentId?: number, page?: number, limit?: number) => {
     const body: any = { locationId };
     if (fromDate) body.fromDate = fromDate;
     if (toDate) body.toDate = toDate;
@@ -105,7 +105,7 @@ export const attendanceApi = {
     if (userId) body.userId = userId;
     if (page) body.page = page;
     if (limit) body.limit = limit;
-   
+
     return await apiRequest('/attendance/report', {
       method: 'POST',
       body: JSON.stringify(body)
