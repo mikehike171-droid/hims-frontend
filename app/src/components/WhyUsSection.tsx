@@ -47,7 +47,7 @@ const WhyUsSection = () => {
             {t('WHY CHOOSE US?')}
           </span>
           <h2 className="text-4xl md:text-6xl font-black text-[#1a2e5a] font-heading mb-8 leading-[1.1] tracking-tight">
-            {t('Why Choose UniCare?')}
+            {t('Why Choose Unicare?')}
           </h2>
           <div className="space-y-4">
             <h3 className="text-xl md:text-2xl text-slate-700 font-medium max-w-3xl mx-auto leading-relaxed italic">

@@ -70,9 +70,9 @@ const Footer = () => {
         {/* Main Footer Grid */}
         <div className="grid md:grid-cols-4 gap-12">
           <div className="space-y-6">
-            <h3 className="text-xl font-bold font-heading text-teal-light">UNICARE HOMEOPATHY PRIVATE LIMITED</h3>
+            <h3 className="text-xl font-bold font-heading text-teal-light">UNICARE HOMEOPATHY</h3>
             <p className="text-white/70 text-sm leading-relaxed font-medium">
-              {t('UNICARE HOMEOPATHY PRIVATE LIMITED with 4+ branches and 15+ experienced doctors providing holistic healthcare solutions.')}
+              {t('UNICARE HOMEOPATHY with 4+ branches and 15+ experienced doctors providing holistic healthcare solutions.')}
             </p>
             <div className="flex gap-4">
               <a href="https://www.facebook.com/share/1ChxmRK7P5/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer">
@@ -153,7 +153,7 @@ const Footer = () => {
               </div>
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-teal-light flex-shrink-0 mt-0.5" />
-                <span className="leading-relaxed">UNICARE HOMEOPATHY PRIVATE LIMITED, Telangana & Andhra Pradesh</span>
+                <span className="leading-relaxed">UNICARE HOMEOPATHY, Telangana & Andhra Pradesh</span>
               </div>
             </div>
           </div>
@@ -164,7 +164,7 @@ const Footer = () => {
           <h2 className="text-xl font-bold font-heading mb-10 tracking-tight uppercase border-b border-white/10 pb-4 text-teal-light">
             {t('Our Clinics')}
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-10">
             {clinicsData.length > 0 ? (
               clinicsData.map((stateGrp) => (
                 <div key={stateGrp.state} className="space-y-4">
@@ -186,14 +186,43 @@ const Footer = () => {
                 </div>
               ))
             ) : (
-              <p className="col-span-full text-center text-white/30">Loading clinics...</p>
+              <p className="col-span-2 text-center text-white/30">Loading clinics...</p>
             )}
+
+            {/* Policies Column on the Right Side */}
+            <div className="space-y-4">
+              <h4 className="font-black text-white/40 tracking-widest text-[10px] uppercase border-b border-white/5 pb-2">
+                {t('Treatments')}
+              </h4>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/privacy-policy" className="hover:text-teal-light transition-colors text-sm font-medium text-white/70">
+                    {t('Privacy Policy')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/shipping-policy" className="hover:text-teal-light transition-colors text-sm font-medium text-white/70">
+                    {t('Shipping Policy')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/cancellation-refund" className="hover:text-teal-light transition-colors text-sm font-medium text-white/70">
+                    {t('Cancellation & Refund Policy')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms-of-service" className="hover:text-teal-light transition-colors text-sm font-medium text-white/70">
+                    {t('Terms of Service')}
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
         {/* Copyright Section */}
         <div className="pt-8 text-center text-[10px] text-white/30 font-medium border-t border-white/5 tracking-widest uppercase">
-          <p>© {new Date().getFullYear()} UNICARE HOMEOPATHY PRIVATE LIMITED. {t('All rights reserved')}.</p>
+          <p>© {new Date().getFullYear()} UNICARE HOMEOPATHY. {t('All rights reserved')}.</p>
         </div>
       </div>
     </footer>

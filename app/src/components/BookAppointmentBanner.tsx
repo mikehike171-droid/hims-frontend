@@ -16,16 +16,46 @@ const BookAppointmentBanner = () => {
           <div className="h-[1px] w-12 bg-white/30" />
         </div>
         
-        <h2 className="text-4xl md:text-6xl font-black text-orange-500 uppercase font-heading leading-[1.1] mb-8 tracking-tight">
-          Book Your Appointment <span className="text-emerald-300 italic">Today</span>
+        <h2 className="text-3xl md:text-5xl font-black text-white uppercase font-heading leading-[1.1] mb-4 tracking-tight">
+          Experience Trusted & Personalized Care at <span className="text-orange-500">UNICARE HOMEOPATHY</span>
         </h2>
-        
-        <p className="text-white/80 text-base md:text-lg max-w-4xl mx-auto leading-relaxed font-medium mb-10">
-          Experience trusted and personalized care with UNICARE HOMEOPATHY PRIVATE LIMITED — proudly recognized as the{" "}
-          <span className="text-white font-black underline decoration-emerald-400 decoration-4 underline-offset-8 uppercase">Best Homeopathy Clinic in UniCare</span> and South India's largest
-          homeopathy chain. Book your appointment today and begin your journey toward safe, effective, and holistic
-          healing with expert guidance you can trust.
-        </p>
+        <h3 className="text-2xl md:text-3xl font-extrabold text-emerald-300 uppercase tracking-wider mb-8 font-heading">
+          Book Your Appointment Today!
+        </h3>
+
+        <div className="max-w-4xl mx-auto space-y-6 text-white/90 text-base md:text-lg leading-relaxed font-medium mb-8">
+          <p>
+            Proudly recognized as one of South India’s leading and largest homeopathy healthcare chains,{" "}
+            <strong className="text-white font-black">UNICARE HOMEOPATHY</strong> is dedicated to providing safe, effective, and holistic treatment tailored to every individual.
+          </p>
+          <p>
+            Our experienced doctors focus on identifying the root cause of health concerns and offering personalized homeopathic care designed to promote long-term wellness and improve overall quality of life.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-5xl mx-auto mb-10 text-left">
+          {[
+            "Expert Medical Consultation",
+            "Personalized Treatment Plans",
+            "Safe & Holistic Healing",
+            "Compassionate Patient Care",
+            "Trusted by Thousands of Families"
+          ].map((item, idx) => (
+            <div key={idx} className="bg-white/10 backdrop-blur-sm border border-white/20 p-4 rounded-xl flex items-center gap-3 hover:bg-white/20 transition-all duration-300">
+              <span className="text-xl shrink-0">✨</span>
+              <span className="text-white font-bold text-sm tracking-tight">{item}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="max-w-3xl mx-auto text-center space-y-4 mb-10">
+          <p className="text-emerald-200 text-lg md:text-xl font-bold italic">
+            Take the first step towards a healthier and happier future.
+          </p>
+          <p className="text-white font-extrabold text-base md:text-lg bg-black/20 inline-block px-6 py-3 rounded-full border border-white/10">
+            📞 Book your appointment today and experience healthcare you can truly trust.
+          </p>
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
           <button

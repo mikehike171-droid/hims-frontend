@@ -33,6 +33,20 @@ const TreatmentDetailPage = () => {
   const [activeSection, setActiveSection] = useState("overview");
 
   const [sidebarForm, setSidebarForm] = useState({ name: "", phone: "", email: "", reason: "" });
+  const [showOverlay, setShowOverlay] = useState(false);
+
+  useEffect(() => {
+    setShowOverlay(false);
+  }, [slug]);
+
+  useEffect(() => {
+    if (!loading && treatment) {
+      const timer = setTimeout(() => {
+        setShowOverlay(true);
+      }, 1500); // 1.5 seconds of full show
+      return () => clearTimeout(timer);
+    }
+  }, [loading, treatment]);
 
   const slugify = (text: string) => {
     return text
@@ -167,26 +181,37 @@ const TreatmentDetailPage = () => {
     <div className="bg-white min-h-screen text-gray-700">
       <Header />
 
-      {/* Hero Section - Ultra Dense */}
-      <section className="relative h-[280px] md:h-[350px] overflow-hidden">
+      {/* Hero Section - Blurred Underlay + Crisp Contained Foreground Image */}
+      <section className="relative h-[280px] md:h-[350px] overflow-hidden bg-slate-950">
+        {/* Blurred background filling left-to-right */}
+        <div className="absolute inset-0 z-0 opacity-25">
+          <img
+            src={getImageUrl(treatment.image_url)}
+            alt=""
+            className="w-full h-full object-cover blur-2xl scale-110"
+          />
+        </div>
+        
+        {/* Clean contained image aligned to the right */}
         <div className="absolute inset-0 z-0">
           <img
             src={getImageUrl(treatment.image_url)}
             alt={treatment.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain object-right"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/40 to-transparent" />
+          {/* Animated dark gradient overlay */}
+          <div className={`absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/70 to-transparent transition-opacity duration-1000 ${showOverlay ? 'opacity-100' : 'opacity-0'}`} />
         </div>
 
         <div className="container mx-auto px-4 relative z-10 h-full flex flex-col justify-center">
-          {/* Absolute Top Breadcrumbs */}
-          <nav className="absolute top-8 flex items-center gap-2 text-white/70 text-[10px] font-bold uppercase tracking-[0.2em]">
+          {/* Top Breadcrumbs - Animated */}
+          <nav className={`absolute top-8 flex items-center gap-2 text-white/70 text-[10px] font-bold uppercase tracking-[0.2em] transition-opacity duration-1000 ${showOverlay ? 'opacity-100' : 'opacity-0'}`}>
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight size={10} />
             <span className="text-white">{treatment.name}</span>
           </nav>
 
-          <div className="max-w-2xl mt-4">
+          <div className={`max-w-2xl mt-4 transition-all duration-1000 ${showOverlay ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
             <h1 className="text-3xl md:text-[2.8rem] font-extrabold text-white leading-[1.1] uppercase mb-4 drop-shadow-md tracking-tight font-heading">
               {treatment.name}
             </h1>

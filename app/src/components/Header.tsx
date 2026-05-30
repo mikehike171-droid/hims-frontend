@@ -255,7 +255,7 @@ const Navbar = () => {
     <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md' : 'bg-background shadow-md'}`}>
       <div className="container mx-auto relative flex items-center justify-between py-3 px-4">
         <Link href="/">
-          <img src={logo.src} alt="UNICARE HOMEOPATHY PRIVATE LIMITED" className="h-14 w-auto" />
+          <img src={logo.src} alt="UNICARE HOMEOPATHY" className="h-14 w-auto" />
         </Link>
 
         {/* Desktop Navigation */}

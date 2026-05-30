@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Building2, Stethoscope, Users, HeartPulse, CalendarDays } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/use-scroll-animation";
 import { useLanguage } from "@/i18n/LanguageContext";
-import doctorImg from "@/assets/hero-doctor-female.png";
+import doctorImg from "@/assets/hero-doctor-female.jpg";
 
 interface CounterProps {
   end: number;
@@ -79,8 +79,8 @@ const WhyTrustUs = () => {
                   alt="Trusted Homeopathic Doctor"
                   className="relative w-full h-[450px] object-cover rounded-[2rem] shadow-2xl transition-transform duration-700 group-hover:scale-[1.02]"
                 />
-                {/* Floating badge for added premium feel - Now on the Right side of the image */}
-                <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-2xl shadow-xl border border-emerald-50 hidden md:block animate-bounce" style={{ animationDuration: '5s' }}>
+                {/* Floating badge for added premium feel - Now on the Bottom-Left side of the image */}
+                <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-xl border border-emerald-50 hidden md:block animate-bounce" style={{ animationDuration: '5s' }}>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                       <HeartPulse className="text-primary w-6 h-6" />
@@ -98,7 +98,7 @@ const WhyTrustUs = () => {
             <div className={`lg:col-span-7 space-y-8 transition-all duration-1000 ${isVisible ? "animate-fade-in-up opacity-100" : "opacity-0"}`}>
               <div className="space-y-4">
                 <h2 className="text-3xl md:text-[2.8rem] font-black text-primary tracking-tight uppercase font-heading leading-[1.1]">
-                  {t('Why Trust UNICARE HOMEOPATHY PRIVATE LIMITED?')}
+                  {t('Why Trust UNICARE HOMEOPATHY?')}
                 </h2>
                 <div className="w-20 h-1.5 bg-primary rounded-full opacity-60" />
               </div>

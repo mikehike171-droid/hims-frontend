@@ -8,14 +8,17 @@ export const translations: Record<string, any> = {
     "Accessible quality care, anytime": "Accessible quality care, anytime",
     "Years": "Years",
     "Compassionate homeopathic care": "Compassionate homeopathic care",
-    "Why Trust UNICARE HOMEOPATHY PRIVATE LIMITED?": "Why Trust UNICARE HOMEOPATHY PRIVATE LIMITED?",
+    "Why Trust UNICARE HOMEOPATHY?": "Why Trust UNICARE HOMEOPATHY?",
     "Experience Excellence in Healthcare": "Experience Excellence in Healthcare",
     "Our trusted remedies are based on a holistic approach that carefully considers the physical, mental, and emotional aspects of every individual while treating the root cause of the condition.": "Our trusted remedies are based on a holistic approach that carefully considers the physical, mental, and emotional aspects of every individual while treating the root cause of the condition.",
     "As the": "As the",
     "Best Homeopathy Clinic in UniCare": "Best Homeopathy Clinic in UniCare",
     "we focus on delivering personalized care that goes beyond symptom relief to promote complete well-being.": "we focus on delivering personalized care that goes beyond symptom relief to promote complete well-being.",
     "Privacy Policy": "Privacy Policy",
-    "Our Clinics": "Our Clinics"
+    "Our Clinics": "Our Clinics",
+    "Shipping Policy": "Shipping Policy",
+    "Cancellation & Refund Policy": "Cancellation & Refund Policy",
+    "Terms of Service": "Terms of Service"
   },
   hi: {
     "Happy Patients": "खुश मरीज",
@@ -26,14 +29,17 @@ export const translations: Record<string, any> = {
     "Accessible quality care, anytime": "सुलभ गुणवत्तापूर्ण देखभाल, कभी भी",
     "Years": "वर्ष",
     "Compassionate homeopathic care": "करुणामयी होम्योपैथिक देखभाल",
-    "Why Trust UNICARE HOMEOPATHY PRIVATE LIMITED?": "UNICARE HOMEOPATHY PRIVATE LIMITED पर भरोसा क्यों करें?",
+    "Why Trust UNICARE HOMEOPATHY?": "UNICARE HOMEOPATHY पर भरोसा क्यों करें?",
     "Experience Excellence in Healthcare": "स्वास्थ्य सेवा में उत्कृष्टता का अनुभव करें",
     "Our trusted remedies are based on a holistic approach that carefully considers the physical, mental, and emotional aspects of every individual while treating the root cause of the condition.": "हमारे भरोसेमंद उपचार एक समग्र दृष्टिकोण पर आधारित हैं जो स्थिति के मूल कारण का इलाज करते समय प्रत्येक व्यक्ति के शारीरिक, मानसिक और भावनात्मक पहलुओं पर ध्यान से विचार करते हैं।",
     "As the": "जैसा कि",
     "Best Homeopathy Clinic in UniCare": "यूनिकेयर में सर्वश्रेष्ठ होम्योपैथी क्लिनिक",
     "we focus on delivering personalized care that goes beyond symptom relief to promote complete well- wellbeing.": "हम व्यक्तिगत देखभाल प्रदान करने पर ध्यान केंद्रित करते हैं जो पूर्ण कल्याण को बढ़ावा देने के लिए लक्षणों से राहत से परे है।",
     "Privacy Policy": "गोपनीयता नीति",
-    "Our Clinics": "हमारे क्लीनिक"
+    "Our Clinics": "हमारे क्लीनिक",
+    "Shipping Policy": "शिपिंग नीति",
+    "Cancellation & Refund Policy": "रद्दीकरण और धनवापसी नीति",
+    "Terms of Service": "सेवा की शर्तें"
   },
   te: {
     "Happy Patients": "సంతోషంగా ఉన్న రోగులు",
@@ -44,13 +50,16 @@ export const translations: Record<string, any> = {
     "Accessible quality care, anytime": "అందుబాటులో ఉన్న నాణ్యమైన సంరక్షణ, ఎప్పుడైనా",
     "Years": "సంవత్సరాలు",
     "Compassionate homeopathic care": "దయతో కూడిన హోమియోపతి సంరక్షణ",
-    "Why Trust UNICARE HOMEOPATHY PRIVATE LIMITED?": "UNICARE HOMEOPATHY PRIVATE LIMITEDను ఎందుకు నమ్మాలి?",
+    "Why Trust UNICARE HOMEOPATHY?": "UNICARE HOMEOPATHYను ఎందుకు నమ్మాలి?",
     "Experience Excellence in Healthcare": "హెల్త్‌కేర్‌లో శ్రేష్ఠతను అనుభవించండి",
     "Our trusted remedies are based on a holistic approach that carefully considers the physical, mental, and emotional aspects of every individual while treating the root cause of the condition.": "మా నమ్మకమైన నివారణలు ఒక సంపూర్ణ విధానంపై ఆధారపడి ఉంటాయి, ఇవి పరిస్థితి యొక్క మూల కారణాన్ని చికిత్స చేసేటప్పుడు ప్రతి వ్యక్తి యొక్క శారీరక, మానసిక మరియు భావోద్వేగ అంశాలను జాగ్రత్తగా పరిశీలిస్తాయి.",
     "As the": "ఒక",
     "Best Homeopathy Clinic in UniCare": "యూనికేర్ లో ఉత్తమ హోమియోపతి క్లినిక్",
     "we focus on delivering personalized care that goes beyond symptom relief to promote complete well-being.": "మేము లక్షణాల ఉపశమనం కంటే పూర్తి శ్రేయస్సును ప్రోత్సహించడానికి వ్యక్తిగతీకరించిన సంరక్షణను అందించడంపై దృష్టి పెడతాము.",
     "Privacy Policy": "గోపనీయత విధానం",
-    "Our Clinics": "మా క్లినిక్‌లు"
+    "Our Clinics": "మా క్లినిక్‌లు",
+    "Shipping Policy": "షిప్పింగ్ పాలసీ",
+    "Cancellation & Refund Policy": "రద్దు & రీఫండ్ పాలసీ",
+    "Terms of Service": "సేవా నిబంధనలు"
   }
 };
