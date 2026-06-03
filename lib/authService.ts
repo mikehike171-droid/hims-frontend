@@ -33,7 +33,7 @@ const login = async (username: string, password: string) => {
   }
 
   try {
-    const response = await fetch(SETTINGS_API_URL + '/auth/login', {
+    const response = await fetch(getSettingsApiUrl() + '/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

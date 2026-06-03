@@ -15,7 +15,7 @@ export function ChatNotificationBell() {
   useEffect(() => {
     // Connect to the same WebSocket as the chat system
     const socket = io(authService.getSocketUrl(), {
-      transports: ["polling", "websocket"],
+      transports: ["websocket"],
     })
     socketRef.current = socket
 
@@ -48,9 +48,8 @@ export function ChatNotificationBell() {
     >
       {/* Bell icon with shake animation when new message arrives */}
       <Bell
-        className={`h-5 w-5 text-gray-600 transition-transform ${
-          animate ? "animate-bounce" : ""
-        }`}
+        className={`h-5 w-5 text-gray-600 transition-transform ${animate ? "animate-bounce" : ""
+          }`}
       />
 
       {/* Unread count badge */}
