@@ -15,7 +15,7 @@ export function ChatNotificationBell() {
   useEffect(() => {
     // Connect to the same WebSocket as the chat system
     const socket = io(authService.getSocketUrl(), {
-      transports: ["websocket"],
+      transports: ["polling", "websocket"],
     })
     socketRef.current = socket
 

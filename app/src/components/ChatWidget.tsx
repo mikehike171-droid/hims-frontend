@@ -46,7 +46,7 @@ const ChatWidget = () => {
 
     // Connect to WebSocket
     const socket = io(authService.getSocketUrl(), {
-      transports: ["websocket"],
+      transports: ["polling", "websocket"],
     });
     socketRef.current = socket;
 
