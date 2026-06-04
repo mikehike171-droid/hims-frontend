@@ -47,6 +47,20 @@ function getInitials(session: ChatSession): string {
   return name.substring(0, 2).toUpperCase();
 }
 
+function getUnreadCount(session: ChatSession): number {
+  if (session.isRead) return 0;
+  const messages = session.messages || [];
+  let count = 0;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].senderType === 'visitor') {
+      count++;
+    } else {
+      break;
+    }
+  }
+  return count;
+}
+
 export default function AdminChatPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -55,6 +69,24 @@ export default function AdminChatPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const socketRef = useRef<Socket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const selectedSessionRef = useRef<ChatSession | null>(null);
+
+  useEffect(() => {
+    selectedSessionRef.current = selectedSession;
+  }, [selectedSession]);
+
+  const markAsReadApi = async (sessionId: number) => {
+    try {
+      const token = authService.getCurrentToken();
+      await fetch(`${authService.getSettingsApiUrl()}/chat/sessions/${sessionId}/read`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      window.dispatchEvent(new CustomEvent('chatMarkedAsRead', { detail: { sessionId } }));
+    } catch (error) {
+      console.error("Error marking session as read:", error);
+    }
+  };
 
   useEffect(() => {
     setIsMounted(true);
@@ -76,11 +108,14 @@ export default function AdminChatPage() {
 
     fetchSessions();
 
-    const socket = io(authService.getSocketUrl(), { transports: ["polling", "websocket"] });
+    const conn = authService.getSocketConnection();
+    const socket = io(conn.url, conn.options);
     socketRef.current = socket;
     socket.emit("admin_join");
 
     socket.on("visitor_message", (data: any) => {
+      const isCurrentActive = selectedSessionRef.current?.id === data.sessionId;
+
       setSessions(prev => {
         const index = prev.findIndex(s => s.id === data.sessionId);
         if (index !== -1) {
@@ -89,7 +124,7 @@ export default function AdminChatPage() {
             ...updated[index],
             messages: [...(updated[index].messages || []), data],
             updatedAt: data.createdAt,
-            isRead: false
+            isRead: isCurrentActive
           };
           return updated;
         } else {
@@ -98,13 +133,17 @@ export default function AdminChatPage() {
             guestId: data.guestId || null,
             visitorName: data.visitorName || null,
             status: 'active',
-            isRead: false,
+            isRead: isCurrentActive,
             messages: [data],
             updatedAt: data.createdAt
           };
           return [newSession, ...prev];
         }
       });
+
+      if (isCurrentActive) {
+        markAsReadApi(data.sessionId);
+      }
 
       toast({
         title: "💬 New Message",
@@ -153,16 +192,8 @@ export default function AdminChatPage() {
     // Mark as read in UI
     setSessions(prev => prev.map(s => s.id === session.id ? { ...s, isRead: true } : s));
 
-    // Mark as read in Backend
-    try {
-      const token = authService.getCurrentToken();
-      await fetch(`${authService.getSettingsApiUrl()}/chat/sessions/${session.id}/read`, {
-        method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-    } catch (error) {
-      console.error("Error marking session as read:", error);
-    }
+    // Mark as read in Backend and dispatch custom event
+    markAsReadApi(session.id);
   };
 
   const filteredSessions = sessions.filter(s =>
@@ -170,6 +201,7 @@ export default function AdminChatPage() {
     (s.guestId || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const unreadSessionsCount = sessions.filter(s => !s.isRead).length;
   const activeChat = selectedSession ? sessions.find(s => s.id === selectedSession.id) : null;
 
   if (!isMounted) return null;
@@ -231,14 +263,21 @@ export default function AdminChatPage() {
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <h4 className={`font-bold truncate ${!session.isRead ? 'text-orange-900' : 'text-slate-900'}`}>
                             {getDisplayName(session)}
-                            {!session.isRead && (
-                              <span className="ml-2 inline-block w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-                            )}
                           </h4>
-                          <span className="text-[10px] text-slate-400 flex items-center gap-1 whitespace-nowrap">
-                            <Clock className="h-3 w-3" />
-                            {new Date(session.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {(() => {
+                              const unreadCount = getUnreadCount(session);
+                              return unreadCount > 0 ? (
+                                <Badge className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-2 py-0.5 text-[10px] font-bold border-none min-w-5 h-5 flex items-center justify-center animate-pulse">
+                                  {unreadCount}
+                                </Badge>
+                              ) : null;
+                            })()}
+                            <span className="text-[10px] text-slate-400 flex items-center gap-1 whitespace-nowrap">
+                              <Clock className="h-3 w-3" />
+                              {new Date(session.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
                         </div>
                         <p className="text-xs text-slate-500 truncate italic">
                           {session.messages?.[session.messages.length - 1]?.content || "No messages yet"}

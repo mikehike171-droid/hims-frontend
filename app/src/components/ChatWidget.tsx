@@ -44,10 +44,8 @@ const ChatWidget = () => {
       setShowTelugu(true);
     }, 5000);
 
-    // Connect to WebSocket
-    const socket = io(authService.getSocketUrl(), {
-      transports: ["polling", "websocket"],
-    });
+    const conn = authService.getSocketConnection();
+    const socket = io(conn.url, conn.options);
     socketRef.current = socket;
 
     socket.emit("join_chat", { guestId: savedId });

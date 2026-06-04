@@ -7,38 +7,77 @@ import { io, Socket } from "socket.io-client"
 import authService from "@/lib/authService"
 
 export function ChatNotificationBell() {
-  const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadSessionIds, setUnreadSessionIds] = useState<number[]>([])
   const [animate, setAnimate] = useState(false)
   const socketRef = useRef<Socket | null>(null)
   const router = useRouter()
 
   useEffect(() => {
+    // Fetch initial unread sessions
+    const fetchUnreadSessions = async () => {
+      try {
+        const token = authService.getCurrentToken();
+        if (!token) return;
+        const response = await fetch(`${authService.getSettingsApiUrl()}/chat/sessions`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data)) {
+            const unreadIds = data.filter((s: any) => !s.isRead).map((s: any) => s.id);
+            setUnreadSessionIds(unreadIds);
+          }
+        }
+      } catch (e) {
+        console.error("Error fetching unread sessions in bell:", e);
+      }
+    };
+    fetchUnreadSessions();
+
     // Connect to the same WebSocket as the chat system
-    const socket = io(authService.getSocketUrl(), {
-      transports: ["websocket"],
-    })
+    const conn = authService.getSocketConnection();
+    const socket = io(conn.url, conn.options);
     socketRef.current = socket
 
     // Join as admin observer to receive visitor messages
     socket.emit("admin_join")
 
     // Listen for new messages from visitors
-    socket.on("visitor_message", () => {
-      setUnreadCount((prev) => prev + 1)
-      // Trigger bell shake animation
-      setAnimate(true)
-      setTimeout(() => setAnimate(false), 600)
+    socket.on("visitor_message", (data: any) => {
+      if (data && data.sessionId) {
+        setUnreadSessionIds((prev) => {
+          if (!prev.includes(data.sessionId)) {
+            const updated = [...prev, data.sessionId];
+            // Trigger bell shake animation
+            setAnimate(true)
+            setTimeout(() => setAnimate(false), 600)
+            return updated;
+          }
+          return prev;
+        });
+      }
     })
+
+    // Listen for custom event when chat is marked as read
+    const handleChatRead = (event: any) => {
+      const { sessionId } = event.detail;
+      if (sessionId) {
+        setUnreadSessionIds((prev) => prev.filter((id) => id !== sessionId));
+      }
+    };
+    window.addEventListener("chatMarkedAsRead", handleChatRead);
 
     return () => {
       socket.disconnect()
+      window.removeEventListener("chatMarkedAsRead", handleChatRead);
     }
   }, [])
 
   const handleClick = () => {
-    setUnreadCount(0)
     router.push("/admin/website/chat")
   }
+
+  const unreadCount = unreadSessionIds.length;
 
   return (
     <button

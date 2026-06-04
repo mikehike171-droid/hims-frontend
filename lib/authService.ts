@@ -134,6 +134,17 @@ const getSettingsApiUrl = () => {
   return '/api/settings-service';
 };
 
+const getSettingsApiAbsoluteUrl = () => {
+  if (typeof window === 'undefined') return SETTINGS_API_URL;
+  let url = localStorage.getItem('SETTINGS_API_URL');
+  if (!url) {
+    const host = window.location.hostname;
+    const isIpOrLocal = host === 'localhost' || host === '127.0.0.1' || /^[0-9.]+$/.test(host);
+    url = isIpOrLocal ? `http://${host}:3002/api` : `${window.location.origin}/api/settings-service`;
+  }
+  return url;
+};
+
 const getFrontOfficeApiUrl = () => {
   if (typeof window === 'undefined') return FRONT_OFFICE_API_URL;
   return FRONT_OFFICE_API_URL || localStorage.getItem('FRONT_OFFICE_API_URL');
@@ -195,6 +206,36 @@ const getSocketUrl = () => {
   return apiUrl.replace('/api', '');
 };
 
+const getSocketConnection = () => {
+  const apiUrl = getSettingsApiAbsoluteUrl();
+  try {
+    const urlObj = new URL(apiUrl);
+    if (urlObj.pathname.includes('/settings-service')) {
+      return {
+        url: urlObj.origin,
+        options: {
+          path: '/settings-service/socket.io',
+          transports: ['websocket']
+        }
+      };
+    }
+    return {
+      url: urlObj.origin,
+      options: {
+        transports: ['websocket']
+      }
+    };
+  } catch (e) {
+    console.error('Failed to parse settings API absolute URL:', e);
+    return {
+      url: typeof window !== 'undefined' ? window.location.origin : '',
+      options: {
+        transports: ['websocket']
+      }
+    };
+  }
+};
+
 const authService = {
   login,
   logout,
@@ -206,8 +247,10 @@ const authService = {
   getApiUrl,
   getApiDomainUrl,
   getSettingsApiUrl,
+  getSettingsApiAbsoluteUrl,
   getFrontOfficeApiUrl,
   getSocketUrl,
+  getSocketConnection,
   getFileUrl,
   getSelectedBranchId,
   setSelectedBranchId,

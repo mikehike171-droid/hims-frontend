@@ -57,7 +57,7 @@ export default function RenewalPage() {
         pageNum,
         limit
       )
-      
+
       if (response && response.data) {
         setRenewalPatients(response.data)
         setTotalPages(response.totalPages || 1)
@@ -260,7 +260,7 @@ export default function RenewalPage() {
                       .map((p, i, arr) => {
                         return (
                           <div key={p} className="flex items-center">
-                            {i > 0 && arr[i-1] !== p - 1 && <span className="px-2">...</span>}
+                            {i > 0 && arr[i - 1] !== p - 1 && <span className="px-2">...</span>}
                             <Button
                               variant={page === p ? "default" : "outline"}
                               size="sm"
@@ -271,7 +271,7 @@ export default function RenewalPage() {
                             </Button>
                           </div>
                         )
-                    })}
+                      })}
                   </div>
                   <Button
                     variant="outline"
