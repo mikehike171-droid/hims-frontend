@@ -214,7 +214,7 @@ const getSocketConnection = () => {
       return {
         url: urlObj.origin,
         options: {
-          path: '/settings-service/socket.io',
+          path: '/api/settings-service/socket.io',
           transports: ['websocket']
         }
       };
