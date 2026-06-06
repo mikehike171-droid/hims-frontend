@@ -1,9 +1,8 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react";
-import { X, MessageCircle, Send, User } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { X, MessageCircle, Send, User, Loader2 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { io, Socket } from "socket.io-client";
 import authService from "@/lib/authService";
 import doctorAvatar from "@/assets/hero-doctor-male.png";
 
@@ -14,6 +13,9 @@ interface Message {
   createdAt: string;
 }
 
+// Base API URL - always goes through Next.js proxy (works on Vercel)
+const API_BASE = '/api/settings-service/chat';
+
 const ChatWidget = () => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -22,10 +24,30 @@ const ChatWidget = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [guestId, setGuestId] = useState<string>("");
-  const socketRef = useRef<Socket | null>(null);
+  const [isSending, setIsSending] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'error'>('connected');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const guestIdRef = useRef<string>("");
 
-  // Initialize guestId and socket
+  // Poll messages from server every 4 seconds
+  const pollMessages = useCallback(async (id: string) => {
+    if (!id) return;
+    try {
+      const res = await fetch(`${API_BASE}/messages/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setMessages(data);
+          setConnectionStatus('connected');
+        }
+      }
+    } catch (e) {
+      // Silently fail - don't disrupt UX on polling errors
+    }
+  }, []);
+
+  // Initialize guestId and start polling
   useEffect(() => {
     let savedId = localStorage.getItem("chat_guest_id");
     if (!savedId) {
@@ -33,75 +55,95 @@ const ChatWidget = () => {
       localStorage.setItem("chat_guest_id", savedId);
     }
     setGuestId(savedId);
+    guestIdRef.current = savedId;
 
-    // Initial greeting if no messages
+    // Show chat widget after 2s
     const timer = setTimeout(() => {
       setIsOpen(true);
       setIsCardVisible(true);
     }, 2000);
 
+    // Show Telugu greeting after 5s
     const teluguTimer = setTimeout(() => {
       setShowTelugu(true);
     }, 5000);
 
-    const conn = authService.getSocketConnection();
-    const socket = io(conn.url, conn.options);
-    socketRef.current = socket;
+    // Load existing history immediately
+    pollMessages(savedId);
 
-    socket.emit("join_chat", { guestId: savedId });
-
-    socket.on("chat_history", (history: Message[]) => {
-      setMessages(history);
-    });
-
-    socket.on("new_message", (message: Message) => {
-      setMessages((prev) => [...prev, message]);
-    });
-
-    socket.on("admin_reply", (message: Message) => {
-      setMessages((prev) => [...prev, message]);
-      if (!isCardVisible) {
-        // Notification sound or visual cue could go here
-      }
-    });
+    // Start polling every 4 seconds for new messages/admin replies
+    pollingRef.current = setInterval(() => {
+      pollMessages(guestIdRef.current);
+    }, 4000);
 
     return () => {
-      socket.disconnect();
       clearTimeout(timer);
       clearTimeout(teluguTimer);
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
     };
-  }, []);
+  }, [pollMessages]);
 
-  // Scroll to bottom when messages change
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isCardVisible]);
 
-  const handleSendMessage = (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!inputValue.trim() || !socketRef.current) return;
+    const content = inputValue.trim();
+    if (!content || isSending) return;
 
-    socketRef.current.emit("visitor_send_message", {
-      guestId,
-      content: inputValue,
-      visitorName: "Guest Visitor",
-    });
+    const currentGuestId = guestIdRef.current;
+    if (!currentGuestId) return;
 
+    // Optimistic update - show message immediately
+    const optimisticMsg: Message = {
+      id: Date.now(),
+      senderType: 'visitor',
+      content,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
     setInputValue("");
+    setIsSending(true);
+
+    try {
+      const res = await fetch(`${API_BASE}/visitor-message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guestId: currentGuestId,
+          content,
+          visitorName: 'Guest Visitor',
+        }),
+      });
+
+      if (res.ok) {
+        // Replace optimistic message with server response
+        const serverMsg: Message = await res.json();
+        setMessages(prev =>
+          prev.map(m => m.id === optimisticMsg.id ? serverMsg : m)
+        );
+        setConnectionStatus('connected');
+      } else {
+        setConnectionStatus('error');
+      }
+    } catch (err) {
+      setConnectionStatus('error');
+      // Keep optimistic message visible even on error
+    } finally {
+      setIsSending(false);
+    }
   };
 
-  const handleClose = () => {
-    setIsCardVisible(false);
-  };
-
-  const toggleWidget = () => {
-    setIsCardVisible(!isCardVisible);
-  };
+  const handleClose = () => setIsCardVisible(false);
+  const toggleWidget = () => setIsCardVisible(!isCardVisible);
 
   const isAdminPage = pathname?.startsWith('/admin');
-
   if (!isOpen || isAdminPage) return null;
 
   return (
@@ -109,25 +151,28 @@ const ChatWidget = () => {
       {/* Message Card */}
       {isCardVisible && (
         <div className="w-[320px] md:w-[380px] h-[500px] bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 flex flex-col pointer-events-auto animate-in fade-in slide-in-from-bottom-10 duration-500 overflow-hidden relative">
-          
+
           {/* Header */}
           <div className="p-4 bg-primary text-white flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20">
-                  <img 
-                    src={doctorAvatar.src} 
-                    alt="Unicare Health Assistant" 
+                  <img
+                    src={doctorAvatar.src}
+                    alt="Unicare Health Assistant"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-primary rounded-full" />
+                <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2 border-primary rounded-full ${connectionStatus === 'connected' ? 'bg-emerald-500' : 'bg-yellow-400'}`} />
               </div>
               <div>
                 <h4 className="font-bold text-sm leading-tight">Unicare Health Assistant</h4>
+                <p className="text-[10px] text-white/60">
+                  {connectionStatus === 'connected' ? 'Online' : 'Reconnecting...'}
+                </p>
               </div>
             </div>
-            <button 
+            <button
               onClick={handleClose}
               className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
             >
@@ -136,14 +181,13 @@ const ChatWidget = () => {
           </div>
 
           {/* Chat Messages */}
-          <div 
+          <div
             ref={scrollRef}
             className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50"
           >
-            {/* Automatic Initial Greet if empty */}
+            {/* Initial greeting when no messages from server */}
             {messages.length === 0 && (
               <div className="space-y-4">
-                {/* English Greeting */}
                 <div className="flex gap-2 max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-500">
                   <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center">
                     <User className="w-4 h-4 text-slate-500" />
@@ -155,7 +199,6 @@ const ChatWidget = () => {
                   </div>
                 </div>
 
-                {/* Telugu Greeting */}
                 {showTelugu && (
                   <div className="flex gap-2 max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-700">
                     <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center">
@@ -171,9 +214,10 @@ const ChatWidget = () => {
               </div>
             )}
 
+            {/* Message list */}
             {messages.map((msg, idx) => (
-              <div 
-                key={msg.id || idx} 
+              <div
+                key={msg.id || idx}
                 className={cn("flex gap-2 max-w-[85%]", msg.senderType === 'visitor' ? "ml-auto flex-row-reverse" : "")}
               >
                 <div className={cn(
@@ -184,8 +228,8 @@ const ChatWidget = () => {
                 </div>
                 <div className={cn(
                   "p-3 rounded-2xl shadow-sm border",
-                  msg.senderType === 'visitor' 
-                    ? "bg-primary text-white rounded-tr-none border-primary" 
+                  msg.senderType === 'visitor'
+                    ? "bg-primary text-white rounded-tr-none border-primary"
                     : "bg-white text-slate-700 rounded-tl-none border-slate-100"
                 )}>
                   <p className="text-sm leading-relaxed">{msg.content}</p>
@@ -201,23 +245,27 @@ const ChatWidget = () => {
           </div>
 
           {/* Input Area */}
-          <form 
+          <form
             onSubmit={handleSendMessage}
             className="p-4 bg-white border-t border-slate-100 flex items-center gap-2"
           >
-            <input 
+            <input
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Type your message..."
-              className="flex-1 bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+              disabled={isSending}
+              className="flex-1 bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none disabled:opacity-60"
             />
-            <button 
+            <button
               type="submit"
-              disabled={!inputValue.trim()}
+              disabled={!inputValue.trim() || isSending}
               className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
             >
-              <Send className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              {isSending
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Send className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              }
             </button>
           </form>
         </div>
@@ -231,9 +279,9 @@ const ChatWidget = () => {
         <div className="absolute -inset-2 bg-primary/20 rounded-full blur-lg group-hover:bg-primary/30 transition-all animate-pulse" />
         <div className="relative w-16 h-16 bg-primary rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer overflow-hidden border-2 border-white/20">
           {isCardVisible ? (
-            <img 
-              src={doctorAvatar.src} 
-              alt="Toggle Chat" 
+            <img
+              src={doctorAvatar.src}
+              alt="Toggle Chat"
               className="w-full h-full object-cover group-hover:scale-110 transition-transform"
             />
           ) : (
@@ -246,7 +294,6 @@ const ChatWidget = () => {
   );
 };
 
-// Helper for conditional classes if not globally available
 function cn(...classes: any[]) {
   return classes.filter(Boolean).join(" ");
 }

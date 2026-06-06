@@ -197,7 +197,18 @@ const getLocationId = () => {
 const getFileUrl = (path: string) => {
   if (!path) return "";
   if (path.startsWith('http')) return path;
-  return `${getSettingsApiUrl().replace('/api', '')}${path}`;
+  
+  const absoluteApiUrl = getSettingsApiAbsoluteUrl() || '';
+  let baseUrl = '';
+  
+  if (absoluteApiUrl.includes('/api/settings-service')) {
+    baseUrl = absoluteApiUrl.replace('/api/settings-service', '/settings-service');
+  } else {
+    baseUrl = absoluteApiUrl.replace(/\/api\/?$/, '');
+  }
+  
+  const cleanedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${baseUrl}${cleanedPath}`;
 };
 
 const getSocketUrl = () => {

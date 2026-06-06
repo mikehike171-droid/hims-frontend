@@ -145,11 +145,7 @@ const TreatmentDetailPage = () => {
   }, [navItems]);
 
   const getImageUrl = (url: string | null) => {
-    if (!url) return "https://images.unsplash.com/photo-1576091160550-217359f42f8c?q=80&w=2670&auto=format&fit=crop";
-    if (url.startsWith('http')) return url;
-    const settingsUrl = authService.getSettingsApiUrl();
-    const baseUrl = settingsUrl.replace('/api', '');
-    return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    return authService.getFileUrl(url || "");
   };
 
   if (loading) {

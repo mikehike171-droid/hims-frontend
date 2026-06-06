@@ -18,6 +18,7 @@ interface Enquiry {
   name: string
   phone: string
   medical_problems?: string
+  location?: string
   userview: string
   created_at: string
 }
@@ -34,11 +35,17 @@ export default function OnlinePatientsPage() {
   const [itemsPerPage] = useState(10)
   const [hasViewedLeads, setHasViewedLeads] = useState(false)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [newLeadForm, setNewLeadForm] = useState({ name: "", phone: "", reason: "" })
+  const [newLeadForm, setNewLeadForm] = useState({ name: "", phone: "", reason: "", location: "" })
+  const [locations, setLocations] = useState<{ id: number; name: string }[]>([])
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
+    // Fetch clinic locations for dropdown
+    fetch('/api/settings-service/locations')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => { if (Array.isArray(data)) setLocations(data.filter((l: any) => l.isActive !== false)) })
+      .catch(() => {})
   }, [])
 
   // Set default dates to current month
@@ -94,13 +101,14 @@ export default function OnlinePatientsPage() {
       const enquiryData = {
         name: newLeadForm.name,
         phone: newLeadForm.phone,
-        medical_problems: newLeadForm.reason
+        medical_problems: newLeadForm.reason,
+        location: newLeadForm.location || null,
       };
 
       await frontOfficeApi.saveEnquiry(enquiryData);
 
       setIsAddModalOpen(false);
-      setNewLeadForm({ name: "", phone: "", reason: "" });
+      setNewLeadForm({ name: "", phone: "", reason: "", location: "" });
       fetchEnquiries();
     } catch (error) {
       console.error(error);
@@ -252,6 +260,10 @@ export default function OnlinePatientsPage() {
                             <p className="font-medium">{enquiry.phone}</p>
                           </div>
                           <div>
+                            <p className="text-gray-600">Location</p>
+                            <p className="font-medium">{enquiry.location || 'Not specified'}</p>
+                          </div>
+                          <div>
                             <p className="text-gray-600">Medical Problems</p>
                             <p className="font-medium">{enquiry.medical_problems || 'N/A'}</p>
                           </div>
@@ -282,6 +294,7 @@ export default function OnlinePatientsPage() {
                   <TableRow>
                     <TableHead>Lead Name</TableHead>
                     <TableHead>Phone Number</TableHead>
+                    <TableHead>Location</TableHead>
                     <TableHead>Medical Problems</TableHead>
                     <TableHead>Submission Date</TableHead>
                     <TableHead>Actions</TableHead>
@@ -305,6 +318,15 @@ export default function OnlinePatientsPage() {
                         </div>
                       </TableCell>
                       <TableCell>{enquiry.phone}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center gap-1 text-sm">
+                          {enquiry.location ? (
+                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium border border-emerald-200">{enquiry.location}</span>
+                          ) : (
+                            <span className="text-slate-400 text-xs">Not specified</span>
+                          )}
+                        </span>
+                      </TableCell>
                       <TableCell className="max-w-xs truncate">{enquiry.medical_problems || 'N/A'}</TableCell>
                       <TableCell>
                         {new Date(enquiry.created_at).toLocaleDateString()}
@@ -389,6 +411,19 @@ export default function OnlinePatientsPage() {
               <div>
                 <Label>Mobile Number *</Label>
                 <Input required type="tel" value={newLeadForm.phone} onChange={e => setNewLeadForm({ ...newLeadForm, phone: e.target.value })} />
+              </div>
+              <div>
+                <Label>Clinic Location</Label>
+                <select
+                  value={newLeadForm.location}
+                  onChange={e => setNewLeadForm({ ...newLeadForm, location: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="">Select Location (Optional)</option>
+                  {locations.map(loc => (
+                    <option key={loc.id} value={loc.name}>{loc.name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <Label>Medical Concern</Label>

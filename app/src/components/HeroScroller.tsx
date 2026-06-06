@@ -344,7 +344,7 @@ const HeroScroller = () => {
 
         {/* ── Text (left) — animates in sync with image ── */}
         <div
-          className="flex-1 z-20 px-10 md:px-16 py-4 md:py-0 flex flex-col justify-center"
+          className="flex-1 z-20 px-4 md:px-16 py-6 md:py-0 flex flex-col justify-center text-center md:text-left items-center md:items-start"
           style={textStyle}
         >
           <h2 
@@ -370,13 +370,13 @@ const HeroScroller = () => {
 
         {/* ── Image (right) — animates in sync with text ── */}
         <div
-          className="flex-1 relative flex items-end justify-center z-20 overflow-hidden min-h-[460px]"
+          className="flex-1 relative flex items-center md:items-end justify-center z-20 overflow-hidden min-h-[250px] md:min-h-[460px] w-full mt-4 md:mt-0 px-4 md:px-0"
           style={{...imageStyle, ...getRevealImageStyle(revealLevel)}}
         >
           <img
             src={s.visual}
             alt={s.title}
-            className="relative z-20 w-full max-h-[440px] rounded-[2rem] object-cover drop-shadow-2xl"
+            className="relative z-20 w-full max-h-[320px] md:max-h-[440px] rounded-[2rem] object-cover drop-shadow-2xl"
           />
           {/* Decorative glows */}
           <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-[#22d3ee] opacity-30 blur-3xl rounded-full z-0 pointer-events-none" />

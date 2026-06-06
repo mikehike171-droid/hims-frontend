@@ -69,17 +69,7 @@ const TreatmentExplorer = () => {
   };
 
   const getImageUrl = (url: string) => {
-    if (!url) return "https://images.unsplash.com/photo-1576091160550-217359f42f8c?q=80&w=2670&auto=format&fit=crop";
-    if (url.startsWith('http')) return url;
-    
-    // Remove '/api' from the end of the URL if it exists
-    const settingsUrl = authService.getSettingsApiUrl().replace(/\/api$/, '').replace(/\/api\/$/, '/');
-    if (!settingsUrl) return url;
-    
-    const baseUrl = settingsUrl.endsWith('/') ? settingsUrl : `${settingsUrl}/`;
-    const cleanedPath = url.startsWith('/') ? url.substring(1) : url;
-    
-    return `${baseUrl}${cleanedPath}`;
+    return authService.getFileUrl(url);
   };
 
   if (isLoading) {

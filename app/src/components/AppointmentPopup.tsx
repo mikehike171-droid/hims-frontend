@@ -4,7 +4,8 @@ import authService from "@/lib/authService";
 
 const AppointmentPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", reason: "" });
+  const [form, setForm] = useState({ name: "", phone: "", reason: "", location: "" });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const handleOpenPopup = () => setIsOpen(true);
@@ -27,6 +28,7 @@ const AppointmentPopup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const SETTINGS_API_URL = authService.getSettingsApiUrl();
       const response = await fetch(`${SETTINGS_API_URL}/enquiry/book`, {
@@ -39,9 +41,12 @@ const AppointmentPopup = () => {
       
       window.dispatchEvent(new CustomEvent("booking-success"));
       setIsOpen(false);
+      setForm({ name: "", phone: "", reason: "", location: "" });
     } catch (error) {
       console.error('Submission error:', error);
       alert("There was an issue processing your request. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -107,6 +112,15 @@ const AppointmentPopup = () => {
               <div className="relative">
                 <input
                   type="text"
+                  placeholder="Your Location / City"
+                  value={form.location}
+                  onChange={(e) => setForm({ ...form, location: e.target.value })}
+                  className="w-full px-6 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1B7A43] focus:bg-white transition-all duration-300"
+                />
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
                   placeholder="Medical Concern (e.g. Asthma, Thyroid)"
                   value={form.reason}
                   onChange={(e) => setForm({ ...form, reason: e.target.value })}
@@ -117,9 +131,10 @@ const AppointmentPopup = () => {
 
             <button
               type="submit"
-              className="w-full bg-[#1B7A43] text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-[#1B7A43]/20 hover:bg-[#155e34] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 mt-4"
+              disabled={loading}
+              className="w-full bg-[#1B7A43] text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-[#1B7A43]/20 hover:bg-[#155e34] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 mt-4 disabled:opacity-70"
             >
-              Confirm Appointment
+              {loading ? "Sending..." : "Confirm Appointment"}
             </button>
             <p className="text-center text-[10px] text-slate-400 mt-4 uppercase tracking-tighter">
               Fast-track your clinical recovery with UniCare today.
