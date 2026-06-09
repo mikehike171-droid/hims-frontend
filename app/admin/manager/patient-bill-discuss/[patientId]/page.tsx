@@ -90,6 +90,39 @@ export default function PatientBillDiscuss() {
   const [tempExamDate, setTempExamDate] = useState<string>("")
   const [showAdditionalMultiPayment, setShowAdditionalMultiPayment] = useState(false)
   const [selectedAdditionalPaymentMethods, setSelectedAdditionalPaymentMethods] = useState<{ id: string, amount: number }[]>([])
+  
+  const [showCreateExamDialog, setShowCreateExamDialog] = useState(false)
+  const [newExamDoctorMonths, setNewExamDoctorMonths] = useState("")
+  const [newExamDoctorRenewalDate, setNewExamDoctorRenewalDate] = useState("")
+  const [newExamProMonths, setNewExamProMonths] = useState("")
+  const [newExamProRenewalDate, setNewExamProRenewalDate] = useState("")
+
+  const [dialogDoctorSearch, setDialogDoctorSearch] = useState("")
+  const [showDialogDoctorDropdown, setShowDialogDoctorDropdown] = useState(false)
+  const [dialogProSearch, setDialogProSearch] = useState("")
+  const [showDialogProDropdown, setShowDialogProDropdown] = useState(false)
+
+  const filteredDialogDoctorPlans = treatmentPlans.filter(plan =>
+    plan.months.toString().includes(dialogDoctorSearch) ||
+    (plan.name || '').toLowerCase().includes(dialogDoctorSearch.toLowerCase())
+  )
+
+  const filteredDialogProPlans = treatmentPlans.filter(plan =>
+    plan.months.toString().includes(dialogProSearch) ||
+    (plan.name || '').toLowerCase().includes(dialogProSearch.toLowerCase())
+  )
+
+  useEffect(() => {
+    if (currentExamination) {
+      setTotalAmount(parseFloat((currentExamination.totalAmount || currentExamination.total_amount || 0).toString()))
+      setDiscount(parseFloat((currentExamination.discountAmount || currentExamination.discount_amount || 0).toString()))
+      setPaidAmount(parseFloat((currentExamination.paidAmount || currentExamination.paid_amount || 0).toString()))
+    } else {
+      setTotalAmount(0)
+      setDiscount(0)
+      setPaidAmount(0)
+    }
+  }, [currentExamination])
 
   useEffect(() => {
     fetchTreatmentPlans()
@@ -119,6 +152,8 @@ export default function PatientBillDiscuss() {
       const target = event.target as HTMLElement
       if (!target.closest('.relative')) {
         setShowPlanDropdown(false)
+        setShowDialogDoctorDropdown(false)
+        setShowDialogProDropdown(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -387,6 +422,65 @@ export default function PatientBillDiscuss() {
     }
   }
 
+  const handleCreateNewExamination = async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('authToken')
+      
+      const userData = JSON.parse(localStorage.getItem('user') || '{}')
+      const locationId = userData?.primary_location_id || 1
+
+      const newExamData = {
+        patientId: parseInt(patientId),
+        locationId: parseInt(locationId),
+        treatmentPlanMonthsDoctor: newExamDoctorMonths ? parseInt(newExamDoctorMonths) : null,
+        nextRenewalDateDoctor: newExamDoctorRenewalDate || null,
+        treatmentPlanMonthsPro: newExamProMonths ? parseInt(newExamProMonths) : null,
+        nextRenewalDatePro: newExamProRenewalDate || null,
+        totalAmount: 0,
+        discountAmount: 0,
+        paidAmount: 0,
+        dueAmount: 0
+      }
+
+      const response = await fetch(`${authService.getSettingsApiUrl()}/patient-examination`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newExamData)
+      })
+
+      if (response.ok) {
+        const createdExam = await response.json()
+        alert('New examination record created successfully!')
+        setShowCreateExamDialog(false)
+        
+        // Reset dialog states
+        setNewExamDoctorMonths("")
+        setNewExamDoctorRenewalDate("")
+        setNewExamProMonths("")
+        setNewExamProRenewalDate("")
+        setDialogDoctorSearch("")
+        setDialogProSearch("")
+
+        // Reload data
+        await fetchPatientExamination()
+        
+        // Set newly created exam as current
+        setCurrentExamination(createdExam)
+      } else {
+        alert('Failed to create new examination record')
+      }
+    } catch (error) {
+      console.error('Error creating examination:', error)
+      alert('Error creating new examination record')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleAddPayment = async () => {
     if (!currentExamination) return
 
@@ -612,92 +706,84 @@ export default function PatientBillDiscuss() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {currentExamination && (
-              <div className="mb-6 space-y-4">
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-4">Complete Examination Details</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                    <div className="bg-white p-3 rounded border">
-                      <span className="text-gray-600 font-medium">Patient Name:</span>
-                      <span className="ml-2">{patient?.name || 'N/A'}</span>
-                    </div>
-                    <div className="bg-white p-3 rounded border">
-                      <span className="text-gray-600 font-medium">Doctor Plan (Months):</span>
-                      <span className="ml-2">{currentExamination.treatmentPlanMonthsDoctor || 'N/A'}</span>
-                    </div>
-                    <div className="bg-white p-3 rounded border">
-                      <span className="text-gray-600 font-medium">Doctor Renewal Date:</span>
-                      <span className="ml-2">
-                        {currentExamination.nextRenewalDateDoctor ?
-                          format(new Date(currentExamination.nextRenewalDateDoctor), "dd/MM/yyyy")
-                          : 'N/A'
-                        }
-                      </span>
-                    </div>
-                    <div className="bg-white p-3 rounded border">
-                      <span className="text-gray-600 font-medium">Plan (Months):</span>
-                      <span className="ml-2">{currentExamination.treatmentPlanMonthsPro || 'N/A'}</span>
-                    </div>
-                    <div className="bg-white p-3 rounded border">
-                      <span className="text-gray-600 font-medium">PRO Renewal Date:</span>
-                      <span className="ml-2">
-                        {currentExamination.nextRenewalDatePro ?
-                          format(new Date(currentExamination.nextRenewalDatePro), "dd/MM/yyyy")
-                          : 'N/A'
-                        }
-                      </span>
+            {currentExamination && (() => {
+              const docMonths = currentExamination.treatmentPlanMonthsDoctor || currentExamination.treatment_plan_months_doctor;
+              const docRenewal = currentExamination.nextRenewalDateDoctor || currentExamination.next_renewal_date_doctor;
+              const proMonths = currentExamination.treatmentPlanMonthsPro || currentExamination.treatment_plan_months_pro;
+              const proRenewal = currentExamination.nextRenewalDatePro || currentExamination.next_renewal_date_pro;
+
+              return (
+                <div className="mb-6 space-y-4">
+                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <h4 className="font-medium text-gray-900 mb-4">Complete Examination Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                      <div className="bg-white p-3 rounded border">
+                        <span className="text-gray-600 font-medium">Patient Name:</span>
+                        <span className="ml-2">{patient?.name || 'N/A'}</span>
+                      </div>
+                      <div className="bg-white p-3 rounded border">
+                        <span className="text-gray-600 font-medium">Doctor Plan (Months):</span>
+                        <span className="ml-2">{docMonths || 'N/A'}</span>
+                      </div>
+                      <div className="bg-white p-3 rounded border">
+                        <span className="text-gray-600 font-medium">Doctor Renewal Date:</span>
+                        <span className="ml-2">
+                          {docRenewal ? format(new Date(docRenewal), "dd/MM/yyyy") : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="bg-white p-3 rounded border">
+                        <span className="text-gray-600 font-medium">Plan (Months):</span>
+                        <span className="ml-2">{proMonths || 'N/A'}</span>
+                      </div>
+                      <div className="bg-white p-3 rounded border">
+                        <span className="text-gray-600 font-medium">PRO Renewal Date:</span>
+                        <span className="ml-2">
+                          {proRenewal ? format(new Date(proRenewal), "dd/MM/yyyy") : 'N/A'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Current Doctor Treatment Plan</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-blue-700">Duration:</span>
-                      <span className="ml-2 font-medium">
-                        {currentExamination.treatmentPlanMonthsDoctor ?
-                          `${currentExamination.treatmentPlanMonthsDoctor} Month${currentExamination.treatmentPlanMonthsDoctor > 1 ? 's' : ''}`
-                          : 'Not set'
-                        }
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-blue-700">Doctor Renewal Date:</span>
-                      <span className="ml-2 font-medium">
-                        {currentExamination.nextRenewalDateDoctor ?
-                          format(new Date(currentExamination.nextRenewalDateDoctor), "dd/MM/yyyy")
-                          : 'Not set'
-                        }
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {currentExamination.treatmentPlanMonthsPro && (
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <h4 className="font-medium text-green-900 mb-2">Current Treatment Plan</h4>
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">Current Doctor Treatment Plan</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-green-700">Duration:</span>
+                        <span className="text-blue-700">Duration:</span>
                         <span className="ml-2 font-medium">
-                          {currentExamination.treatmentPlanMonthsPro} Month{currentExamination.treatmentPlanMonthsPro > 1 ? 's' : ''}
+                          {docMonths ? `${docMonths} Month${docMonths > 1 ? 's' : ''}` : 'Not set'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-green-700">PRO Renewal Date:</span>
+                        <span className="text-blue-700">Doctor Renewal Date:</span>
                         <span className="ml-2 font-medium">
-                          {currentExamination.nextRenewalDatePro ?
-                            format(new Date(currentExamination.nextRenewalDatePro), "dd/MM/yyyy")
-                            : 'Not set'
-                          }
+                          {docRenewal ? format(new Date(docRenewal), "dd/MM/yyyy") : 'Not set'}
                         </span>
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
-            )}
+
+                  {proMonths && (
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <h4 className="font-medium text-green-900 mb-2">Current Treatment Plan</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-green-700">Duration:</span>
+                          <span className="ml-2 font-medium">
+                            {proMonths} Month{proMonths > 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-green-700">PRO Renewal Date:</span>
+                          <span className="ml-2 font-medium">
+                            {proRenewal ? format(new Date(proRenewal), "dd/MM/yyyy") : 'Not set'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -784,11 +870,14 @@ export default function PatientBillDiscuss() {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <LucideCalendar className="h-5 w-5" />
               Examination History
             </CardTitle>
+            <Button onClick={() => setShowCreateExamDialog(true)} size="sm" className="bg-blue-600 hover:bg-blue-700">
+              + New Examination
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -797,14 +886,45 @@ export default function PatientBillDiscuss() {
                   <TableRow>
                     <TableHead>Date</TableHead>
                     <TableHead>Doctor Plan</TableHead>
+                    <TableHead>Doctor Renewal</TableHead>
                     <TableHead>PRO Plan</TableHead>
+                    <TableHead>PRO Renewal</TableHead>
                     <TableHead>Total Amount</TableHead>
+                    <TableHead>Discount</TableHead>
+                    <TableHead>Paid Amount</TableHead>
                     <TableHead>Due Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {allExaminations.map((exam) => (
-                    <TableRow key={exam.id} className={cn(currentExamination?.id === exam.id && "bg-blue-50")}>
+                    <TableRow 
+                      key={exam.id} 
+                      className={cn(
+                        "cursor-pointer hover:bg-slate-100 transition-colors",
+                        currentExamination?.id === exam.id ? "bg-blue-50 hover:bg-blue-100" : ""
+                      )}
+                      onClick={() => {
+                        setCurrentExamination(exam)
+                        const pMonths = exam.treatmentPlanMonthsPro || exam.treatment_plan_months_pro;
+                        const pRenewal = exam.nextRenewalDatePro || exam.next_renewal_date_pro;
+                        const dMonths = exam.treatmentPlanMonthsDoctor || exam.treatment_plan_months_doctor;
+                        const dRenewal = exam.nextRenewalDateDoctor || exam.next_renewal_date_doctor;
+
+                        if (pMonths) {
+                          setSelectedPlanValue(pMonths.toString())
+                          setNextRenewalDate(pRenewal ? format(new Date(pRenewal), "yyyy-MM-dd") : '')
+                          const plan = treatmentPlans.find(p => p.months === pMonths)
+                          if (plan) setPlanSearch(`${plan.months} Month${plan.months > 1 ? 's' : ''}`)
+                        } else if (dMonths) {
+                          setSelectedPlanValue(dMonths.toString())
+                          setNextRenewalDate(dRenewal ? format(new Date(dRenewal), "yyyy-MM-dd") : '')
+                        } else {
+                          setSelectedPlanValue("")
+                          setNextRenewalDate("")
+                          setPlanSearch("")
+                        }
+                      }}
+                    >
                       <TableCell className="font-medium">
                         <span className="font-bold">
                           {(() => {
@@ -821,13 +941,37 @@ export default function PatientBillDiscuss() {
                       </TableCell>
                       <TableCell>
                         {(() => {
+                          const val = exam.next_renewal_date_doctor || exam.nextRenewalDateDoctor
+                          return val ? format(new Date(val), "dd/MM/yyyy") : '-'
+                        })()}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
                           const val = exam.treatment_plan_months_pro || exam.treatmentPlanMonthsPro
                           return val ? `${val} Month${val > 1 ? 's' : ''}` : '-'
                         })()}
                       </TableCell>
                       <TableCell>
+                        {(() => {
+                          const val = exam.next_renewal_date_pro || exam.nextRenewalDatePro
+                          return val ? format(new Date(val), "dd/MM/yyyy") : '-'
+                        })()}
+                      </TableCell>
+                      <TableCell>
                         ₹{(() => {
                           const val = exam.total_amount || exam.totalAmount || 0
+                          return parseFloat(val.toString()).toFixed(2)
+                        })()}
+                      </TableCell>
+                      <TableCell>
+                        ₹{(() => {
+                          const val = exam.discount_amount || exam.discountAmount || 0
+                          return parseFloat(val.toString()).toFixed(2)
+                        })()}
+                      </TableCell>
+                      <TableCell className="text-green-600">
+                        ₹{(() => {
+                          const val = exam.paid_amount || exam.paidAmount || 0
                           return parseFloat(val.toString()).toFixed(2)
                         })()}
                       </TableCell>
@@ -845,146 +989,150 @@ export default function PatientBillDiscuss() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" />
-              Payment Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>Total Treatment Amount *</Label>
-                <div className="relative">
-                  <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="0.00"
-                    className="pl-10"
-                    value={totalAmount || ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                        setTotalAmount(val === '' ? 0 : parseFloat(val));
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Discount</Label>
-                <div className="relative">
-                  <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="0.00"
-                    className="pl-10"
-                    value={discount || ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                        setDiscount(val === '' ? 0 : parseFloat(val));
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Select onValueChange={(value) => {
-                  if (!selectedPaymentMethods.find(p => p.id === value)) {
-                    setSelectedPaymentMethods([...selectedPaymentMethods, { id: value, amount: 0 }])
-                  }
-                }}>
-
-                  <SelectContent>
-                    {paymentMethods.filter(method => {
-                      const methodValue = method.code || method.name?.toLowerCase() || ''
-                      return !selectedPaymentMethods.find(p => p.id === methodValue)
-                    }).map((method) => {
-                      const methodValue = method.code || method.name?.toLowerCase() || ''
-                      const IconComponent = getPaymentIcon(methodValue)
-                      return (
-                        <SelectItem key={method.id} value={methodValue}>
-                          <div className="flex items-center gap-2">
-                            <IconComponent className="h-4 w-4" />
-                            {method.name}
-                          </div>
-                        </SelectItem>
-                      )
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedPaymentMethods.length > 0 && (
-                <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-medium text-blue-900">Payment Breakdown</h4>
-                  {selectedPaymentMethods.map((payment, index) => {
-                    const method = paymentMethods.find(m => (m.code || m.name?.toLowerCase()) === payment.id)
-                    const IconComponent = getPaymentIcon(payment.id)
-                    return (
-                      <div key={payment.id} className="flex items-center gap-3 p-3 bg-white rounded border">
-                        <IconComponent className="h-4 w-4 text-gray-600" />
-                        <span className="min-w-20 text-sm font-medium">{method?.name || payment.id}</span>
-                        <div className="flex-1 relative">
-                          <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-                          <Input
-                            type="text"
-                            inputMode="decimal"
-                            placeholder="0.00"
-                            className="pl-10"
-                            value={payment.amount || ''}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                                const newPayments = [...selectedPaymentMethods]
-                                newPayments[index].amount = val === '' ? 0 : parseFloat(val)
-                                setSelectedPaymentMethods(newPayments)
-                              }
-                            }}
-                          />
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedPaymentMethods(selectedPaymentMethods.filter((_, i) => i !== index))
-                          }}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    )
-                  })}
-                  <div className="pt-2 border-t">
-                    <div className="flex justify-between text-sm font-medium">
-                      <span>Total Payment Methods Amount:</span>
-                      <span>₹{selectedPaymentMethods.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}</span>
-                    </div>
+        {currentExamination && parseFloat((currentExamination.totalAmount || currentExamination.total_amount || 0).toString()) === 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-5 w-5" />
+                Payment Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Total Treatment Amount *</Label>
+                  <div className="relative">
+                    <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0.00"
+                      className="pl-10"
+                      value={totalAmount || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                          setTotalAmount(val === '' ? 0 : parseFloat(val));
+                        }
+                      }}
+                    />
                   </div>
                 </div>
-              )}
-            </div>
 
-            <div className="flex justify-end mt-6">
-              <Button
-                onClick={handleSavePayments}
-                disabled={loading || !totalAmount}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {loading ? 'Saving...' : 'Save Payment Details'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="space-y-2">
+                  <Label>Discount</Label>
+                  <div className="relative">
+                    <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0.00"
+                      className="pl-10"
+                      value={discount || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                          setDiscount(val === '' ? 0 : parseFloat(val));
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Select onValueChange={(value) => {
+                    if (!selectedPaymentMethods.find(p => p.id === value)) {
+                      setSelectedPaymentMethods([...selectedPaymentMethods, { id: value, amount: 0 }])
+                    }
+                  }}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Add Payment Method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentMethods.filter(method => {
+                        const methodValue = method.code || method.name?.toLowerCase() || ''
+                        return !selectedPaymentMethods.find(p => p.id === methodValue)
+                      }).map((method) => {
+                        const methodValue = method.code || method.name?.toLowerCase() || ''
+                        const IconComponent = getPaymentIcon(methodValue)
+                        return (
+                          <SelectItem key={method.id} value={methodValue}>
+                            <div className="flex items-center gap-2">
+                              <IconComponent className="h-4 w-4" />
+                              {method.name}
+                            </div>
+                          </SelectItem>
+                        )
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedPaymentMethods.length > 0 && (
+                  <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-900">Payment Breakdown</h4>
+                    {selectedPaymentMethods.map((payment, index) => {
+                      const method = paymentMethods.find(m => (m.code || m.name?.toLowerCase()) === payment.id)
+                      const IconComponent = getPaymentIcon(payment.id)
+                      return (
+                        <div key={payment.id} className="flex items-center gap-3 p-3 bg-white rounded border">
+                          <IconComponent className="h-4 w-4 text-gray-600" />
+                          <span className="min-w-20 text-sm font-medium">{method?.name || payment.id}</span>
+                          <div className="flex-1 relative">
+                            <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                            <Input
+                              type="text"
+                              inputMode="decimal"
+                              placeholder="0.00"
+                              className="pl-10"
+                              value={payment.amount || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                  const newPayments = [...selectedPaymentMethods]
+                                  newPayments[index].amount = val === '' ? 0 : parseFloat(val)
+                                  setSelectedPaymentMethods(newPayments)
+                                }
+                              }}
+                            />
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedPaymentMethods(selectedPaymentMethods.filter((_, i) => i !== index))
+                            }}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      )
+                    })}
+                    <div className="pt-2 border-t">
+                      <div className="flex justify-between text-sm font-medium">
+                        <span>Total Payment Methods Amount:</span>
+                        <span>₹{selectedPaymentMethods.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end mt-6">
+                <Button
+                  onClick={handleSavePayments}
+                  disabled={loading || !totalAmount}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {loading ? 'Saving...' : 'Save Payment Details'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {currentExamination && (
           <Card>
@@ -1593,6 +1741,136 @@ export default function PatientBillDiscuss() {
             </DialogContent>
           </Dialog>
         )}
+
+        <Dialog open={showCreateExamDialog} onOpenChange={setShowCreateExamDialog}>
+          <DialogContent className="max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle>Create New Examination</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Doctor Treatment Plan (Months)</Label>
+                <div className="relative">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search doctor plan..."
+                      value={dialogDoctorSearch}
+                      onChange={(e) => setDialogDoctorSearch(e.target.value)}
+                      onFocus={() => setShowDialogDoctorDropdown(true)}
+                      className="h-10 pl-10 pr-10 bg-white"
+                    />
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  </div>
+                  {showDialogDoctorDropdown && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-auto">
+                      {filteredDialogDoctorPlans.length > 0 ? (
+                        filteredDialogDoctorPlans.map((plan, index) => (
+                          <div
+                            key={index}
+                            onClick={() => {
+                              setNewExamDoctorMonths(plan.months.toString())
+                              setDialogDoctorSearch(`${plan.months} Month${plan.months > 1 ? 's' : ''}`)
+                              setShowDialogDoctorDropdown(false)
+                              const today = new Date()
+                              const renewal = addMonths(today, plan.months)
+                              setNewExamDoctorRenewalDate(format(renewal, "yyyy-MM-dd"))
+                            }}
+                            className="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                          >
+                            <LucideCalendar className="h-4 w-4 mr-3 text-blue-600" />
+                            <div>
+                              <p className="font-medium text-gray-900">{plan.months} Month${plan.months > 1 ? 's' : ''}</p>
+                              {plan.name && <p className="text-sm text-gray-500">{plan.name}</p>}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-3 text-gray-500 text-center text-sm">No plans found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Doctor Renewal Date</Label>
+                <Input
+                  type="date"
+                  value={newExamDoctorRenewalDate}
+                  onChange={(e) => setNewExamDoctorRenewalDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>PRO Treatment Plan (Months)</Label>
+                <div className="relative">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search PRO plan..."
+                      value={dialogProSearch}
+                      onChange={(e) => setDialogProSearch(e.target.value)}
+                      onFocus={() => setShowDialogProDropdown(true)}
+                      className="h-10 pl-10 pr-10 bg-white"
+                    />
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  </div>
+                  {showDialogProDropdown && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-auto">
+                      {filteredDialogProPlans.length > 0 ? (
+                        filteredDialogProPlans.map((plan, index) => (
+                          <div
+                            key={index}
+                            onClick={() => {
+                              setNewExamProMonths(plan.months.toString())
+                              setDialogProSearch(`${plan.months} Month${plan.months > 1 ? 's' : ''}`)
+                              setShowDialogProDropdown(false)
+                              const today = new Date()
+                              const renewal = addMonths(today, plan.months)
+                              setNewExamProRenewalDate(format(renewal, "yyyy-MM-dd"))
+                            }}
+                            className="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                          >
+                            <LucideCalendar className="h-4 w-4 mr-3 text-blue-600" />
+                            <div>
+                              <p className="font-medium text-gray-900">{plan.months} Month${plan.months > 1 ? 's' : ''}</p>
+                              {plan.name && <p className="text-sm text-gray-500">{plan.name}</p>}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-3 text-gray-500 text-center text-sm">No plans found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>PRO Renewal Date</Label>
+                <Input
+                  type="date"
+                  value={newExamProRenewalDate}
+                  onChange={(e) => setNewExamProRenewalDate(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => {
+                  setShowCreateExamDialog(false)
+                  setNewExamDoctorMonths("")
+                  setNewExamDoctorRenewalDate("")
+                  setNewExamProMonths("")
+                  setNewExamProRenewalDate("")
+                  setDialogDoctorSearch("")
+                  setDialogProSearch("")
+                }}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateNewExamination} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+                  {loading ? 'Creating...' : 'Create Record'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </PrivateRoute>
   )

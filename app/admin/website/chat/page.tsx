@@ -47,9 +47,21 @@ function getInitials(session: ChatSession): string {
   return name.substring(0, 2).toUpperCase();
 }
 
+function getSortedMessages(messages: Message[]): Message[] {
+  if (!messages) return [];
+  return [...messages].sort((a, b) => {
+    const timeA = new Date(a.createdAt).getTime();
+    const timeB = new Date(b.createdAt).getTime();
+    if (timeA !== timeB) {
+      return timeA - timeB;
+    }
+    return a.id - b.id;
+  });
+}
+
 function getUnreadCount(session: ChatSession): number {
   if (session.isRead) return 0;
-  const messages = session.messages || [];
+  const messages = getSortedMessages(session.messages);
   let count = 0;
   for (let i = messages.length - 1; i >= 0; i--) {
     if (messages[i].senderType === 'visitor') {
@@ -90,7 +102,8 @@ export default function AdminChatPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    // Fetch initial active sessions
+    
+    // Fetch initial active sessions & poll
     const fetchSessions = async () => {
       try {
         const token = authService.getCurrentToken();
@@ -99,7 +112,30 @@ export default function AdminChatPage() {
         });
         if (response.ok) {
           const data = await response.json();
-          setSessions(Array.isArray(data) ? data : []);
+          const newSessions = Array.isArray(data) ? data : [];
+          setSessions(prev => {
+            return newSessions.map(ns => {
+              const existing = prev.find(s => s.id === ns.id);
+              if (!existing) return ns;
+              
+              // Keep any messages from existing that are optimistic (id > 1000000000000)
+              const optimisticMsgs = existing.messages?.filter(m => m.id > 1000000000000) || [];
+              if (optimisticMsgs.length === 0) return ns;
+              
+              // Merge: take all from ns, plus the optimistic ones that aren't already represented by content
+              const mergedMessages = [...ns.messages];
+              for (const optMsg of optimisticMsgs) {
+                const alreadySaved = ns.messages.some(m => m.content === optMsg.content && m.senderType === 'admin');
+                if (!alreadySaved) {
+                  mergedMessages.push(optMsg);
+                }
+              }
+              return {
+                ...ns,
+                messages: mergedMessages
+              };
+            });
+          });
         }
       } catch (error) {
         console.error("Error fetching chat sessions:", error);
@@ -107,6 +143,7 @@ export default function AdminChatPage() {
     };
 
     fetchSessions();
+    const intervalId = setInterval(fetchSessions, 5000); // Poll every 5 seconds
 
     const conn = authService.getSocketConnection();
     const socket = io(conn.url, conn.options);
@@ -120,6 +157,11 @@ export default function AdminChatPage() {
         const index = prev.findIndex(s => s.id === data.sessionId);
         if (index !== -1) {
           const updated = [...prev];
+          
+          // Check if message already exists to prevent duplicate
+          const msgExists = updated[index].messages?.some(m => m.id === data.id);
+          if (msgExists) return prev;
+
           updated[index] = {
             ...updated[index],
             messages: [...(updated[index].messages || []), data],
@@ -156,9 +198,30 @@ export default function AdminChatPage() {
         const index = prev.findIndex(s => s.id === message.sessionId);
         if (index !== -1) {
           const updated = [...prev];
+          
+          // Check if message already exists
+          const msgExists = updated[index].messages?.some(m => m.id === message.id);
+          if (msgExists) return prev;
+
+          // Check if we have an optimistic message matching this admin reply
+          let messages = updated[index].messages || [];
+          if (message.senderType === 'admin') {
+            const optIdx = messages.findIndex(m => m.id > 1000000000000 && m.content === message.content);
+            if (optIdx !== -1) {
+              const newMsgs = [...messages];
+              newMsgs[optIdx] = message;
+              updated[index] = {
+                ...updated[index],
+                messages: newMsgs,
+                updatedAt: message.createdAt
+              };
+              return updated;
+            }
+          }
+
           updated[index] = {
             ...updated[index],
-            messages: [...(updated[index].messages || []), message],
+            messages: [...messages, message],
             updatedAt: message.createdAt
           };
           return updated;
@@ -167,23 +230,130 @@ export default function AdminChatPage() {
       });
     });
 
-    return () => { socket.disconnect(); };
+    return () => {
+      clearInterval(intervalId);
+      socket.disconnect();
+    };
   }, []);
+
+  const activeChatMsgLength = selectedSession ? (sessions.find(s => s.id === selectedSession.id)?.messages?.length || 0) : 0;
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [sessions, selectedSession]);
+  }, [activeChatMsgLength, selectedSession?.id]);
 
-  const handleSendMessage = (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!inputValue.trim() || !selectedSession || !socketRef.current) return;
-    socketRef.current.emit("admin_send_message", {
-      guestId: selectedSession.guestId,
-      content: inputValue
-    });
+    if (!inputValue.trim() || !selectedSession) return;
+    
+    const content = inputValue.trim();
     setInputValue("");
+
+    // Create a temporary optimistic message
+    const tempId = Date.now();
+    const optimisticMsg: Message = {
+      id: tempId,
+      sessionId: selectedSession.id,
+      senderType: 'admin',
+      content: content,
+      createdAt: new Date().toISOString()
+    };
+
+    // Update sessions state immediately with the optimistic message
+    setSessions(prev => prev.map(s => {
+      if (s.id === selectedSession.id) {
+        return {
+          ...s,
+          messages: [...(s.messages || []), optimisticMsg],
+          updatedAt: optimisticMsg.createdAt
+        };
+      }
+      return s;
+    }));
+
+    try {
+      const token = authService.getCurrentToken();
+      const response = await fetch(`${authService.getSettingsApiUrl()}/chat/admin-message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          guestId: selectedSession.guestId,
+          content: content
+        })
+      });
+
+      if (response.ok) {
+        const savedMsg = await response.json();
+        // Replace optimistic message with actual saved message from server
+        setSessions(prev => prev.map(s => {
+          if (s.id === selectedSession.id) {
+            return {
+              ...s,
+              messages: (s.messages || []).map(m => m.id === tempId ? savedMsg : m)
+            };
+          }
+          return s;
+        }));
+      } else if (response.status === 404 && socketRef.current) {
+        // Fallback to Socket.io if the HTTP endpoint doesn't exist yet on the server
+        console.warn("admin-message REST endpoint not found (404). Falling back to Socket.io...");
+        socketRef.current.emit("admin_send_message", {
+          guestId: selectedSession.guestId,
+          content: content
+        });
+        
+        // Since socket event `new_message` will receive this reply and replace the optimistic message,
+        // we don't need to do anything here except wait for the socket event.
+      } else {
+        toast({
+          title: "❌ Error",
+          description: "Failed to send message.",
+          variant: "destructive"
+        });
+        // Remove optimistic message on failure
+        setSessions(prev => prev.map(s => {
+          if (s.id === selectedSession.id) {
+            return {
+              ...s,
+              messages: (s.messages || []).filter(m => m.id !== tempId)
+            };
+          }
+          return s;
+        }));
+      }
+    } catch (error) {
+      console.error("Error sending admin message:", error);
+      
+      // Fallback to Socket.io on network error if socket is available
+      if (socketRef.current) {
+        console.warn("Network error. Falling back to Socket.io...");
+        socketRef.current.emit("admin_send_message", {
+          guestId: selectedSession.guestId,
+          content: content
+        });
+      } else {
+        toast({
+          title: "❌ Error",
+          description: "Failed to send message. Please check connection.",
+          variant: "destructive"
+        });
+        // Remove optimistic message on failure
+        setSessions(prev => prev.map(s => {
+          if (s.id === selectedSession.id) {
+            return {
+              ...s,
+              messages: (s.messages || []).filter(m => m.id !== tempId)
+            };
+          }
+          return s;
+        }));
+      }
+    }
   };
 
   const handleSelectSession = async (session: ChatSession) => {
@@ -200,6 +370,10 @@ export default function AdminChatPage() {
     (s.visitorName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (s.guestId || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const sortedSessions = [...filteredSessions].sort((a, b) => {
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  });
 
   const unreadSessionsCount = sessions.filter(s => !s.isRead).length;
   const activeChat = selectedSession ? sessions.find(s => s.id === selectedSession.id) : null;
@@ -235,14 +409,14 @@ export default function AdminChatPage() {
             </CardHeader>
             <ScrollArea className="flex-1">
               <div className="divide-y divide-slate-50">
-                {filteredSessions.length === 0 ? (
+                {sortedSessions.length === 0 ? (
                   <div className="p-10 text-center text-slate-400">
                     <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-20" />
                     <p className="text-sm">No active chats found</p>
                     <p className="text-xs mt-1 text-slate-300">Messages from visitors will appear here</p>
                   </div>
                 ) : (
-                  filteredSessions.map((session) => (
+                  sortedSessions.map((session) => (
                     <div
                       key={session.id}
                       onClick={() => handleSelectSession(session)}
@@ -280,7 +454,10 @@ export default function AdminChatPage() {
                           </div>
                         </div>
                         <p className="text-xs text-slate-500 truncate italic">
-                          {session.messages?.[session.messages.length - 1]?.content || "No messages yet"}
+                          {(() => {
+                            const sortedMsgs = getSortedMessages(session.messages);
+                            return sortedMsgs[sortedMsgs.length - 1]?.content || "No messages yet";
+                          })()}
                         </p>
                       </div>
                     </div>
@@ -316,35 +493,38 @@ export default function AdminChatPage() {
                 ref={scrollRef}
                 className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30"
               >
-                {(activeChat.messages || []).length === 0 ? (
-                  <div className="text-center text-slate-400 mt-10">
-                    <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-20" />
-                    <p className="text-sm">No messages yet</p>
-                  </div>
-                ) : (
-                  (activeChat.messages || []).map((msg, idx) => (
-                    <div
-                      key={msg.id || idx}
-                      className={`flex ${msg.senderType === 'admin' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div className={`max-w-[70%] rounded-2xl p-4 shadow-sm ${
-                        msg.senderType === 'admin'
-                          ? 'bg-primary text-white rounded-tr-none'
-                          : 'bg-white text-slate-700 border border-slate-100 rounded-tl-none'
-                      }`}>
-                        <p className="text-sm leading-relaxed">{msg.content}</p>
-                        <div className={`flex items-center gap-1.5 mt-1.5 ${
-                          msg.senderType === 'admin' ? 'justify-end text-white/50' : 'text-slate-400'
+                {(() => {
+                  const sortedMsgs = getSortedMessages(activeChat.messages);
+                  return sortedMsgs.length === 0 ? (
+                    <div className="text-center text-slate-400 mt-10">
+                      <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                      <p className="text-sm">No messages yet</p>
+                    </div>
+                  ) : (
+                    sortedMsgs.map((msg, idx) => (
+                      <div
+                        key={msg.id || idx}
+                        className={`flex ${msg.senderType === 'admin' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[70%] rounded-2xl p-4 shadow-sm ${
+                          msg.senderType === 'admin'
+                            ? 'bg-primary text-white rounded-tr-none'
+                            : 'bg-white text-slate-700 border border-slate-100 rounded-tl-none'
                         }`}>
-                          <span className="text-[10px]">
-                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                          {msg.senderType === 'admin' && <CheckCheck className="h-3 w-3" />}
+                          <p className="text-sm leading-relaxed">{msg.content}</p>
+                          <div className={`flex items-center gap-1.5 mt-1.5 ${
+                            msg.senderType === 'admin' ? 'justify-end text-white/50' : 'text-slate-400'
+                          }`}>
+                            <span className="text-[10px]">
+                              {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            {msg.senderType === 'admin' && <CheckCheck className="h-3 w-3" />}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
-                )}
+                    ))
+                  );
+                })()}
               </div>
 
               {/* Input */}

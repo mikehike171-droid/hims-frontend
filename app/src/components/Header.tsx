@@ -112,7 +112,7 @@ const TopBar = () => {
               onClick={openAppointment}
               className="bg-[#00A8A8] text-white px-3 py-1 rounded text-[11px] font-bold hover:bg-[#008e8e] transition-colors whitespace-nowrap shadow-sm"
             >
-              {t('For USA Patients')}
+              {t('For NRI Patients')}
             </button>
             <Link 
               href="/specialties"
@@ -408,7 +408,7 @@ const Navbar = () => {
               }}
               className="flex-1 bg-[#00A8A8] text-white px-3 py-2 rounded text-xs font-bold"
             >
-              {t('USA Patients')}
+              {t('NRI Patients')}
             </button>
             <Link 
               href="/specialties"
