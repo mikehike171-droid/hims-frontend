@@ -76,6 +76,7 @@ export default function DoctorGTPage() {
 
   // Summary totals (across ALL records, not just current page)
   const [summaryTotalPaid, setSummaryTotalPaid] = useState(0)
+  const [summaryTotalDue, setSummaryTotalDue] = useState(0)
   const [summaryTotalExams, setSummaryTotalExams] = useState(0)
   const [summaryDoctorBreakdown, setSummaryDoctorBreakdown] = useState<{ createdBy: number; doctorName: string; examCount: number; totalPaid: number }[]>([])
 
@@ -187,6 +188,7 @@ export default function DoctorGTPage() {
           }
           if (summary) {
             setSummaryTotalPaid(summary.totalPaid ?? 0)
+            setSummaryTotalDue(summary.totalDue ?? 0)
             setSummaryTotalExams(summary.totalExams ?? 0)
             setSummaryDoctorBreakdown(summary.doctorBreakdown ?? [])
           }
@@ -599,6 +601,7 @@ export default function DoctorGTPage() {
                       <TableHead className="font-bold text-slate-600">Patient ID</TableHead>
                       <TableHead className="font-bold text-slate-600">Created by (doctor/user name)</TableHead>
                       <TableHead className="font-bold text-slate-600">Amount paid (paid_amount)</TableHead>
+                      <TableHead className="font-bold text-slate-600">Due Amount</TableHead>
                       <TableHead className="font-bold text-slate-600">Created at (date/timestamp)</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -614,6 +617,7 @@ export default function DoctorGTPage() {
                           </TableCell>
                           <TableCell className="text-slate-700 font-semibold">{doctorName}</TableCell>
                           <TableCell className="font-bold text-emerald-600">₹{record.paidAmount.toFixed(2)}</TableCell>
+                          <TableCell className="font-bold text-rose-600">₹{((record as any).dueAmount ?? 0).toFixed(2)}</TableCell>
                           <TableCell className="text-slate-600 font-medium">
                             {format(new Date(record.createdAt), "dd/MM/yyyy hh:mm a")}
                           </TableCell>
@@ -668,6 +672,7 @@ export default function DoctorGTPage() {
                                 <TableHead className="font-bold text-slate-500 text-xs uppercase">Patient ID</TableHead>
                                 <TableHead className="font-bold text-slate-500 text-xs uppercase">Created At</TableHead>
                                 <TableHead className="font-bold text-slate-500 text-xs uppercase">Paid Amount</TableHead>
+                                <TableHead className="font-bold text-slate-500 text-xs uppercase">Due Amount</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -683,6 +688,7 @@ export default function DoctorGTPage() {
                                       {format(new Date(record.createdAt), "hh:mm a")}
                                     </TableCell>
                                     <TableCell className="font-bold text-emerald-600">₹{record.paidAmount.toFixed(2)}</TableCell>
+                                    <TableCell className="font-bold text-rose-600">₹{((record as any).dueAmount ?? 0).toFixed(2)}</TableCell>
                                   </TableRow>
                                 )
                               })}

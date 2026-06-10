@@ -136,6 +136,7 @@ export default function PatientRegistrationPage() {
         setOccupation(patient.occupation || '')
         setSpecialization(patient.specialization || '')
         setDoctor(patient.doctor || '')
+        setReferralCode(patient.referral_code || '')
       }
     } catch (error) {
       console.error('Failed to load patient data:', error)
@@ -227,6 +228,7 @@ export default function PatientRegistrationPage() {
   const [specialization, setSpecialization] = useState("")
   const [doctor, setDoctor] = useState("")
   const [password, setPassword] = useState("")
+  const [referralCode, setReferralCode] = useState("")
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
   // Handle patient registration/update
@@ -280,7 +282,8 @@ export default function PatientRegistrationPage() {
         occupation,
         specialization,
         doctor,
-        password
+        password,
+        referralCode
       }
 
       const token = localStorage.getItem('authToken')
@@ -478,6 +481,12 @@ export default function PatientRegistrationPage() {
               <Label>Mobile No. *</Label>
               <Input className="h-9" type="tel" placeholder="Enter 10-digit mobile" maxLength={10} value={mobile} onChange={(e) => setMobile(e.target.value)} />
               {errors.mobile && <p className="text-xs text-red-600">{errors.mobile}</p>}
+            </div>
+
+            {/* Referral Code */}
+            <div className="space-y-1">
+              <Label>Referral Code</Label>
+              <Input className="h-9" placeholder="Enter referral code" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} />
             </div>
 
             {/* Blood Group */}

@@ -9,6 +9,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Calendar as CalendarIcon,
   Filter,
@@ -46,6 +47,69 @@ export default function PatientSourcePage() {
   // Stats
   const [totalPatients, setTotalPatients] = useState<number>(0)
   const [topSource, setTopSource] = useState<{ title: string; count: number }>({ title: "N/A", count: 0 })
+
+  // Modal states
+  const [showPatientsModal, setShowPatientsModal] = useState(false)
+  const [selectedSourceTitle, setSelectedSourceTitle] = useState("")
+  const [patientsList, setPatientsList] = useState<any[]>([])
+  const [isModalLoading, setIsModalLoading] = useState(false)
+
+  const fetchPatientsForSource = async (sourceCode: string, sourceTitle: string) => {
+    try {
+      setIsModalLoading(true)
+      setSelectedSourceTitle(sourceTitle)
+      setShowPatientsModal(true)
+      setPatientsList([])
+
+      const token = localStorage.getItem('authToken')
+      const params = new URLSearchParams()
+      
+      if (selectedLocationId && selectedLocationId !== "all" && selectedLocationId !== "0") {
+        params.append('locationId', selectedLocationId)
+      }
+      if (fromDate) params.append('fromDate', format(fromDate, "yyyy-MM-dd"))
+      if (toDate) params.append('toDate', format(toDate, "yyyy-MM-dd"))
+      params.append('source', sourceCode)
+
+      const url = `${authService.getSettingsApiUrl()}/patients?${params}`
+
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (Array.isArray(data)) {
+          setPatientsList(data)
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching patients for source:", error)
+    } finally {
+      setIsModalLoading(false)
+    }
+  }
+
+  const getReferrerName = (patient: any) => {
+    if (patient.refer_patient_name && patient.refer_patient_name.trim() !== '') {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+          Patient: {patient.refer_patient_name} ({patient.ref_patient_id})
+        </span>
+      )
+    }
+    if (patient.refer_employee_name && patient.refer_employee_name.trim() !== '') {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700 border border-green-100">
+          Staff: {patient.refer_employee_name}
+        </span>
+      )
+    }
+    return <span className="text-gray-400 text-xs font-normal">Direct</span>
+  }
 
   useEffect(() => {
     // Set initial branch from authService
@@ -252,7 +316,15 @@ export default function PatientSourcePage() {
                       return (
                         <TableRow key={sourceItem.source} className="hover:bg-gray-50/50">
                           <TableCell className="font-medium text-gray-900">{sourceItem.title}</TableCell>
-                          <TableCell className="font-semibold text-gray-900">{sourceItem.count}</TableCell>
+                          <TableCell className="font-semibold text-gray-900">
+                            <Button
+                              variant="link"
+                              className="p-0 h-auto text-blue-600 hover:text-blue-800 font-semibold hover:underline"
+                              onClick={() => fetchPatientsForSource(sourceItem.source, sourceItem.title)}
+                            >
+                              {sourceItem.count}
+                            </Button>
+                          </TableCell>
                           <TableCell className="text-gray-600 font-medium">{pct}%</TableCell>
                         </TableRow>
                       )
@@ -268,6 +340,62 @@ export default function PatientSourcePage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Patients List Modal */}
+        <Dialog open={showPatientsModal} onOpenChange={setShowPatientsModal}>
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto bg-white shadow-2xl rounded-2xl border border-gray-100 p-6">
+            <DialogHeader className="border-b pb-4 mb-4">
+              <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <Users className="h-6 w-6 text-red-600" />
+                Patients from {selectedSourceTitle}
+              </DialogTitle>
+            </DialogHeader>
+
+            {isModalLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                <RefreshCw className="h-8 w-8 text-red-600 animate-spin" />
+                <p className="text-sm font-medium text-gray-500">Fetching related patients...</p>
+              </div>
+            ) : patientsList.length === 0 ? (
+              <div className="text-center py-16 text-gray-500">
+                No active patients registered from this source in the selected date range and branch.
+              </div>
+            ) : (
+              <div className="overflow-hidden border border-gray-200 rounded-xl">
+                <Table>
+                  <TableHeader className="bg-gray-50">
+                    <TableRow>
+                      <TableHead className="font-semibold text-gray-700 w-24">Patient ID</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Patient Name</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Mobile</TableHead>
+                      <TableHead className="font-semibold text-gray-700 w-24">Gender</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Registration Date</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Referral Name</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="divide-y">
+                    {patientsList.map((patient) => (
+                      <TableRow key={patient.id} className="hover:bg-gray-50/50">
+                        <TableCell className="font-semibold text-gray-900">{patient.patient_id}</TableCell>
+                        <TableCell className="font-medium text-gray-900 capitalize">
+                          {`${patient.salutation ? patient.salutation + '. ' : ''}${patient.first_name} ${patient.last_name}`}
+                        </TableCell>
+                        <TableCell className="text-gray-700 font-medium">{patient.mobile || 'N/A'}</TableCell>
+                        <TableCell className="text-gray-700 capitalize font-medium">{patient.gender || 'N/A'}</TableCell>
+                        <TableCell className="text-gray-600 font-medium">
+                          {patient.created_at ? format(new Date(patient.created_at), 'dd/MM/yyyy') : 'N/A'}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {getReferrerName(patient)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </PrivateRoute>
   )

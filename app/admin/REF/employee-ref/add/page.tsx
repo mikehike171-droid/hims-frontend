@@ -57,6 +57,7 @@ export default function AddEmployeeRefPage() {
     const [specialization, setSpecialization] = useState("")
     const [doctor, setDoctor] = useState("")
     const [password, setPassword] = useState("")
+    const [referralCode, setReferralCode] = useState("")
     const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
     const stateDistrictData = {
@@ -182,7 +183,8 @@ export default function AddEmployeeRefPage() {
                 specialization,
                 doctor,
                 password,
-                employeeRefId: userId || null
+                employeeRefId: userId || null,
+                referralCode
             }
 
             const token = localStorage.getItem('authToken')
@@ -245,6 +247,7 @@ export default function AddEmployeeRefPage() {
         setSpecialization("")
         setDoctor("")
         setPassword("")
+        setReferralCode("")
     }
 
     return (
@@ -350,6 +353,12 @@ export default function AddEmployeeRefPage() {
                             <Label>Mobile No. *</Label>
                             <Input className="h-9" type="tel" placeholder="Enter 10-digit mobile" maxLength={10} value={mobile} onChange={(e) => setMobile(e.target.value)} />
                             {errors.mobile && <p className="text-xs text-red-600">{errors.mobile}</p>}
+                        </div>
+
+                        {/* Referral Code */}
+                        <div className="space-y-1">
+                            <Label>Referral Code</Label>
+                            <Input className="h-9" placeholder="Enter referral code" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} />
                         </div>
 
                         <div className="space-y-1">

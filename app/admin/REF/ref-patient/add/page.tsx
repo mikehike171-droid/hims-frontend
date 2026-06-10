@@ -61,6 +61,7 @@ export default function AddRefPatientPage() {
     const [specialization, setSpecialization] = useState("")
     const [doctor, setDoctor] = useState("")
     const [password, setPassword] = useState("")
+    const [referralCode, setReferralCode] = useState("")
     const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
     // State and District data
@@ -219,7 +220,8 @@ export default function AddRefPatientPage() {
                 specialization,
                 doctor,
                 password,
-                refPatientId: selectedPatient?.patient_id || null
+                refPatientId: selectedPatient?.patient_id || null,
+                referralCode
             }
 
             const token = localStorage.getItem('authToken')
@@ -284,6 +286,7 @@ export default function AddRefPatientPage() {
         setSpecialization("")
         setDoctor("")
         setPassword("")
+        setReferralCode("")
     }
 
     return (
@@ -477,6 +480,12 @@ export default function AddRefPatientPage() {
                             <Label>Mobile No. *</Label>
                             <Input className="h-9" type="tel" placeholder="Enter 10-digit mobile" maxLength={10} value={mobile} onChange={(e) => setMobile(e.target.value)} />
                             {errors.mobile && <p className="text-xs text-red-600">{errors.mobile}</p>}
+                        </div>
+
+                        {/* Referral Code */}
+                        <div className="space-y-1">
+                            <Label>Referral Code</Label>
+                            <Input className="h-9" placeholder="Enter referral code" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} />
                         </div>
 
                         {/* Blood Group */}

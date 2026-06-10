@@ -7,11 +7,43 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Label } from "@/components/ui/label"
-import { Search, Plus, Users, Phone, Calendar as CalendarIcon, MapPin, ArrowLeft, Edit, DollarSign, ChevronLeft, ChevronRight } from "lucide-react"
+import {
+  Search,
+  Plus,
+  Users,
+  Phone,
+  Calendar as CalendarIcon,
+  MapPin,
+  ArrowLeft,
+  Edit,
+  DollarSign,
+  ChevronLeft,
+  ChevronRight,
+  History,
+  FileText,
+  Trash2,
+  Banknote,
+  CreditCard,
+  Smartphone,
+  Building,
+  Receipt,
+  IndianRupee,
+  ChevronDown,
+  Printer,
+  Clock
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import PrivateRoute from "@/components/auth/PrivateRoute"
 import authService from "@/lib/authService"
+import { settingsApi } from "@/lib/settingsApi"
+import { format, parseISO, addMonths } from "date-fns"
+import { cn } from "@/lib/utils"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 
 export default function PatientSearch() {
   const router = useRouter()
@@ -23,11 +55,76 @@ export default function PatientSearch() {
   const [pageSize] = useState(10)
   const [totalRecords, setTotalRecords] = useState(0)
 
-  useEffect(() => {
-    if (searchTerm) {
-      fetchPatients()
+  // Examination History Modal States
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false)
+  const [selectedPatientForHistory, setSelectedPatientForHistory] = useState<any>(null)
+  const [allExaminations, setAllExaminations] = useState<any[]>([])
+  const [examLoading, setExamLoading] = useState(false)
+
+  // Appointment History Modal States
+  const [showAppointmentsDialog, setShowAppointmentsDialog] = useState(false)
+  const [selectedPatientForAppointments, setSelectedPatientForAppointments] = useState<any>(null)
+  const [patientAppointments, setPatientAppointments] = useState<any[]>([])
+  const [appointmentsLoading, setAppointmentsLoading] = useState(false)
+
+  const handleShowAppointments = (patient: any) => {
+    setSelectedPatientForAppointments(patient)
+    setShowAppointmentsDialog(true)
+    setPatientAppointments([])
+    fetchPatientAppointments(patient.id)
+  }
+
+  const fetchPatientAppointments = async (pId: any) => {
+    try {
+      setAppointmentsLoading(true)
+      const token = localStorage.getItem('authToken')
+      const response = await fetch(`${authService.getSettingsApiUrl()}/appointments/patient/${pId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setPatientAppointments(Array.isArray(data) ? data : [])
+      }
+    } catch (error) {
+      console.error('Error fetching patient appointments:', error)
+    } finally {
+      setAppointmentsLoading(false)
     }
-  }, [currentPage])
+  }
+
+  const handleShowHistory = (patient: any) => {
+    setSelectedPatientForHistory(patient)
+    setShowHistoryDialog(true)
+    setAllExaminations([])
+    fetchPatientExaminations(patient.id)
+  }
+
+  const fetchPatientExaminations = async (pId: any) => {
+    try {
+      setExamLoading(true)
+      const token = localStorage.getItem('authToken')
+      const response = await fetch(`${authService.getSettingsApiUrl()}/patient-examination/${pId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const examinations = Array.isArray(data) ? data : []
+        setAllExaminations(examinations)
+      }
+    } catch (error) {
+      console.error('Error fetching patient examinations:', error)
+    } finally {
+      setExamLoading(false)
+    }
+  }
 
   const fetchPatients = async () => {
     try {
@@ -260,6 +357,24 @@ export default function PatientSearch() {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200"
+                              title="Examination History"
+                              onClick={() => handleShowHistory(patient)}
+                            >
+                              <History className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
+                              title="Appointment History"
+                              onClick={() => handleShowAppointments(patient)}
+                            >
+                              <Clock className="h-4 w-4" />
+                            </Button>
                             <Link href={`/admin/front-office/appointments/book?patientId=${patient.patientId}`}>
                               <Button
                                 variant="outline"
@@ -364,6 +479,177 @@ export default function PatientSearch() {
             )}
           </CardContent>
         </Card>
+
+        {/* Examination History Modal Dialog */}
+        <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white p-6">
+            <DialogHeader className="border-b pb-4 mb-4">
+              <DialogTitle className="flex items-center gap-2 text-2xl font-bold text-slate-800">
+                <History className="h-6 w-6 text-indigo-600" />
+                Examination History
+              </DialogTitle>
+              <DialogDescription className="hidden">Displays historical examination details for the selected patient.</DialogDescription>
+              <div className="flex flex-wrap gap-4 mt-2 text-sm text-slate-500">
+                <span><strong>Patient:</strong> {selectedPatientForHistory?.name}</span>
+                <span><strong>UHID:</strong> {selectedPatientForHistory?.patientId}</span>
+                <span><strong>Mobile:</strong> {selectedPatientForHistory?.mobile}</span>
+                <span><strong>Gender:</strong> {selectedPatientForHistory?.gender}</span>
+                <span><strong>Age:</strong> {selectedPatientForHistory?.age}</span>
+              </div>
+            </DialogHeader>
+
+            {examLoading ? (
+              <div className="text-center py-12 text-slate-500">Loading examination history...</div>
+            ) : allExaminations.length === 0 ? (
+              <div className="text-center py-12 text-slate-400 text-sm">No examinations recorded yet</div>
+            ) : (
+              <div className="overflow-x-auto border border-slate-100 rounded-xl shadow-sm">
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow>
+                      <TableHead className="font-bold text-slate-700">Date</TableHead>
+                      <TableHead className="font-bold text-slate-700">Doctor Plan</TableHead>
+                      <TableHead className="font-bold text-slate-700">Doctor Renewal</TableHead>
+                      <TableHead className="font-bold text-slate-700">PRO Plan</TableHead>
+                      <TableHead className="font-bold text-slate-700">PRO Renewal</TableHead>
+                      <TableHead className="font-bold text-slate-700">Total Amount</TableHead>
+                      <TableHead className="font-bold text-slate-700">Discount</TableHead>
+                      <TableHead className="font-bold text-green-700">Paid Amount</TableHead>
+                      <TableHead className="font-bold text-red-700">Due Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {allExaminations.map((exam) => (
+                      <TableRow key={exam.id} className="hover:bg-slate-50 transition-colors">
+                        <TableCell className="font-medium">
+                          <span className="font-bold">
+                            {(() => {
+                              const dateVal = exam.created_at || exam.createdAt
+                              return dateVal ? format(new Date(dateVal), "dd/MM/yyyy") : 'N/A'
+                            })()}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const val = exam.treatment_plan_months_doctor || exam.treatmentPlanMonthsDoctor
+                            return val ? `${val} Month${val > 1 ? 's' : ''}` : '-'
+                          })()}
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const val = exam.next_renewal_date_doctor || exam.nextRenewalDateDoctor
+                            return val ? format(new Date(val), "dd/MM/yyyy") : '-'
+                          })()}
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const val = exam.treatment_plan_months_pro || exam.treatmentPlanMonthsPro
+                            return val ? `${val} Month${val > 1 ? 's' : ''}` : '-'
+                          })()}
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const val = exam.next_renewal_date_pro || exam.nextRenewalDatePro
+                            return val ? format(new Date(val), "dd/MM/yyyy") : '-'
+                          })()}
+                        </TableCell>
+                        <TableCell>
+                          ₹{(() => {
+                            const val = exam.total_amount || exam.totalAmount || 0
+                            return parseFloat(val.toString()).toFixed(2)
+                          })()}
+                        </TableCell>
+                        <TableCell>
+                          ₹{(() => {
+                            const val = exam.discount_amount || exam.discountAmount || 0
+                            return parseFloat(val.toString()).toFixed(2)
+                          })()}
+                        </TableCell>
+                        <TableCell className="text-green-600 font-medium">
+                          ₹{(() => {
+                            const val = exam.paid_amount || exam.paidAmount || 0
+                            return parseFloat(val.toString()).toFixed(2)
+                          })()}
+                        </TableCell>
+                        <TableCell className="text-red-655 font-bold">
+                          ₹{(() => {
+                            const val = exam.due_amount || exam.dueAmount || 0
+                            return parseFloat(val.toString()).toFixed(2)
+                          })()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Appointment History Modal Dialog */}
+        <Dialog open={showAppointmentsDialog} onOpenChange={setShowAppointmentsDialog}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white p-6">
+            <DialogHeader className="border-b pb-4 mb-4">
+              <DialogTitle className="flex items-center gap-2 text-2xl font-bold text-slate-800">
+                <Clock className="h-6 w-6 text-amber-600" />
+                Appointment History
+              </DialogTitle>
+              <DialogDescription className="hidden">Displays historical appointment details for the selected patient.</DialogDescription>
+              <div className="flex flex-wrap gap-4 mt-2 text-sm text-slate-500">
+                <span><strong>Patient:</strong> {selectedPatientForAppointments?.name}</span>
+                <span><strong>UHID:</strong> {selectedPatientForAppointments?.patientId}</span>
+                <span><strong>Mobile:</strong> {selectedPatientForAppointments?.mobile}</span>
+                <span><strong>Gender:</strong> {selectedPatientForAppointments?.gender}</span>
+                <span><strong>Age:</strong> {selectedPatientForAppointments?.age}</span>
+              </div>
+            </DialogHeader>
+
+            {appointmentsLoading ? (
+              <div className="text-center py-12 text-slate-500">Loading appointment history...</div>
+            ) : patientAppointments.length === 0 ? (
+              <div className="text-center py-12 text-slate-400 text-sm">No appointments recorded yet</div>
+            ) : (
+              <div className="overflow-x-auto border border-slate-100 rounded-xl shadow-sm">
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow>
+                      <TableHead className="font-bold text-slate-700">Appointment ID</TableHead>
+                      <TableHead className="font-bold text-slate-700">Date</TableHead>
+                      <TableHead className="font-bold text-slate-700">Time</TableHead>
+                      <TableHead className="font-bold text-slate-700">Type</TableHead>
+                      <TableHead className="font-bold text-slate-700">Doctor</TableHead>
+                      <TableHead className="font-bold text-slate-700">Notes/Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {patientAppointments.map((app) => (
+                      <TableRow key={app.id} className="hover:bg-slate-50 transition-colors">
+                        <TableCell className="font-medium text-blue-600">
+                          {app.appointmentId}
+                        </TableCell>
+                        <TableCell className="font-semibold">
+                          {app.appointmentDate ? format(new Date(app.appointmentDate), "dd/MM/yyyy") : 'N/A'}
+                        </TableCell>
+                        <TableCell>{app.appointmentTime || 'N/A'}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="capitalize">
+                            {app.appointmentType || 'N/A'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium text-slate-800">
+                          {app.doctorName || 'N/A'}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate text-slate-600" title={app.notes}>
+                          {app.notes || '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </PrivateRoute>
   )

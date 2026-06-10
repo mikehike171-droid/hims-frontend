@@ -25,9 +25,10 @@ import {
   ArrowUp,
   ArrowDown,
   Printer,
-  Trash2
+  Trash2,
+  Clock
 } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import PrivateRoute from "@/components/auth/PrivateRoute"
@@ -58,6 +59,41 @@ export default function PatientListPage() {
   const [showRegistrationReceipt, setShowRegistrationReceipt] = useState(false)
   const [selectedPatientForReceipt, setSelectedPatientForReceipt] = useState<any>(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  
+  // Appointment History Modal States
+  const [showAppointmentsDialog, setShowAppointmentsDialog] = useState(false)
+  const [selectedPatientForAppointments, setSelectedPatientForAppointments] = useState<any>(null)
+  const [patientAppointments, setPatientAppointments] = useState<any[]>([])
+  const [appointmentsLoading, setAppointmentsLoading] = useState(false)
+
+  const handleShowAppointments = (patient: any) => {
+    setSelectedPatientForAppointments(patient)
+    setShowAppointmentsDialog(true)
+    setPatientAppointments([])
+    fetchPatientAppointments(patient.id)
+  }
+
+  const fetchPatientAppointments = async (pId: any) => {
+    try {
+      setAppointmentsLoading(true)
+      const token = localStorage.getItem('authToken')
+      const response = await fetch(`${authService.getSettingsApiUrl()}/appointments/patient/${pId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setPatientAppointments(Array.isArray(data) ? data : [])
+      }
+    } catch (error) {
+      console.error('Error fetching patient appointments:', error)
+    } finally {
+      setAppointmentsLoading(false)
+    }
+  }
 
   useEffect(() => {
     const user = authService.getUserInfo()
@@ -553,6 +589,15 @@ export default function PatientListPage() {
                             <Button
                               variant="outline"
                               size="sm"
+                              className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
+                              title="Appointment History"
+                              onClick={() => handleShowAppointments(patient)}
+                            >
+                              <Clock className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="h-8 w-8 p-0"
                               title="Registration Receipt"
                               onClick={() => {
@@ -786,6 +831,71 @@ export default function PatientListPage() {
                     Close
                   </Button>
                 </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Appointment History Modal Dialog */}
+        <Dialog open={showAppointmentsDialog} onOpenChange={setShowAppointmentsDialog}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white p-6">
+            <DialogHeader className="border-b pb-4 mb-4">
+              <DialogTitle className="flex items-center gap-2 text-2xl font-bold text-slate-800">
+                <Clock className="h-6 w-6 text-amber-600" />
+                Appointment History
+              </DialogTitle>
+              <DialogDescription className="hidden">Displays historical appointment details for the selected patient.</DialogDescription>
+              <div className="flex flex-wrap gap-4 mt-2 text-sm text-slate-500">
+                <span><strong>Patient:</strong> {selectedPatientForAppointments?.name}</span>
+                <span><strong>UHID:</strong> {selectedPatientForAppointments?.patientId}</span>
+                <span><strong>Mobile:</strong> {selectedPatientForAppointments?.mobile}</span>
+                <span><strong>Gender:</strong> {selectedPatientForAppointments?.gender}</span>
+                <span><strong>Age:</strong> {selectedPatientForAppointments?.age}</span>
+              </div>
+            </DialogHeader>
+
+            {appointmentsLoading ? (
+              <div className="text-center py-12 text-slate-500">Loading appointment history...</div>
+            ) : patientAppointments.length === 0 ? (
+              <div className="text-center py-12 text-slate-400 text-sm">No appointments recorded yet</div>
+            ) : (
+              <div className="overflow-x-auto border border-slate-100 rounded-xl shadow-sm">
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow>
+                      <TableHead className="font-bold text-slate-700">Appointment ID</TableHead>
+                      <TableHead className="font-bold text-slate-700">Date</TableHead>
+                      <TableHead className="font-bold text-slate-700">Time</TableHead>
+                      <TableHead className="font-bold text-slate-700">Type</TableHead>
+                      <TableHead className="font-bold text-slate-700">Doctor</TableHead>
+                      <TableHead className="font-bold text-slate-700">Notes/Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {patientAppointments.map((app) => (
+                      <TableRow key={app.id} className="hover:bg-slate-50 transition-colors">
+                        <TableCell className="font-medium text-blue-600">
+                          {app.appointmentId}
+                        </TableCell>
+                        <TableCell className="font-semibold">
+                          {app.appointmentDate ? format(new Date(app.appointmentDate), "dd/MM/yyyy") : 'N/A'}
+                        </TableCell>
+                        <TableCell>{app.appointmentTime || 'N/A'}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="capitalize">
+                            {app.appointmentType || 'N/A'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium text-slate-800">
+                          {app.doctorName || 'N/A'}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate text-slate-600" title={app.notes}>
+                          {app.notes || '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </DialogContent>

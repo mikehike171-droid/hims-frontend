@@ -197,23 +197,23 @@ const getLocationId = () => {
 const getFileUrl = (path: string) => {
   if (!path) return "";
   if (path.startsWith('http')) return path;
-  
+
   const cleanedPath = path.startsWith('/') ? path : `/${path}`;
-  
+
   if (typeof window !== 'undefined') {
     // Always use the relative proxy path in the browser to bypass firewalls and mixed-content issues
     return `/settings-service${cleanedPath}`;
   }
-  
+
   const absoluteApiUrl = getSettingsApiAbsoluteUrl() || '';
   let baseUrl = '';
-  
+
   if (absoluteApiUrl.includes('/api/settings-service')) {
     baseUrl = absoluteApiUrl.replace('/api/settings-service', '/settings-service');
   } else {
     baseUrl = absoluteApiUrl.replace(/\/api\/?$/, '');
   }
-  
+
   return `${baseUrl}${cleanedPath}`;
 };
 

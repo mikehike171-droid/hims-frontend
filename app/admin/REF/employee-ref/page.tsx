@@ -86,6 +86,7 @@ export default function EmployeeRefListPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referred By (Employee)</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referral Code</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered At</th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -93,13 +94,13 @@ export default function EmployeeRefListPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                       Loading patients...
                     </td>
                   </tr>
                 ) : filteredPatients.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                       No Employee REF patients found
                     </td>
                   </tr>
@@ -127,6 +128,11 @@ export default function EmployeeRefListPage() {
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
                         <span className="px-2 py-1 bg-green-50 text-green-700 rounded-md text-xs font-medium border border-green-100">
                           {`${patient.referrer_first_name} ${patient.referrer_last_name}`}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded-md text-xs font-medium border border-purple-100">
+                          {patient.referral_code || 'N/A'}
                         </span>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
