@@ -8,8 +8,23 @@ interface Props {
 
 export default async function CatchAllSlugPage({ params }: Props) {
   const { slug } = params;
-  let redirectTo: string | null = null;
   const normalizedReq = slug.toLowerCase().trim();
+
+  // Static redirects for common legacy paths
+  if (normalizedReq === 'treatment' || normalizedReq === 'treatments') {
+    redirect('/specialties');
+  }
+  if (normalizedReq === 'clinic') {
+    redirect('/#clinics');
+  }
+  if (normalizedReq === 'about-us') {
+    redirect('/about');
+  }
+  if (normalizedReq === 'contact' || normalizedReq === 'contact-us') {
+    redirect('/#appointment');
+  }
+
+  let redirectTo: string | null = null;
 
   // 1. Fetch all treatments and find a robust match by slug or name
   try {
