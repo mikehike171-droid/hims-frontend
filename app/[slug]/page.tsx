@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { settingsApi } from "@/lib/settingsApi";
+import { slugify } from "../../lib/utils";
 
 interface Props {
   params: { slug: string };
@@ -8,26 +9,44 @@ interface Props {
 export default async function CatchAllSlugPage({ params }: Props) {
   const { slug } = params;
   let redirectTo: string | null = null;
+  const normalizedReq = slug.toLowerCase().trim();
 
-  // 1. Check if the slug matches an active treatment
+  // 1. Fetch all treatments and find a robust match by slug or name
   try {
-    const treatment = await settingsApi.getPublicTreatmentBySlug(slug);
-    if (treatment) {
-      redirectTo = `/treatment/${slug}`;
+    const treatments = await settingsApi.getPublicTreatments();
+    if (Array.isArray(treatments)) {
+      const matched = treatments.find((t: any) => {
+        if (t.status !== 'active') return false;
+        const dbSlug = (t.slug || '').toLowerCase().trim();
+        const dbNameSlug = slugify(t.name || '').toLowerCase().trim();
+        return dbSlug === normalizedReq || dbNameSlug === normalizedReq;
+      });
+
+      if (matched) {
+        redirectTo = `/treatment/${matched.slug || matched.id}`;
+      }
     }
   } catch (error) {
-    console.error("CatchAll redirect: error checking treatment slug", error);
+    console.error("CatchAll redirect: error checking treatments list", error);
   }
 
-  // 2. Check if the slug matches a clinic branch
+  // 2. Fetch all clinic branches and find a robust match by slug or name
   if (!redirectTo) {
     try {
-      const branch = await settingsApi.getPublicBranchBySlug(slug);
-      if (branch) {
-        redirectTo = `/clinics/${slug}`;
+      const branches = await settingsApi.getPublicBranches();
+      if (Array.isArray(branches)) {
+        const matched = branches.find((b: any) => {
+          const dbSlug = (b.slug || b.id || '').toString().toLowerCase().trim();
+          const dbNameSlug = slugify(b.name || '').toLowerCase().trim();
+          return dbSlug === normalizedReq || dbNameSlug === normalizedReq;
+        });
+
+        if (matched) {
+          redirectTo = `/clinics/${matched.slug || matched.id}`;
+        }
       }
     } catch (error) {
-      console.error("CatchAll redirect: error checking clinic slug", error);
+      console.error("CatchAll redirect: error checking branches list", error);
     }
   }
 
