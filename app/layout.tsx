@@ -1,32 +1,71 @@
-"use client"
-
 import './globals.css'
-import { useEffect } from 'react'
 import Script from 'next/script'
-import dynamic from 'next/dynamic'
-import { usePathname } from 'next/navigation'
+import ClientLayout from './ClientLayout'
+import type { Metadata } from 'next'
 
-import { LanguageProvider } from "@/i18n/LanguageContext";
-
-const BookingSuccessModal = dynamic(() => import("@/components/BookingSuccessModal"), { ssr: false });
-const ChatWidget = dynamic(() => import("@/components/ChatWidget"), { ssr: false });
-const AppointmentPopup = dynamic(() => import("@/components/AppointmentPopup"), { ssr: false });
-const WhatsAppFloat = dynamic(() => import("@/components/WhatsAppFloat"), { ssr: false });
-const SpecialOffer = dynamic(() => import("@/components/SpecialOffer"), { ssr: false });
+export const metadata: Metadata = {
+  metadataBase: new URL('https://www.unicarehomeopathy.com'),
+  title: {
+    default: 'UniCare Homeopathy | Holistic Healing & Constitutional Treatment',
+    template: '%s | UniCare Homeopathy',
+  },
+  description: 'UniCare Homeopathy offers personalized, constitutional homeopathic healthcare. Book appointments, read wellness articles, and treat chronic diseases naturally.',
+  keywords: [
+    'homeopathy',
+    'holistic healthcare',
+    'constitutional treatment',
+    'doctor appointment',
+    'chronic diseases',
+    'natural medicine',
+    'homeopathic clinic',
+    'UniCare Homeopathy',
+  ],
+  authors: [{ name: 'UniCare Homeopathy' }],
+  creator: 'UniCare Homeopathy',
+  publisher: 'UniCare Homeopathy',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'UniCare Homeopathy | Holistic Healing & Constitutional Treatment',
+    description: 'Expert constitutional homeopathic treatment for chronic and acute ailments. Natural healing tailored to your health profile.',
+    url: 'https://www.unicarehomeopathy.com',
+    siteName: 'UniCare Homeopathy',
+    locale: 'en_IN',
+    type: 'website',
+    images: [
+      {
+        url: '/images/og-main.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'UniCare Homeopathy Clinic',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'UniCare Homeopathy | Holistic Healing & Constitutional Treatment',
+    description: 'Constitutional homeopathic treatment tailored to your health profile. Natural healing for chronic and acute ailments.',
+    images: ['/images/og-main.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+}
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const pathname = usePathname()
-  const isAdminPage = pathname?.startsWith('/admin')
-
-  useEffect(() => {
-    // Initialize global 401 interceptor
-    import('@/lib/apiClient')
-  }, [])
-
   return (
     <html lang="en">
       <head>
@@ -105,20 +144,9 @@ export default function RootLayout({
           }
         ` }} />
       </head>
-      <body className={`font-sans text-slate-900 bg-slate-50 ${isAdminPage ? 'notranslate' : ''}`}>
-        <LanguageProvider>
-          {children}
-          {!isAdminPage && (
-            <>
-              <BookingSuccessModal />
-              <ChatWidget />
-              <AppointmentPopup />
-              <WhatsAppFloat />
-              <SpecialOffer />
-            </>
-          )}
-        </LanguageProvider>
-      </body>
+      <ClientLayout>
+        {children}
+      </ClientLayout>
     </html>
   );
 }

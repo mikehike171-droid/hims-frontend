@@ -1,3 +1,5 @@
+"use client";
+
 import Header from "@/components/Header";
 import HeroScroller from "@/components/HeroScroller";
 import BookAppointmentBanner from "@/components/BookAppointmentBanner";
