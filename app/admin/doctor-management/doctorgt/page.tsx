@@ -305,6 +305,7 @@ export default function DoctorGTPage() {
         body: JSON.stringify({
           paidAmount: parseFloat(editPaidAmount),
           createdAt: new Date(editCreatedAt).toISOString(),
+          isInstallment: true
         }),
       })
 
