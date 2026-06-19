@@ -367,7 +367,6 @@ export default function PatientSourcePage() {
                     <TableRow>
                       <TableHead className="font-semibold text-gray-700 w-24">Patient ID</TableHead>
                       <TableHead className="font-semibold text-gray-700">Patient Name</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Mobile</TableHead>
                       <TableHead className="font-semibold text-gray-700 w-24">Gender</TableHead>
                       <TableHead className="font-semibold text-gray-700">Registration Date</TableHead>
                       <TableHead className="font-semibold text-gray-700">Referral Name</TableHead>
@@ -380,7 +379,6 @@ export default function PatientSourcePage() {
                         <TableCell className="font-medium text-gray-900 capitalize">
                           {`${patient.salutation ? patient.salutation + '. ' : ''}${patient.first_name} ${patient.last_name}`}
                         </TableCell>
-                        <TableCell className="text-gray-700 font-medium">{patient.mobile || 'N/A'}</TableCell>
                         <TableCell className="text-gray-700 capitalize font-medium">{patient.gender || 'N/A'}</TableCell>
                         <TableCell className="text-gray-600 font-medium">
                           {patient.created_at ? format(new Date(patient.created_at), 'dd/MM/yyyy') : 'N/A'}

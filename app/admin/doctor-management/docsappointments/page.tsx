@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import { Calendar, Clock, User, Users, Phone, CalendarIcon, CheckCircle, AlertCircle, XCircle, FileText, Search, PhoneCall, Loader2 } from "lucide-react"
+import { Calendar, Clock, User, Users, CalendarIcon, CheckCircle, AlertCircle, XCircle, FileText, Search, PhoneCall, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import PrivateRoute from "@/components/auth/PrivateRoute"
 import authService from "@/lib/authService"
@@ -43,6 +43,7 @@ export default function DoctorAppointmentsPage() {
   const filteredAppointments = appointments.filter((appointment: any) => {
     const matchesSearch = searchTerm === "" ||
       appointment.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      appointment.patientRegId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       appointment.patientPhone?.includes(searchTerm) ||
       appointment.notes?.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesSearch
@@ -341,10 +342,6 @@ export default function DoctorAppointmentsPage() {
                             </div>
                             <div>
                               <p className="font-medium">{appointment.patientName}</p>
-                              <p className="text-sm text-gray-600 flex items-center gap-1">
-                                <Phone className="h-3 w-3" />
-                                {appointment.patientPhone}
-                              </p>
                             </div>
                           </div>
                         </TableCell>
