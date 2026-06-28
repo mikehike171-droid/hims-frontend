@@ -14,6 +14,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import PrivateRoute from "@/components/auth/PrivateRoute"
 import authService from "@/lib/authService"
 
+const maskPhoneNumber = (phone: string) => {
+  if (!phone || phone === "N/A") return "******9999"
+  const digits = phone.replace(/\D/g, "")
+  if (digits.length <= 4) return "******" + digits
+  return "******" + digits.slice(-4)
+}
+
 interface CallHistoryRecord {
   sno: number
   dateTime: string
@@ -476,7 +483,7 @@ export default function CallPatientPage() {
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-600">Mobile</Label>
-                    <p className="text-lg font-semibold">{patientData.mobile_number || patientData.mobile || 'N/A'}</p>
+                    <p className="text-lg font-semibold">{maskPhoneNumber(patientData.mobile_number || patientData.mobile)}</p>
                   </div>
                 </div>
               )}
