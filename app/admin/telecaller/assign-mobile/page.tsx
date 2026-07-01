@@ -120,7 +120,6 @@ export default function AssignMobilePage() {
       setAssigning(false)
     }
   }
-
   const handleAssignByCount = async () => {
     if (!selectedUser || !numberCount) {
       alert('Please select user and enter number count')
@@ -128,12 +127,10 @@ export default function AssignMobilePage() {
     }
 
     const count = parseInt(numberCount)
-    if (count <= 0 || count > unassignedNumbers.length) {
-      alert(`Please enter a number between 1 and ${unassignedNumbers.length}`)
+    if (count <= 0 || count > pagination.total) {
+      alert(`Please enter a number between 1 and ${pagination.total}`)
       return
     }
-
-    const numbersToAssign = unassignedNumbers.slice(0, count).map((num: any) => num.id)
 
     setAssigning(true)
     try {
@@ -145,17 +142,21 @@ export default function AssignMobilePage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          mobileIds: numbersToAssign,
+          count: count,
           userId: parseInt(selectedUser)
         })
       })
 
       if (response.ok) {
         const result = await response.json()
-        alert(`Successfully assigned ${result.count} numbers`)
-        setSelectedUser("")
-        setNumberCount("")
-        fetchData()
+        if (result.success === false) {
+          alert(result.message || 'Failed to assign numbers')
+        } else {
+          alert(`Successfully assigned ${result.count} numbers`)
+          setSelectedUser("")
+          setNumberCount("")
+          fetchData()
+        }
       } else {
         alert('Failed to assign numbers')
       }
@@ -196,7 +197,7 @@ export default function AssignMobilePage() {
                 value={numberCount}
                 onChange={(e) => setNumberCount(e.target.value)}
                 min="1"
-                max={unassignedNumbers.length}
+                max={pagination.total}
               />
               
               <Button 

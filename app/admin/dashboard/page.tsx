@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import authService from "@/lib/authService"
 import PrivateRoute from "@/components/auth/PrivateRoute"
+import { useBranch } from "@/contexts/branch-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -36,6 +37,7 @@ import {
 
 export default function AdminDashboard() {
   const router = useRouter()
+  const { currentBranch } = useBranch()
   const [patientCount, setPatientCount] = useState<string>("...")
   const [appointmentCount, setAppointmentCount] = useState<string>("...")
   const [revenue, setRevenue] = useState<string>("...")
@@ -66,7 +68,11 @@ export default function AdminDashboard() {
           'Authorization': `Bearer ${token}`
         };
 
-        const response = await fetch(`${authService.getSettingsApiUrl()}/patients/dashboard-stats`, { headers });
+        const rawLocationId = authService.getLocationId();
+        const locationId = rawLocationId ? rawLocationId.replace(/"/g, '').trim() : '';
+        const hasLocation = locationId && locationId !== 'null' && locationId !== 'undefined';
+        const url = `${authService.getSettingsApiUrl()}/patients/dashboard-stats${hasLocation ? `?locationId=${locationId}` : ''}`;
+        const response = await fetch(url, { headers });
         if (response.ok) {
           const data = await response.json();
           setPatientCount(data.patients.month?.toString() || "0");
@@ -122,7 +128,7 @@ export default function AdminDashboard() {
     {
       title: "New Patients (Month)",
       value: patientCount,
-      change: "All Locations",
+      change: currentBranch?.name || "All Locations",
       trend: "up",
       icon: Users,
       color: "blue"
@@ -130,7 +136,7 @@ export default function AdminDashboard() {
     {
       title: "Appointments (Month)",
       value: appointmentCount,
-      change: "All Locations",
+      change: currentBranch?.name || "All Locations",
       trend: "up",
       icon: Calendar,
       color: "green"
@@ -138,7 +144,7 @@ export default function AdminDashboard() {
     {
       title: "Revenue (Month)",
       value: revenue === "..." ? "..." : `₹${revenue}`,
-      change: "All Locations",
+      change: currentBranch?.name || "All Locations",
       trend: "up",
       icon: DollarSign,
       color: "purple"
@@ -146,7 +152,7 @@ export default function AdminDashboard() {
     {
       title: "Due Amount (Month)",
       value: dueAmount === "..." ? "..." : `₹${dueAmount}`,
-      change: "All Locations",
+      change: currentBranch?.name || "All Locations",
       trend: "down",
       icon: AlertTriangle,
       color: "orange"
@@ -168,7 +174,7 @@ export default function AdminDashboard() {
               <div className="flex items-center space-x-4">
                 <Badge variant="outline" className="text-red-600 border-red-200">
                   <Building2 className="h-3 w-3 mr-1" />
-                  Main Hospital
+                  {currentBranch?.name || "All Locations"}
                 </Badge>
               </div>
             </div>
