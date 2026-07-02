@@ -192,7 +192,7 @@ const BlogDetails = () => {
                   {recentBlogs.filter(b => b.id !== blog.id).slice(0, 4).map((rBlog) => (
                     <Link
                       key={rBlog.id}
-                      href={`/blog/${slugify(rBlog.title)}`}
+                      href={`/blog/${rBlog.slug || slugify(rBlog.title)}`}
                       className="group flex gap-4 items-start"
                     >
                       <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 border-2 border-white shadow-sm">

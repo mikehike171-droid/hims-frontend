@@ -101,7 +101,7 @@ const AllBlogs = () => {
                     className="treatment-card group hover:-translate-y-2 transition-all duration-500 animate-fade-in-up"
                     style={{ animationDelay: `${(i % 3) * 150}ms` }}
                   >
-                    <Link href={`/blog/${slugify(b.title)}`} className="overflow-hidden aspect-[4/3] block">
+                    <Link href={`/blog/${b.slug || slugify(b.title)}`} className="overflow-hidden aspect-[4/3] block">
                       <img
                         src={getImageUrl(b.image_url)}
                         alt={b.title}
@@ -118,7 +118,7 @@ const AllBlogs = () => {
                           {new Date(b.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <Link href={`/blog/${slugify(b.title)}`}>
+                      <Link href={`/blog/${b.slug || slugify(b.title)}`}>
                         <h3 className="text-lg font-bold text-foreground font-heading line-clamp-2 group-hover:text-[#1B7A43] transition-colors duration-300 min-h-[3.5rem]">
                           {b.title}
                         </h3>
@@ -127,7 +127,7 @@ const AllBlogs = () => {
                         {b.short_description}
                       </p>
                       <div className="mt-5 pt-5 border-t border-slate-100">
-                        <Link href={`/blog/${slugify(b.title)}`} className="text-[#1B7A43] font-bold text-xs uppercase tracking-widest flex items-center gap-2 group/link">
+                        <Link href={`/blog/${b.slug || slugify(b.title)}`} className="text-[#1B7A43] font-bold text-xs uppercase tracking-widest flex items-center gap-2 group/link">
                           {t('Read Story')}
                           <span className="group-hover/link:translate-x-1 transition-transform duration-300">→</span>
                         </Link>

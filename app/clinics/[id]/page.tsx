@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import ClinicDetails from "@/pages/ClinicDetails";
 import { settingsApi } from "@/lib/settingsApi";
+import { notFound } from "next/navigation";
 
 interface Props {
   params: { id: string }
@@ -37,7 +38,7 @@ export default async function ClinicPage({ params }: Props) {
   const branch = await settingsApi.getPublicBranchBySlug(params.id);
   
   if (!branch) {
-    return <ClinicDetails />;
+    notFound();
   }
 
   const schemaData = {

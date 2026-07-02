@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import BlogDetails from "@/pages/BlogDetails";
 import { settingsApi } from "@/lib/settingsApi";
 import authService from "@/lib/authService";
+import { notFound } from "next/navigation";
 
 interface Props {
   params: { slug: string }
@@ -52,7 +53,7 @@ export default async function BlogPage({ params }: Props) {
   const blog = await settingsApi.getPublicBlogByTitle(params.slug);
   
   if (!blog) {
-    return <BlogDetails />;
+    notFound();
   }
 
   const imageUrl = blog.image_url ? authService.getFileUrl(blog.image_url) : 'https://www.unicarehomeopathy.com/images/og-main.jpg'

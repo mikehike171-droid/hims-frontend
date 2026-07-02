@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import TreatmentDetailPageClient from "./TreatmentDetailPageClient";
 import { settingsApi } from "@/lib/settingsApi";
 import authService from "@/lib/authService";
+import { notFound } from "next/navigation";
 
 interface Props {
   params: { slug: string }
@@ -49,7 +50,7 @@ export default async function TreatmentPage({ params }: Props) {
   const treatment = await settingsApi.getPublicTreatmentBySlug(params.slug);
   
   if (!treatment) {
-    return <TreatmentDetailPageClient />;
+    notFound();
   }
 
   const imageUrl = treatment.image_url ? authService.getFileUrl(treatment.image_url) : 'https://www.unicarehomeopathy.com/images/og-main.jpg'
