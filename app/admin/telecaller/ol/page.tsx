@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import {
   User,
   Search,
@@ -15,6 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  Edit2,
+  CheckCircle,
 } from "lucide-react"
 import authService from "@/lib/authService"
 import { useRouter } from "next/navigation"
@@ -41,11 +45,18 @@ const maskPhoneNumber = (phone: string) => {
 
 export default function OnlinePatientsPage() {
   const router = useRouter()
-  const [patients, setPatients] = useState<any[]>([])
+  const [enquiries, setEnquiries] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
+
+  // Edit Enquiry state
+  const [selectedEnquiry, setSelectedEnquiry] = useState<any>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editName, setEditName] = useState("")
+  const [editPhone, setEditPhone] = useState("")
+  const [editReason, setEditReason] = useState("")
 
   // Pagination
   const [page, setPage] = useState(1)
@@ -54,20 +65,15 @@ export default function OnlinePatientsPage() {
 
   const fetchingRef = useRef(false)
 
-  // ─── Fetch Patients from settings API ─────────────────────────
-  const fetchPatients = async (pageNum = page) => {
+  // ─── Fetch Enquiries from settings API ─────────────────────────
+  const fetchEnquiries = async (pageNum = page) => {
     fetchingRef.current = true
     setLoading(true)
     try {
       const token = localStorage.getItem("authToken")
-      const locationId = authService.getLocationId()
-
-      const params = new URLSearchParams()
-      params.append("source", "Online Lead")
-      if (locationId) params.append("locationId", locationId)
 
       const res = await fetch(
-        `${authService.getSettingsApiUrl()}/patients?${params.toString()}`,
+        `${authService.getSettingsApiUrl()}/enquiry`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -80,21 +86,22 @@ export default function OnlinePatientsPage() {
         const result = await res.json()
         let dataList = Array.isArray(result) ? result : (result.data || [])
         
-        // Client-side filtering because backend getPatientsBySourceString doesn't filter/paginate
+        // Client-side filtering
         if (searchTerm.trim()) {
           const lowerSearch = searchTerm.toLowerCase()
           dataList = dataList.filter((p: any) => {
-            const name = `${p.firstName || p.first_name || ""} ${p.lastName || p.last_name || ""}`.toLowerCase()
-            const phone = (p.mobile || p.mobileNumber || p.mobile_number || "")
-            const pid = String(p.patientId || p.patient_id || "").toLowerCase()
-            return name.includes(lowerSearch) || phone.includes(searchTerm) || pid.includes(lowerSearch)
+            const name = (p.name || "").toLowerCase()
+            const phone = (p.phone || "")
+            const pid = String(p.id || "").toLowerCase()
+            const problems = (p.medical_problems || "").toLowerCase()
+            return name.includes(lowerSearch) || phone.includes(searchTerm) || pid.includes(lowerSearch) || problems.includes(lowerSearch)
           })
         }
 
         if (fromDate) {
           const from = new Date(fromDate)
           dataList = dataList.filter((p: any) => {
-            const created = new Date(p.createdAt || p.created_at)
+            const created = new Date(p.created_at || p.createdAt)
             return created >= from
           })
         }
@@ -103,7 +110,7 @@ export default function OnlinePatientsPage() {
           const to = new Date(toDate)
           to.setHours(23, 59, 59, 999)
           dataList = dataList.filter((p: any) => {
-            const created = new Date(p.createdAt || p.created_at)
+            const created = new Date(p.created_at || p.createdAt)
             return created <= to
           })
         }
@@ -112,16 +119,16 @@ export default function OnlinePatientsPage() {
         const start = (pageNum - 1) * 10
         const end = start + 10
 
-        setPatients(dataList.slice(start, end))
+        setEnquiries(dataList.slice(start, end))
         setPage(pageNum)
         setTotalPages(Math.ceil(total / 10) || 1)
         setTotalRecords(total)
       } else {
-        setPatients([])
+        setEnquiries([])
       }
     } catch (error) {
-      console.error("Error fetching patients:", error)
-      setPatients([])
+      console.error("Error fetching enquiries:", error)
+      setEnquiries([])
     } finally {
       setLoading(false)
       fetchingRef.current = false
@@ -129,13 +136,8 @@ export default function OnlinePatientsPage() {
   }
 
   useEffect(() => {
-    fetchPatients(1)
+    fetchEnquiries(1)
   }, [])
-
-  const getPatientName = (p: any) => {
-    if (p.name) return p.name
-    return `${p.firstName || p.first_name || ""} ${p.lastName || p.last_name || ""}`.trim() || "Unknown Patient"
-  }
 
   const getPageNumbers = () => {
     const pages = []
@@ -147,13 +149,75 @@ export default function OnlinePatientsPage() {
     return pages
   }
 
+  const handleOpenEdit = (enquiry: any) => {
+    setSelectedEnquiry(enquiry)
+    setEditName(enquiry.name || "")
+    setEditPhone(enquiry.phone || "")
+    setEditReason(enquiry.medical_problems || "")
+    setEditOpen(true)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!selectedEnquiry) return
+    try {
+      const token = localStorage.getItem("authToken")
+      const res = await fetch(
+        `${authService.getSettingsApiUrl()}/enquiry/${selectedEnquiry.id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: editName,
+            phone: editPhone,
+            medical_problems: editReason,
+          }),
+        }
+      )
+
+      if (res.ok) {
+        setEditOpen(false)
+        fetchEnquiries(page)
+      } else {
+        alert("Failed to update enquiry")
+      }
+    } catch (error) {
+      console.error("Error updating enquiry:", error)
+      alert("Error updating enquiry")
+    }
+  }
+
+  const handleMarkRead = async (id: number) => {
+    try {
+      const token = localStorage.getItem("authToken")
+      const res = await fetch(
+        `${authService.getSettingsApiUrl()}/enquiry/${id}/read`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      )
+
+      if (res.ok) {
+        fetchEnquiries(page)
+      }
+    } catch (error) {
+      console.error("Error marking enquiry read:", error)
+    }
+  }
+
   return (
     <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Online Leads</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Online Enquiries</h1>
         </div>
       </div>
 
@@ -169,14 +233,14 @@ export default function OnlinePatientsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Search */}
             <div className="space-y-2">
-              <Label>Search Patient</Label>
+              <Label>Search Enquiry</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search by name or phone..."
+                  placeholder="Search by name, phone or concern..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && fetchPatients(1)}
+                  onKeyDown={(e) => e.key === "Enter" && fetchEnquiries(1)}
                   className="pl-10"
                 />
               </div>
@@ -206,7 +270,7 @@ export default function OnlinePatientsPage() {
 
             {/* Action Button */}
             <div className="flex items-end">
-              <Button className="w-full" onClick={() => fetchPatients(1)}>
+              <Button className="w-full" onClick={() => fetchEnquiries(1)}>
                 <Search className="h-4 w-4 mr-2" />
                 Search
               </Button>
@@ -215,27 +279,27 @@ export default function OnlinePatientsPage() {
         </CardContent>
       </Card>
 
-      {/* Patients Table */}
+      {/* Enquiries Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Online Leads ({totalRecords})</CardTitle>
+          <CardTitle className="text-lg">Online Enquiries ({totalRecords})</CardTitle>
           <CardDescription className="text-sm">
-            List of all online leads under your location
+            List of all public online enquiries received from the landing page.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
             <div className="text-center py-12">
               <RefreshCw className="h-8 w-8 mx-auto mb-4 text-gray-400 animate-spin" />
-              <p className="text-gray-500">Loading patients...</p>
+              <p className="text-gray-500">Loading enquiries...</p>
             </div>
           ) : (
             <>
               {/* Mobile View */}
               <div className="block lg:hidden">
                 <div className="space-y-4 p-4">
-                  {patients.map((patient) => (
-                    <Card key={patient.id} className="border border-gray-200">
+                  {enquiries.map((enquiry) => (
+                    <Card key={enquiry.id} className="border border-gray-200">
                       <CardContent className="p-4">
                         <div className="space-y-3">
                           <div className="flex items-start justify-between">
@@ -244,34 +308,46 @@ export default function OnlinePatientsPage() {
                                 <User className="h-5 w-5 text-emerald-600" />
                               </div>
                               <div>
-                                <p className="font-medium text-gray-900">{getPatientName(patient)}</p>
-                                <p className="text-xs text-gray-500">{patient.patientId || patient.patient_id || `ID: ${patient.id}`}</p>
+                                <p className="font-medium text-gray-900">{enquiry.name || "Anonymous"}</p>
                               </div>
                             </div>
-                            {patient.gender && (
-                              <Badge variant="outline" className="capitalize text-xs">
-                                {patient.gender}
-                              </Badge>
-                            )}
+                            <Badge variant={enquiry.userview === "read" ? "secondary" : "default"} className="capitalize text-xs">
+                              {enquiry.userview || "unread"}
+                            </Badge>
+                          </div>
+
+                          <div className="space-y-1 text-sm">
+                            <p className="text-gray-500 text-xs">Concern</p>
+                            <p className="font-medium">{enquiry.medical_problems || "—"}</p>
                           </div>
 
                           <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                              <p className="text-gray-500 text-xs">Mobile Number</p>
-                              <p className="font-medium">{maskPhoneNumber(patient.mobile || patient.mobileNumber)}</p>
+                              <p className="text-gray-500 text-xs">Phone Number</p>
+                              <p className="font-medium">{enquiry.phone || "—"}</p>
                             </div>
                             <div>
-                              <p className="text-gray-500 text-xs">Date of Birth</p>
-                              <p className="font-medium">{safeFormatDate(patient.dateOfBirth || patient.date_of_birth, "dd/MM/yyyy")}</p>
+                              <p className="text-gray-500 text-xs">Created Date</p>
+                              <p className="font-medium">{safeFormatDate(enquiry.created_at, "dd/MM/yyyy")}</p>
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-end pt-2">
+                          <div className="flex items-center justify-end gap-2 pt-2 border-t mt-2">
+                            {enquiry.userview !== "read" && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-gray-600 hover:text-gray-900"
+                                onClick={() => handleMarkRead(enquiry.id)}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Mark Read
+                              </Button>
+                            )}
                             <Button
                               size="sm"
-                              variant="outline"
-                              className="text-emerald-600 border-emerald-600 hover:bg-emerald-50"
-                              onClick={() => router.push(`/admin/telecaller/call-patient?patientId=${patient.id}`)}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                              onClick={() => router.push(`/admin/telecaller/call-patient?patientId=${enquiry.id}&type=enquiry`)}
                             >
                               <PhoneCall className="h-4 w-4 mr-2" />
                               Call Now
@@ -289,54 +365,62 @@ export default function OnlinePatientsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Patient ID</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Phone Number</TableHead>
-                      <TableHead>Gender</TableHead>
-                      <TableHead>Date of Birth</TableHead>
+                      <TableHead>Concern / Reason</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Created Date</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {patients.map((patient) => (
-                      <TableRow key={patient.id} className="hover:bg-slate-50">
-                        <TableCell className="font-medium">
-                          {patient.patientId || patient.patient_id || `ID: ${patient.id}`}
-                        </TableCell>
+                    {enquiries.map((enquiry) => (
+                      <TableRow key={enquiry.id} className="hover:bg-slate-50">
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-emerald-50 rounded-full flex items-center justify-center shrink-0">
                               <User className="h-4 w-4 text-emerald-600" />
                             </div>
-                            <span className="font-medium text-sm">{getPatientName(patient)}</span>
+                            <span className="font-medium text-sm">{enquiry.name || "Anonymous"}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {maskPhoneNumber(patient.mobile || patient.mobileNumber)}
+                           {enquiry.phone || "—"}
+                        </TableCell>
+                        <TableCell className="text-sm max-w-[200px] truncate" title={enquiry.medical_problems}>
+                          {enquiry.medical_problems || "—"}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="capitalize text-xs">
-                            {patient.gender || "—"}
+                          <Badge variant={enquiry.userview === "read" ? "secondary" : "default"} className="capitalize text-xs">
+                            {enquiry.userview || "unread"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {safeFormatDate(patient.dateOfBirth || patient.date_of_birth, "dd/MM/yyyy")}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {safeFormatDate(patient.createdAt || patient.created_at, "dd/MM/yyyy")}
+                          {safeFormatDate(enquiry.created_at, "dd/MM/yyyy hh:mm a")}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 h-8 px-3"
-                            onClick={() => router.push(`/admin/telecaller/call-patient?patientId=${patient.id}`)}
-                            title="Call Patient"
-                          >
-                            <PhoneCall className="h-4 w-4 mr-2" />
-                            Call
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            {enquiry.userview !== "read" && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 px-2 text-gray-500 hover:text-gray-800"
+                                onClick={() => handleMarkRead(enquiry.id)}
+                                title="Mark as Read"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 px-3"
+                              onClick={() => router.push(`/admin/telecaller/call-patient?patientId=${enquiry.id}&type=enquiry`)}
+                              title="Call Lead"
+                            >
+                              <PhoneCall className="h-4 w-4 mr-2" />
+                              Call
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -347,10 +431,10 @@ export default function OnlinePatientsPage() {
           )}
 
           {/* Empty State */}
-          {patients.length === 0 && !loading && (
+          {enquiries.length === 0 && !loading && (
             <div className="text-center py-12">
               <User className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 font-medium">No patients found</p>
+              <p className="text-gray-500 font-medium">No enquiries found</p>
             </div>
           )}
 
@@ -359,13 +443,13 @@ export default function OnlinePatientsPage() {
             <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t gap-4 bg-slate-50/50">
               <div className="text-sm text-gray-600">
                 Showing {Math.min((page - 1) * 10 + 1, totalRecords)} to{" "}
-                {Math.min(page * 10, totalRecords)} of {totalRecords} patients
+                {Math.min(page * 10, totalRecords)} of {totalRecords} enquiries
               </div>
               <div className="flex gap-2 items-center">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => fetchPatients(page - 1)}
+                  onClick={() => fetchEnquiries(page - 1)}
                   disabled={page === 1 || loading}
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
@@ -377,7 +461,7 @@ export default function OnlinePatientsPage() {
                       key={pNum}
                       variant={page === pNum ? "default" : "outline"}
                       size="sm"
-                      onClick={() => fetchPatients(pNum)}
+                      onClick={() => fetchEnquiries(pNum)}
                       disabled={loading}
                       className="w-9"
                     >
@@ -388,7 +472,7 @@ export default function OnlinePatientsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => fetchPatients(page + 1)}
+                  onClick={() => fetchEnquiries(page + 1)}
                   disabled={page >= totalPages || loading}
                 >
                   Next
@@ -399,6 +483,53 @@ export default function OnlinePatientsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Enquiry Details</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="reason">Concern / Reason of Visit</Label>
+              <Textarea
+                id="reason"
+                value={editReason}
+                onChange={(e) => setEditReason(e.target.value)}
+                rows={4}
+                className="w-full resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit} className="bg-[#1B7A43] hover:bg-[#155e34] text-white">
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   )

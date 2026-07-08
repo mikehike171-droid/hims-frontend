@@ -76,6 +76,8 @@ export default function CallPatientPage() {
       // Fetch patient details
       const patientUrl = type === 'campaign'
         ? `${baseUrl}/campaigns/${patientId}`
+        : type === 'enquiry'
+        ? `${baseUrl}/enquiry/${patientId}`
         : `${baseUrl}/patients/${patientId}`
 
       console.log('Patient URL:', patientUrl)
@@ -151,7 +153,7 @@ export default function CallPatientPage() {
   }
 
   const convertCampaignToPatient = async () => {
-    if (type !== 'campaign' || !patientData) return patientId;
+    if ((type !== 'campaign' && type !== 'enquiry') || !patientData) return patientId;
 
     try {
       const token = localStorage.getItem('authToken');
@@ -160,8 +162,8 @@ export default function CallPatientPage() {
       const userId = userData.id || 1;
 
       const nameParts = (patientData.name || "").split(' ');
-      const firstName = nameParts[0] || "Campaign";
-      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : "Patient";
+      const firstName = nameParts[0] || (type === 'campaign' ? "Campaign" : "Online");
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : (type === 'campaign' ? "Patient" : "Lead");
 
       const response = await fetch(`${authService.getApiUrl()}/patients`, {
         method: 'POST',
@@ -174,10 +176,10 @@ export default function CallPatientPage() {
           first_name: firstName,
           last_name: lastName,
           gender: "Other",
-          mobile: patientData.mobile || "0000000000",
-          address1: "Campaign Lead",
+          mobile: patientData.mobile || patientData.phone || "0000000000",
+          address1: type === 'campaign' ? "Campaign Lead" : "Online Lead",
           pin_code: "000000",
-          medical_conditions: patientData.diseases,
+          medical_conditions: patientData.diseases || patientData.medical_problems,
           location_id: parseInt(locationId || '1'),
           created_by: parseInt(userId)
         })
@@ -191,11 +193,11 @@ export default function CallPatientPage() {
         return newId;
       } else {
         const errText = await response.text();
-        console.error("Failed to convert campaign to patient:", errText);
+        console.error("Failed to convert lead to patient:", errText);
         return null;
       }
     } catch (error) {
-      console.error("Error converting campaign to patient:", error);
+      console.error("Error converting lead to patient:", error);
       return null;
     }
   };
@@ -209,10 +211,10 @@ export default function CallPatientPage() {
     setBookingLoading(true)
     try {
       let targetPatientId = patientId;
-      if (type === 'campaign') {
+      if (type === 'campaign' || type === 'enquiry') {
         const newId = await convertCampaignToPatient();
         if (!newId) {
-          alert('Failed to register patient from campaign details. Cannot book appointment.');
+          alert('Failed to register patient from details. Cannot book appointment.');
           setBookingLoading(false);
           return;
         }
@@ -307,10 +309,10 @@ export default function CallPatientPage() {
       setIsSubmitting(true)
 
       let targetPatientId = patientId;
-      if (type === 'campaign') {
+      if (type === 'campaign' || type === 'enquiry') {
         const newId = await convertCampaignToPatient();
         if (!newId) {
-          alert('Failed to register patient from campaign details. Cannot save call record.');
+          alert('Failed to register patient from details. Cannot save call record.');
           setIsSubmitting(false);
           return;
         }
