@@ -308,6 +308,15 @@ export default function FrontOfficeDashboard() {
             </CardContent>
           </Card>
         </Link>
+
+        <Link href="/admin/front-office/patient-transfer">
+          <Card className="hover:shadow-md transition-all cursor-pointer hover:scale-105">
+            <CardContent className="flex flex-col items-center p-4">
+              <RefreshCw className="h-8 w-8 text-rose-500 mb-2" />
+              <span className="text-sm font-medium text-center">Patient Transfer</span>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Main Dashboard Content */}

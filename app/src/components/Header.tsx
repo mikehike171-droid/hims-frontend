@@ -136,9 +136,9 @@ const TopBar = () => {
             </a>
             <Linkedin className="w-4 h-4 hover:text-teal-light cursor-pointer transition-colors" />
           </div>
-          <button className="bg-primary text-primary-foreground px-4 py-1 rounded text-xs font-semibold hover:opacity-90 transition-opacity">
+          <Link href="/pay" className="bg-primary text-primary-foreground px-4 py-1 rounded text-xs font-semibold hover:opacity-90 transition-opacity">
             {t('Pay Now')}
-          </button>
+          </Link>
           <LanguageSelector white />
         </div>
       </div>

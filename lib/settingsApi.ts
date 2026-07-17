@@ -2231,6 +2231,52 @@ export const settingsApi = {
     }
   },
 
+  createOnlinePayment: async (paymentData: { name: string; email: string; phone: string; amount: number }) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/online-payments/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(paymentData),
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(err || 'Failed to create payment order');
+    }
+    return response.json();
+  },
+
+  verifyOnlinePayment: async (verificationData: {
+    paymentId: number;
+    razorpayOrderId: string;
+    razorpayPaymentId: string;
+    razorpaySignature: string;
+  }) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/online-payments/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(verificationData),
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(err || 'Failed to verify payment signature');
+    }
+    return response.json();
+  },
+
+  failOnlinePayment: async (paymentId: number, errorDetails?: any) => {
+    const response = await fetch(`${authService.getSettingsApiUrl()}/online-payments/${paymentId}/fail`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(errorDetails || {}),
+    });
+    return response.json();
+  },
+
   // Patient Registration
   registerPatient: async (payload: any) => {
     const response = await fetch(`${authService.getSettingsApiUrl()}/patients/register`, {
