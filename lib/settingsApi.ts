@@ -2232,7 +2232,7 @@ export const settingsApi = {
   },
 
   createOnlinePayment: async (paymentData: { name: string; email: string; phone: string; amount: number }) => {
-    const response = await fetch(`${authService.getSettingsApiUrl()}/online-payments/create`, {
+    const response = await fetch(`${authService.getSettingsApiAbsoluteUrl()}/online-payments/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2252,7 +2252,7 @@ export const settingsApi = {
     razorpayPaymentId: string;
     razorpaySignature: string;
   }) => {
-    const response = await fetch(`${authService.getSettingsApiUrl()}/online-payments/verify`, {
+    const response = await fetch(`${authService.getSettingsApiAbsoluteUrl()}/online-payments/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2267,13 +2267,17 @@ export const settingsApi = {
   },
 
   failOnlinePayment: async (paymentId: number, errorDetails?: any) => {
-    const response = await fetch(`${authService.getSettingsApiUrl()}/online-payments/${paymentId}/fail`, {
+    const response = await fetch(`${authService.getSettingsApiAbsoluteUrl()}/online-payments/${paymentId}/fail`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(errorDetails || {}),
     });
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(err || 'Failed to mark payment as failed');
+    }
     return response.json();
   },
 

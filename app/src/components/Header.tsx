@@ -148,6 +148,7 @@ const TopBar = () => {
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileExpandedMenu, setMobileExpandedMenu] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [clinicsData, setClinicsData] = useState<any[]>([]);
@@ -393,15 +394,23 @@ const Navbar = () => {
           </a>
         </div>
 
-        <button className="lg:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-2 lg:hidden">
+          <Link
+            href="/pay"
+            className="bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-full hover:bg-primary/90 transition-all shadow-sm flex items-center gap-1"
+          >
+            {t('Pay Now')}
+          </Link>
+          <button className="p-1.5 text-slate-700 hover:text-primary transition-colors" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
+            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {mobileOpen && (
-        <div className="lg:hidden border-t border-border px-4 py-4 space-y-3 bg-background">
-          <div className="flex gap-2 pb-4">
-             <button 
+        <div className="lg:hidden border-t border-border px-4 py-4 space-y-3 bg-background max-h-[80vh] overflow-y-auto shadow-2xl animate-in slide-in-from-top-2 duration-200">
+          <div className="flex gap-2 pb-4 border-b border-slate-100">
+            <button 
               onClick={() => {
                 setMobileOpen(false);
                 window.dispatchEvent(new CustomEvent("open-appointment-popup"));
@@ -422,44 +431,49 @@ const Navbar = () => {
             <div key={link.label}>
               {link.hasDropdown ? (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between py-2 text-foreground font-medium font-heading">
-                    {link.label}
-                    <ChevronDown className="w-4 h-4" />
-                  </div>
-                  <div className="pl-4 space-y-2 border-l-2 border-slate-100 ml-1">
-                    {link.label === t('Clinics') && clinicsData.map((stateGrp: any) => (
-                      <div key={stateGrp.state} className="space-y-1">
-                        <span className="text-[10px] uppercase font-black text-slate-300 block mt-2">{stateGrp.state}</span>
-                        {stateGrp.cities.map((city: any) => (
-                          <Link
-                            key={city.name}
-                            href={`/clinics/${city.path}`}
-                            className="block py-1 text-slate-500 text-sm font-bold"
-                            onClick={() => setMobileOpen(false)}
-                          >
-                            {city.name}
-                          </Link>
-                        ))}
-                      </div>
-                    ))}
-                    {link.label === t('Treatments') && treatmentsData.map((cat: any) => (
-                      <div key={cat.category} className="space-y-1">
-                        {cat.category !== "Others" && (
-                          <span className="text-[10px] uppercase font-black text-slate-300 block mt-2">{cat.category}</span>
-                        )}
-                        {cat.items.map((item: any) => (
-                          <Link
-                            key={item.name}
-                            href={`/treatment/${item.path}`}
-                            className="block py-1 text-slate-500 text-sm font-bold"
-                            onClick={() => setMobileOpen(false)}
-                          >
-                            {item.name}
-                          </Link>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
+                  <button
+                    onClick={() => setMobileExpandedMenu(mobileExpandedMenu === link.label ? null : link.label)}
+                    className="w-full flex items-center justify-between py-2 text-foreground font-medium font-heading hover:text-primary transition-colors text-left cursor-pointer"
+                  >
+                    <span>{link.label}</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileExpandedMenu === link.label ? 'rotate-180 text-primary' : ''}`} />
+                  </button>
+                  {mobileExpandedMenu === link.label && (
+                    <div className="pl-4 space-y-2 border-l-2 border-primary/20 ml-1 animate-in fade-in duration-200">
+                      {link.label === t('Clinics') && clinicsData.map((stateGrp: any) => (
+                        <div key={stateGrp.state} className="space-y-1">
+                          <span className="text-[10px] uppercase font-black text-slate-400 block mt-2">{stateGrp.state}</span>
+                          {stateGrp.cities.map((city: any) => (
+                            <Link
+                              key={city.name}
+                              href={`/clinics/${city.path}`}
+                              className="block py-1 text-slate-600 hover:text-primary text-sm font-bold transition-colors"
+                              onClick={() => setMobileOpen(false)}
+                            >
+                              {city.name}
+                            </Link>
+                          ))}
+                        </div>
+                      ))}
+                      {link.label === t('Treatments') && treatmentsData.map((cat: any) => (
+                        <div key={cat.category} className="space-y-1">
+                          {cat.category !== "Others" && (
+                            <span className="text-[10px] uppercase font-black text-slate-400 block mt-2">{cat.category}</span>
+                          )}
+                          {cat.items.map((item: any) => (
+                            <Link
+                              key={item.name}
+                              href={`/treatment/${item.path}`}
+                              className="block py-1 text-slate-600 hover:text-primary text-sm font-medium transition-colors"
+                              onClick={() => setMobileOpen(false)}
+                            >
+                              {item.name}
+                            </Link>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <Link
@@ -472,10 +486,17 @@ const Navbar = () => {
               )}
             </div>
           ))}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 pt-2">
+            <Link
+              href="/pay"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full text-sm font-bold justify-center shadow-sm hover:bg-primary/90 transition-all"
+            >
+              {t('Pay Now')}
+            </Link>
             <a
               href="tel:+919553387472"
-              className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold justify-center"
+              className="flex items-center gap-2 bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold justify-center"
             >
               <Phone className="w-4 h-4" />
               +91 95533 87472

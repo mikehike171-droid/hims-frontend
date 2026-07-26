@@ -73,7 +73,7 @@ const PaymentDetailsPage = () => {
       const { paymentId, orderId } = orderResponse;
 
       // 2. Configure and open Razorpay Checkout
-      const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_TD20XDfgDr0m4x";
+      const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_live_TI6TJQ781AxkKs";
       
       const options = {
         key: rzpKey,
