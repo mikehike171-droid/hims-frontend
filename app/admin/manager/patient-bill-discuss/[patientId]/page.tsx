@@ -90,7 +90,7 @@ export default function PatientBillDiscuss() {
   const [tempExamDate, setTempExamDate] = useState<string>("")
   const [showAdditionalMultiPayment, setShowAdditionalMultiPayment] = useState(false)
   const [selectedAdditionalPaymentMethods, setSelectedAdditionalPaymentMethods] = useState<{ id: string, amount: number }[]>([])
-  
+
   const [showCreateExamDialog, setShowCreateExamDialog] = useState(false)
   const [newExamDoctorMonths, setNewExamDoctorMonths] = useState("")
   const [newExamDoctorRenewalDate, setNewExamDoctorRenewalDate] = useState("")
@@ -103,9 +103,6 @@ export default function PatientBillDiscuss() {
   const [showDialogProDropdown, setShowDialogProDropdown] = useState(false)
 
   const [isAdmin, setIsAdmin] = useState(false)
-  const [showDisableExamDialog, setShowDisableExamDialog] = useState(false)
-  const [examToDisable, setExamToDisable] = useState<any>(null)
-  const [disableNotes, setDisableNotes] = useState("")
 
   const filteredDialogDoctorPlans = treatmentPlans.filter(plan =>
     plan.months.toString().includes(dialogDoctorSearch) ||
@@ -119,15 +116,9 @@ export default function PatientBillDiscuss() {
 
   useEffect(() => {
     if (currentExamination) {
-      if (currentExamination.is_active === false || currentExamination.isActive === false) {
-        setTotalAmount(0)
-        setDiscount(0)
-        setPaidAmount(0)
-      } else {
-        setTotalAmount(parseFloat((currentExamination.totalAmount || currentExamination.total_amount || 0).toString()))
-        setDiscount(parseFloat((currentExamination.discountAmount || currentExamination.discount_amount || 0).toString()))
-        setPaidAmount(parseFloat((currentExamination.paidAmount || currentExamination.paid_amount || 0).toString()))
-      }
+      setTotalAmount(parseFloat((currentExamination.totalAmount || currentExamination.total_amount || 0).toString()))
+      setDiscount(parseFloat((currentExamination.discountAmount || currentExamination.discount_amount || 0).toString()))
+      setPaidAmount(parseFloat((currentExamination.paidAmount || currentExamination.paid_amount || 0).toString()))
     } else {
       setTotalAmount(0)
       setDiscount(0)
@@ -438,38 +429,32 @@ export default function PatientBillDiscuss() {
     }
   }
 
-  const handleDisableExam = async () => {
-    if (!examToDisable || !disableNotes.trim()) {
-      alert('Please enter notes')
+  const handleDeleteExam = async (examId: number) => {
+    if (!window.confirm("Are you sure you want to completely delete this record? This action cannot be undone.")) {
       return
     }
     try {
       setLoading(true)
       const token = localStorage.getItem('authToken')
-      const response = await fetch(`${authService.getSettingsApiUrl()}/patient-examination/${examToDisable.id}`, {
-        method: 'PUT',
+      const response = await fetch(`${authService.getSettingsApiUrl()}/patient-examination/${examId}`, {
+        method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          isActive: false,
-          inactiveNotes: disableNotes
-        })
+        }
       })
 
       if (response.ok) {
-        alert('Examination disabled successfully')
-        setShowDisableExamDialog(false)
-        setDisableNotes('')
-        setExamToDisable(null)
+        alert('Examination deleted successfully')
         fetchPatientExamination()
+        if (currentExamination && currentExamination.id === examId) {
+          setCurrentExamination(null)
+        }
       } else {
-        alert('Failed to disable examination')
+        alert('Failed to delete examination')
       }
     } catch (error) {
-      console.error('Error disabling examination:', error)
-      alert('Error disabling examination')
+      console.error('Error deleting examination:', error)
+      alert('Error deleting examination')
     } finally {
       setLoading(false)
     }
@@ -479,7 +464,7 @@ export default function PatientBillDiscuss() {
     try {
       setLoading(true)
       const token = localStorage.getItem('authToken')
-      
+
       const userData = JSON.parse(localStorage.getItem('user') || '{}')
       const locationId = userData?.primary_location_id || 1
 
@@ -509,7 +494,7 @@ export default function PatientBillDiscuss() {
         const createdExam = await response.json()
         alert('New examination record created successfully!')
         setShowCreateExamDialog(false)
-        
+
         // Reset dialog states
         setNewExamDoctorMonths("")
         setNewExamDoctorRenewalDate("")
@@ -520,7 +505,7 @@ export default function PatientBillDiscuss() {
 
         // Reload data
         await fetchPatientExamination()
-        
+
         // Set newly created exam as current
         setCurrentExamination(createdExam)
       } else {
@@ -951,8 +936,8 @@ export default function PatientBillDiscuss() {
                 </TableHeader>
                 <TableBody>
                   {allExaminations.map((exam) => (
-                    <TableRow 
-                      key={exam.id} 
+                    <TableRow
+                      key={exam.id}
                       className={cn(
                         "cursor-pointer hover:bg-slate-100 transition-colors",
                         currentExamination?.id === exam.id ? "bg-blue-50 hover:bg-blue-100" : ""
@@ -1013,50 +998,41 @@ export default function PatientBillDiscuss() {
                       </TableCell>
                       <TableCell>
                         ₹{(() => {
-                          if (exam.is_active === false || exam.isActive === false) return '0.00'
                           const val = exam.total_amount || exam.totalAmount || 0
                           return parseFloat(val.toString()).toFixed(2)
                         })()}
                       </TableCell>
                       <TableCell>
                         ₹{(() => {
-                          if (exam.is_active === false || exam.isActive === false) return '0.00'
                           const val = exam.discount_amount || exam.discountAmount || 0
                           return parseFloat(val.toString()).toFixed(2)
                         })()}
                       </TableCell>
                       <TableCell className="text-green-600">
                         ₹{(() => {
-                          if (exam.is_active === false || exam.isActive === false) return '0.00'
                           const val = exam.paid_amount || exam.paidAmount || 0
                           return parseFloat(val.toString()).toFixed(2)
                         })()}
                       </TableCell>
                       <TableCell className="text-red-600">
                         ₹{(() => {
-                          if (exam.is_active === false || exam.isActive === false) return '0.00'
                           const val = exam.due_amount || exam.dueAmount || 0
                           return parseFloat(val.toString()).toFixed(2)
                         })()}
                       </TableCell>
                       {isAdmin && (
                         <TableCell>
-                          {(exam.is_active !== false && exam.isActive !== false) ? (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setExamToDisable(exam)
-                                setShowDisableExamDialog(true)
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          ) : (
-                            <Badge variant="outline" className="text-xs text-gray-500 bg-gray-50">Disabled</Badge>
-                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteExam(exam.id)
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       )}
                     </TableRow>
@@ -1950,37 +1926,6 @@ export default function PatientBillDiscuss() {
           </DialogContent>
         </Dialog>
 
-        {/* Disable Exam Modal Dialog */}
-        <Dialog open={showDisableExamDialog} onOpenChange={setShowDisableExamDialog}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Disable Examination</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="notes">Reason / Notes for Disabling</Label>
-                <Input
-                  id="notes"
-                  value={disableNotes}
-                  onChange={(e) => setDisableNotes(e.target.value)}
-                  placeholder="Enter notes..."
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowDisableExamDialog(false)}>
-                Cancel
-              </Button>
-              <Button 
-                variant="destructive" 
-                onClick={handleDisableExam}
-                disabled={!disableNotes.trim() || loading}
-              >
-                {loading ? 'Disabling...' : 'Confirm Disable'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </PrivateRoute>
   )
