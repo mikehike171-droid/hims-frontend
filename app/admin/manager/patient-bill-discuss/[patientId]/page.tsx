@@ -102,6 +102,11 @@ export default function PatientBillDiscuss() {
   const [dialogProSearch, setDialogProSearch] = useState("")
   const [showDialogProDropdown, setShowDialogProDropdown] = useState(false)
 
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [showDisableExamDialog, setShowDisableExamDialog] = useState(false)
+  const [examToDisable, setExamToDisable] = useState<any>(null)
+  const [disableNotes, setDisableNotes] = useState("")
+
   const filteredDialogDoctorPlans = treatmentPlans.filter(plan =>
     plan.months.toString().includes(dialogDoctorSearch) ||
     (plan.name || '').toLowerCase().includes(dialogDoctorSearch.toLowerCase())
@@ -114,9 +119,15 @@ export default function PatientBillDiscuss() {
 
   useEffect(() => {
     if (currentExamination) {
-      setTotalAmount(parseFloat((currentExamination.totalAmount || currentExamination.total_amount || 0).toString()))
-      setDiscount(parseFloat((currentExamination.discountAmount || currentExamination.discount_amount || 0).toString()))
-      setPaidAmount(parseFloat((currentExamination.paidAmount || currentExamination.paid_amount || 0).toString()))
+      if (currentExamination.is_active === false || currentExamination.isActive === false) {
+        setTotalAmount(0)
+        setDiscount(0)
+        setPaidAmount(0)
+      } else {
+        setTotalAmount(parseFloat((currentExamination.totalAmount || currentExamination.total_amount || 0).toString()))
+        setDiscount(parseFloat((currentExamination.discountAmount || currentExamination.discount_amount || 0).toString()))
+        setPaidAmount(parseFloat((currentExamination.paidAmount || currentExamination.paid_amount || 0).toString()))
+      }
     } else {
       setTotalAmount(0)
       setDiscount(0)
@@ -132,6 +143,11 @@ export default function PatientBillDiscuss() {
       fetchPatientData()
       fetchPatientExamination()
       fetchInstallments()
+    }
+    const user = authService.getCurrentUser()
+    if (user) {
+      const roleName = (user.role_name || user.role || user.user_type || '').toLowerCase()
+      setIsAdmin(roleName.includes('admin'))
     }
   }, [patientId])
 
@@ -417,6 +433,43 @@ export default function PatientBillDiscuss() {
     } catch (error) {
       console.error('Error updating treatment plan:', error)
       alert('Error updating treatment plan')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDisableExam = async () => {
+    if (!examToDisable || !disableNotes.trim()) {
+      alert('Please enter notes')
+      return
+    }
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('authToken')
+      const response = await fetch(`${authService.getSettingsApiUrl()}/patient-examination/${examToDisable.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isActive: false,
+          inactiveNotes: disableNotes
+        })
+      })
+
+      if (response.ok) {
+        alert('Examination disabled successfully')
+        setShowDisableExamDialog(false)
+        setDisableNotes('')
+        setExamToDisable(null)
+        fetchPatientExamination()
+      } else {
+        alert('Failed to disable examination')
+      }
+    } catch (error) {
+      console.error('Error disabling examination:', error)
+      alert('Error disabling examination')
     } finally {
       setLoading(false)
     }
@@ -893,6 +946,7 @@ export default function PatientBillDiscuss() {
                     <TableHead>Discount</TableHead>
                     <TableHead>Paid Amount</TableHead>
                     <TableHead>Due Amount</TableHead>
+                    {isAdmin && <TableHead>Action</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -959,28 +1013,52 @@ export default function PatientBillDiscuss() {
                       </TableCell>
                       <TableCell>
                         ₹{(() => {
+                          if (exam.is_active === false || exam.isActive === false) return '0.00'
                           const val = exam.total_amount || exam.totalAmount || 0
                           return parseFloat(val.toString()).toFixed(2)
                         })()}
                       </TableCell>
                       <TableCell>
                         ₹{(() => {
+                          if (exam.is_active === false || exam.isActive === false) return '0.00'
                           const val = exam.discount_amount || exam.discountAmount || 0
                           return parseFloat(val.toString()).toFixed(2)
                         })()}
                       </TableCell>
                       <TableCell className="text-green-600">
                         ₹{(() => {
+                          if (exam.is_active === false || exam.isActive === false) return '0.00'
                           const val = exam.paid_amount || exam.paidAmount || 0
                           return parseFloat(val.toString()).toFixed(2)
                         })()}
                       </TableCell>
                       <TableCell className="text-red-600">
                         ₹{(() => {
+                          if (exam.is_active === false || exam.isActive === false) return '0.00'
                           const val = exam.due_amount || exam.dueAmount || 0
                           return parseFloat(val.toString()).toFixed(2)
                         })()}
                       </TableCell>
+                      {isAdmin && (
+                        <TableCell>
+                          {(exam.is_active !== false && exam.isActive !== false) ? (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setExamToDisable(exam)
+                                setShowDisableExamDialog(true)
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Badge variant="outline" className="text-xs text-gray-500 bg-gray-50">Disabled</Badge>
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -1868,6 +1946,38 @@ export default function PatientBillDiscuss() {
                   {loading ? 'Creating...' : 'Create Record'}
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Disable Exam Modal Dialog */}
+        <Dialog open={showDisableExamDialog} onOpenChange={setShowDisableExamDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Disable Examination</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="notes">Reason / Notes for Disabling</Label>
+                <Input
+                  id="notes"
+                  value={disableNotes}
+                  onChange={(e) => setDisableNotes(e.target.value)}
+                  placeholder="Enter notes..."
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowDisableExamDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={handleDisableExam}
+                disabled={!disableNotes.trim() || loading}
+              >
+                {loading ? 'Disabling...' : 'Confirm Disable'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
