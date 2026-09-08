@@ -53,7 +53,7 @@ export default async function BlogPage({ params }: Props) {
   const blog = await settingsApi.getPublicBlogByTitle(params.slug);
   
   if (!blog) {
-    notFound();
+    return <BlogDetails />;
   }
 
   const imageUrl = blog.image_url ? authService.getFileUrl(blog.image_url) : 'https://www.unicarehomeopathy.com/images/og-main.jpg'

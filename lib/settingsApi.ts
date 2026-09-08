@@ -1671,14 +1671,44 @@ export const settingsApi = {
   },
 
   getPublicTreatmentBySlug: async (slug: string) => {
+    if (!slug) return null;
+    const cleanSlug = encodeURIComponent(slug.trim());
     try {
-      const response = await fetch(`${authService.getSettingsApiUrl()}/public-treatments/${slug}`);
-      if (!response.ok) {
-        throw new Error(`Public Detail API Error: ${response.status}`);
+      const response = await fetch(`${authService.getSettingsApiUrl()}/public-treatments/${cleanSlug}`);
+      if (response.ok) {
+        return await response.json();
       }
-      return await response.json();
+
+      // Fallback 1: Try finding in full treatments list (handles uppercase/casing/special character discrepancies)
+      const allTreatments = await settingsApi.getPublicTreatments();
+      if (Array.isArray(allTreatments) && allTreatments.length > 0) {
+        const normalized = decodeURIComponent(slug).toLowerCase().trim();
+        const found = allTreatments.find((t: any) => {
+          const tSlug = (t.slug || '').toLowerCase().trim();
+          const tName = (t.name || '').toLowerCase().trim();
+          const tId = String(t.id);
+          return tSlug === normalized || tName === normalized || tId === normalized;
+        });
+        if (found) return found;
+      }
+
+      return null;
     } catch (error) {
       console.error('getPublicTreatmentBySlug error:', error);
+      try {
+        const allTreatments = await settingsApi.getPublicTreatments();
+        if (Array.isArray(allTreatments)) {
+          const normalized = decodeURIComponent(slug).toLowerCase().trim();
+          return allTreatments.find((t: any) => {
+            const tSlug = (t.slug || '').toLowerCase().trim();
+            const tName = (t.name || '').toLowerCase().trim();
+            const tId = String(t.id);
+            return tSlug === normalized || tName === normalized || tId === normalized;
+          }) || null;
+        }
+      } catch (e) {
+        console.error('getPublicTreatmentBySlug fallback error:', e);
+      }
       return null;
     }
   },
@@ -1852,15 +1882,45 @@ export const settingsApi = {
   },
 
   getPublicBlogByTitle: async (title: string) => {
+    if (!title) return null;
+    const cleanTitle = encodeURIComponent(title.trim());
     try {
-      const url = `${authService.getSettingsApiUrl()}/public-blogs/detail/${encodeURIComponent(title)}`;
+      const url = `${authService.getSettingsApiUrl()}/public-blogs/detail/${cleanTitle}`;
       const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Public Detail API Error: ${response.status}`);
+      if (response.ok) {
+        return await response.json();
       }
-      return await response.json();
+
+      // Fallback: search in all public blogs
+      const allBlogs = await settingsApi.getPublicBlogs();
+      if (Array.isArray(allBlogs) && allBlogs.length > 0) {
+        const normalized = decodeURIComponent(title).toLowerCase().trim();
+        const found = allBlogs.find((b: any) => {
+          const bSlug = (b.slug || b.title || '').toLowerCase().trim();
+          const bTitle = (b.title || '').toLowerCase().trim();
+          const bId = String(b.id);
+          return bSlug === normalized || bTitle === normalized || bId === normalized;
+        });
+        if (found) return found;
+      }
+
+      return null;
     } catch (error) {
       console.error('getPublicBlogByTitle error:', error);
+      try {
+        const allBlogs = await settingsApi.getPublicBlogs();
+        if (Array.isArray(allBlogs)) {
+          const normalized = decodeURIComponent(title).toLowerCase().trim();
+          return allBlogs.find((b: any) => {
+            const bSlug = (b.slug || b.title || '').toLowerCase().trim();
+            const bTitle = (b.title || '').toLowerCase().trim();
+            const bId = String(b.id);
+            return bSlug === normalized || bTitle === normalized || bId === normalized;
+          }) || null;
+        }
+      } catch (e) {
+        console.error('getPublicBlogByTitle fallback error:', e);
+      }
       return null;
     }
   },
@@ -1959,8 +2019,44 @@ export const settingsApi = {
   },
 
   getPublicBranchBySlug: async (slug: string) => {
-    const response = await fetch(`${authService.getSettingsApiUrl()}/public/branches/${slug}`);
-    return await handleApiResponse(response);
+    if (!slug) return null;
+    const cleanSlug = encodeURIComponent(slug.trim());
+    try {
+      const response = await fetch(`${authService.getSettingsApiUrl()}/public/branches/${cleanSlug}`);
+      if (response.ok) {
+        return await response.json();
+      }
+
+      // Fallback: search in all public branches
+      const allBranches = await settingsApi.getPublicBranches();
+      if (Array.isArray(allBranches) && allBranches.length > 0) {
+        const normalized = decodeURIComponent(slug).toLowerCase().trim();
+        const found = allBranches.find((b: any) => {
+          const bSlug = (b.slug || b.id || '').toString().toLowerCase().trim();
+          const bName = (b.name || '').toLowerCase().trim();
+          return bSlug === normalized || bName === normalized;
+        });
+        if (found) return found;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('getPublicBranchBySlug error:', error);
+      try {
+        const allBranches = await settingsApi.getPublicBranches();
+        if (Array.isArray(allBranches)) {
+          const normalized = decodeURIComponent(slug).toLowerCase().trim();
+          return allBranches.find((b: any) => {
+            const bSlug = (b.slug || b.id || '').toString().toLowerCase().trim();
+            const bName = (b.name || '').toLowerCase().trim();
+            return bSlug === normalized || bName === normalized;
+          }) || null;
+        }
+      } catch (e) {
+        console.error('getPublicBranchBySlug fallback error:', e);
+      }
+      return null;
+    }
   },
 
   createBranch: async (data: any) => {

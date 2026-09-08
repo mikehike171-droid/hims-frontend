@@ -50,7 +50,7 @@ export default async function TreatmentPage({ params }: Props) {
   const treatment = await settingsApi.getPublicTreatmentBySlug(params.slug);
   
   if (!treatment) {
-    notFound();
+    return <TreatmentDetailPageClient />;
   }
 
   const imageUrl = treatment.image_url ? authService.getFileUrl(treatment.image_url) : 'https://www.unicarehomeopathy.com/images/og-main.jpg'

@@ -38,7 +38,7 @@ export default async function ClinicPage({ params }: Props) {
   const branch = await settingsApi.getPublicBranchBySlug(params.id);
   
   if (!branch) {
-    notFound();
+    return <ClinicDetails />;
   }
 
   const schemaData = {
